@@ -13,11 +13,4 @@ Thumbs.db
 /node_modules/
 /dist/
 /build/
-/public/
-/src/
-/test/
-/docs/
-/examples/
-/tests/
-/vendor/
 /api-agents/

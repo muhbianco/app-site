@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Entrar na MuhBianco — área de APIs e serviços." />
+  <title>Entrar — MuhBianco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css?v=3" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="logo" href="/">MuhBianco</a>
+    <nav class="nav" aria-label="Principal">
+      <a href="/#servicos">Serviços</a>
+      <a href="/contato.html">Contato</a>
+      <a href="/login.html" class="nav-cta" aria-current="page">Entrar</a>
+    </nav>
+  </header>
+
+  <main class="auth-page">
+    <section class="auth-card">
+      <p class="brand-mark compact">MuhBianco</p>
+      <h1>Entrar</h1>
+      <p class="auth-lede">Acesse a área de APIs. Google para qualquer um; Discord só para quem está no servidor.</p>
+
+      <div id="auth-error" class="auth-alert" hidden></div>
+
+      <div class="oauth-row" id="oauth-row">
+        <button type="button" class="btn btn-oauth google" id="btn-google" hidden>Continuar com Google</button>
+        <button type="button" class="btn btn-oauth discord" id="btn-discord" hidden>Continuar com Discord</button>
+      </div>
+
+      <div class="auth-divider" id="auth-divider" hidden><span>ou e-mail</span></div>
+
+      <form id="login-form" class="auth-form" method="post" action="#" novalidate>
+        <label>
+          <span>E-mail</span>
+          <input type="email" name="email" autocomplete="username" required placeholder="voce@email.com" />
+        </label>
+        <label>
+          <span>Senha</span>
+          <input type="password" name="password" autocomplete="current-password" required minlength="12" placeholder="Sua senha" />
+        </label>
+        <button type="submit" class="btn btn-primary btn-block" id="btn-submit">Entrar</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="/js/auth.js?v=1"></script>
+  <script>
+    (async function () {
+      if (MuhAuth.isLoggedIn()) {
+        location.replace("/conta.html");
+        return;
+      }
+
+      const params = new URLSearchParams(location.search);
+      const errorBox = document.getElementById("auth-error");
+      if (params.get("error")) {
+        errorBox.hidden = false;
+        errorBox.textContent = params.get("message") || mapError(params.get("error"));
+      }
+
+      const providers = await MuhAuth.providers();
+      const googleBtn = document.getElementById("btn-google");
+      const discordBtn = document.getElementById("btn-discord");
+      const divider = document.getElementById("auth-divider");
+      let anyOauth = false;
+      if (providers.google) {
+        googleBtn.hidden = false;
+        anyOauth = true;
+        googleBtn.addEventListener("click", () => MuhAuth.oauthStart("google"));
+      }
+      if (providers.discord) {
+        discordBtn.hidden = false;
+        anyOauth = true;
+        discordBtn.addEventListener("click", () => MuhAuth.oauthStart("discord"));
+      }
+      if (anyOauth) divider.hidden = false;
+
+      document.getElementById("login-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        errorBox.hidden = true;
+        const form = event.currentTarget;
+        const submit = document.getElementById("btn-submit");
+        submit.disabled = true;
+        try {
+          await MuhAuth.loginWithPassword(form.email.value.trim(), form.password.value);
+          const next = params.get("next") || "/conta.html";
+          location.replace(next.startsWith("/") ? next : "/conta.html");
+        } catch (err) {
+          errorBox.hidden = false;
+          errorBox.textContent = err.message || "Falha no login.";
+          submit.disabled = false;
+        }
+      });
+
+      function mapError(code) {
+        const map = {
+          permission_denied: "Você precisa estar no servidor Discord da MuhBianco.",
+          not_in_guild: "Você precisa estar no servidor Discord da MuhBianco.",
+          missing_code: "Login cancelado ou incompleto.",
+          oauth_failed: "Não foi possível concluir o login social.",
+          authentication_failed: "Não foi possível autenticar.",
+        };
+        return map[code] || "Não foi possível entrar. Tente de novo.";
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Sua conta MuhBianco — APIs e saldo." />
+  <title>Minha conta — MuhBianco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css?v=3" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="logo" href="/">MuhBianco</a>
+    <nav class="nav" aria-label="Principal">
+      <a href="/#servicos">Serviços</a>
+      <a href="/contato.html">Contato</a>
+      <a href="/conta.html" class="nav-cta" aria-current="page">Conta</a>
+    </nav>
+  </header>
+
+  <main class="account-page">
+    <section class="account-hero">
+      <p class="brand-mark compact">Área logada</p>
+      <h1 id="hello">Carregando…</h1>
+      <p class="auth-lede" id="subtitle">Em breve: saldo e contratação de APIs (screenshot, agentes e mais).</p>
+    </section>
+
+    <section class="account-grid">
+      <article class="account-panel">
+        <h2>Perfil</h2>
+        <dl class="profile-list" id="profile">
+          <div><dt>E-mail</dt><dd id="p-email">—</dd></div>
+          <div><dt>Papel</dt><dd id="p-role">—</dd></div>
+          <div><dt>Login</dt><dd id="p-auth">—</dd></div>
+        </dl>
+        <button type="button" class="btn btn-ghost" id="btn-logout">Sair</button>
+      </article>
+
+      <article class="account-panel muted">
+        <h2>Serviços de API</h2>
+        <ul class="service-teasers">
+          <li><strong>Screenshot de URL</strong> — capture qualquer página sob demanda.</li>
+          <li><strong>Agentes customizados</strong> — fluxos que vamos publicar aqui.</li>
+        </ul>
+        <p class="hint">Saldo e consumo por request entram no próximo passo.</p>
+      </article>
+    </section>
+  </main>
+
+  <script src="/js/auth.js?v=1"></script>
+  <script>
+    (async function () {
+      if (!MuhAuth.requireAuth()) return;
+
+      document.getElementById("btn-logout").addEventListener("click", async () => {
+        await MuhAuth.logout();
+        location.href = "/login.html";
+      });
+
+      try {
+        const user = await MuhAuth.me();
+        document.getElementById("hello").textContent = `Olá, ${user.full_name.split(" ")[0]}.`;
+        document.getElementById("p-email").textContent = user.email;
+        document.getElementById("p-role").textContent = user.role;
+        const links = [];
+        if (user.has_password) links.push("e-mail/senha");
+        if (user.google_linked) links.push("Google");
+        if (user.discord_linked) links.push("Discord");
+        document.getElementById("p-auth").textContent = links.join(" · ") || "—";
+      } catch (err) {
+        await MuhAuth.logout();
+        location.href = "/login.html?error=authentication_failed";
+      }
+    })();
+  </script>
+</body>
+</html>

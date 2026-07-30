@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Autenticando… — MuhBianco</title>
+  <link rel="stylesheet" href="/css/styles.css?v=3" />
+</head>
+<body>
+  <main class="auth-page">
+    <section class="auth-card">
+      <h1>Quase lá</h1>
+      <p class="auth-lede" id="status">Finalizando login…</p>
+    </section>
+  </main>
+  <script src="/js/auth.js?v=1"></script>
+  <script>
+    (function () {
+      const status = document.getElementById("status");
+      const hash = new URLSearchParams(location.hash.replace(/^#/, ""));
+      const access = hash.get("access_token");
+      const refresh = hash.get("refresh_token");
+      if (!access || !refresh) {
+        status.textContent = "Resposta de login incompleta.";
+        setTimeout(() => location.replace("/login.html?error=oauth_failed"), 1200);
+        return;
+      }
+      MuhAuth.saveTokens({
+        access_token: access,
+        refresh_token: refresh,
+        expires_in: hash.get("expires_in") || "900",
+        token_type: hash.get("token_type") || "bearer",
+        scopes: (hash.get("scopes") || "").split(" ").filter(Boolean),
+      });
+      history.replaceState(null, "", location.pathname);
+      location.replace("/conta.html");
+    })();
+  </script>
+</body>
+</html>
