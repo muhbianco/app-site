@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=3" />
+  <link rel="stylesheet" href="/css/styles.css?v=5" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -25,8 +25,22 @@
   <main class="account-page">
     <section class="account-hero">
       <p class="brand-mark compact">Área logada</p>
-      <h1 id="hello">Carregando…</h1>
-      <p class="auth-lede" id="subtitle">Em breve: saldo e contratação de APIs (screenshot, agentes e mais).</p>
+      <div class="account-identity">
+        <div class="avatar" id="avatar" data-editable="false">
+          <img id="avatar-img" alt="" hidden />
+          <span class="avatar-fallback" id="avatar-fallback" aria-hidden="true">?</span>
+          <button type="button" class="avatar-edit" id="avatar-edit" hidden aria-label="Alterar foto">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path fill="currentColor" d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Zm8-4.7V8.2l-1.7-.3a7.3 7.3 0 0 0-.6-1.4l1-1.4-1.8-1.8-1.4 1a7.3 7.3 0 0 0-1.4-.6L13.5 2h-3l-.3 1.7a7.3 7.3 0 0 0-1.4.6l-1.4-1-1.8 1.8 1 1.4c-.3.4-.5.9-.6 1.4L4 8.2v3l1.7.3c.1.5.3 1 .6 1.4l-1 1.4 1.8 1.8 1.4-1c.4.3.9.5 1.4.6l.3 1.7h3l.3-1.7c.5-.1 1-.3 1.4-.6l1.4 1 1.8-1.8-1-1.4c.3-.4.5-.9.6-1.4l1.7-.3ZM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z"/>
+            </svg>
+          </button>
+          <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp,image/gif" hidden />
+        </div>
+        <div class="account-hello">
+          <h1 id="hello">Carregando…</h1>
+          <p class="auth-lede" id="subtitle">Saldo e APIs — coloque crédito e use quando quiser.</p>
+        </div>
+      </div>
     </section>
 
     <section class="account-grid">
@@ -40,25 +54,156 @@
         <button type="button" class="btn btn-ghost" id="btn-logout">Sair</button>
       </article>
 
-      <article class="account-panel muted">
+      <article class="account-panel">
+        <h2>Saldo</h2>
+        <p class="balance-value" id="balance-value">R$&nbsp;0,00</p>
+        <p class="hint" id="billing-hint">Carregando opções de recarga…</p>
+        <div class="topup-amounts" id="topup-amounts" hidden></div>
+        <div class="pix-box" id="pix-box" hidden>
+          <p class="pix-status" id="pix-status">Pague com PIX para creditar o saldo.</p>
+          <img class="pix-qr" id="pix-qr" alt="QR Code PIX" hidden />
+          <label class="pix-copy-label">
+            <span>PIX copia e cola</span>
+            <textarea id="pix-copy" readonly rows="3"></textarea>
+          </label>
+          <button type="button" class="btn btn-ghost btn-block" id="btn-copy-pix">Copiar código</button>
+        </div>
+      </article>
+
+      <article class="account-panel muted account-span">
         <h2>Serviços de API</h2>
         <ul class="service-teasers">
           <li><strong>Screenshot de URL</strong> — capture qualquer página sob demanda.</li>
           <li><strong>Agentes customizados</strong> — fluxos que vamos publicar aqui.</li>
         </ul>
-        <p class="hint">Saldo e consumo por request entram no próximo passo.</p>
+        <p class="hint">O consumo por request desconta deste saldo (próximo passo).</p>
       </article>
     </section>
   </main>
 
-  <script src="/js/auth.js?v=1"></script>
+  <script src="/js/auth.js?v=4"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
 
+      const avatar = document.getElementById("avatar");
+      const avatarImg = document.getElementById("avatar-img");
+      const avatarFallback = document.getElementById("avatar-fallback");
+      const avatarEdit = document.getElementById("avatar-edit");
+      const avatarInput = document.getElementById("avatar-input");
+      const balanceEl = document.getElementById("balance-value");
+      const amountsEl = document.getElementById("topup-amounts");
+      const hintEl = document.getElementById("billing-hint");
+      const pixBox = document.getElementById("pix-box");
+      const pixStatus = document.getElementById("pix-status");
+      const pixQr = document.getElementById("pix-qr");
+      const pixCopy = document.getElementById("pix-copy");
+      let pollTimer = null;
+
+      function brl(cents) {
+        return (Number(cents) / 100).toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        });
+      }
+
+      async function refreshBalance() {
+        const wallet = await MuhAuth.wallet();
+        balanceEl.textContent = brl(wallet.balance_cents);
+      }
+
+      function stopPoll() {
+        if (pollTimer) {
+          clearInterval(pollTimer);
+          pollTimer = null;
+        }
+      }
+
+      function showPix(topup) {
+        pixBox.hidden = false;
+        pixCopy.value = topup.pix_copy_paste || topup.pix_qr_code || "";
+        if (topup.pix_qr_code_base64) {
+          pixQr.hidden = false;
+          pixQr.src = `data:image/png;base64,${topup.pix_qr_code_base64}`;
+        } else {
+          pixQr.hidden = true;
+        }
+        pixStatus.textContent = `Aguardando PIX de ${brl(topup.amount_cents)}…`;
+      }
+
+      function startPoll(topupId) {
+        stopPoll();
+        pollTimer = setInterval(async () => {
+          try {
+            const topup = await MuhAuth.getTopup(topupId, true);
+            if (topup.status === "paid") {
+              stopPoll();
+              pixStatus.textContent = "Pagamento confirmado. Saldo atualizado.";
+              await refreshBalance();
+            } else if (topup.status === "cancelled" || topup.status === "failed" || topup.status === "expired") {
+              stopPoll();
+              pixStatus.textContent = "Pagamento não concluído. Gere um novo PIX.";
+            }
+          } catch {
+            /* ignore transient errors while polling */
+          }
+        }, 4000);
+      }
+
       document.getElementById("btn-logout").addEventListener("click", async () => {
+        stopPoll();
         await MuhAuth.logout();
         location.href = "/login.html";
+      });
+
+      document.getElementById("btn-copy-pix").addEventListener("click", async () => {
+        const text = pixCopy.value;
+        if (!text) return;
+        try {
+          await navigator.clipboard.writeText(text);
+          pixStatus.textContent = "Código PIX copiado.";
+        } catch {
+          pixCopy.select();
+          pixStatus.textContent = "Selecione e copie o código manualmente.";
+        }
+      });
+
+      function renderAvatar(user) {
+        const first = (user.full_name || "?").trim().charAt(0).toUpperCase() || "?";
+        avatarFallback.textContent = first;
+        const src = MuhAuth.avatarSrc(user.avatar_url);
+        if (src) {
+          avatarImg.hidden = false;
+          avatarImg.src = src;
+          avatarImg.alt = `Foto de ${user.full_name}`;
+          avatarFallback.hidden = true;
+        } else {
+          avatarImg.hidden = true;
+          avatarImg.removeAttribute("src");
+          avatarFallback.hidden = false;
+        }
+        const editable = Boolean(user.has_password);
+        avatar.dataset.editable = editable ? "true" : "false";
+        avatarEdit.hidden = !editable;
+      }
+
+      avatarEdit.addEventListener("click", () => {
+        if (avatar.dataset.editable !== "true") return;
+        avatarInput.click();
+      });
+
+      avatarInput.addEventListener("change", async () => {
+        const file = avatarInput.files && avatarInput.files[0];
+        avatarInput.value = "";
+        if (!file) return;
+        avatarEdit.disabled = true;
+        try {
+          renderAvatar(await MuhAuth.uploadAvatar(file));
+        } catch (err) {
+          alert(err.message || "Falha ao enviar a foto.");
+        } finally {
+          avatarEdit.disabled = false;
+        }
       });
 
       try {
@@ -71,7 +216,38 @@
         if (user.google_linked) links.push("Google");
         if (user.discord_linked) links.push("Discord");
         document.getElementById("p-auth").textContent = links.join(" · ") || "—";
+        renderAvatar(user);
+
+        await refreshBalance();
+        const options = await MuhAuth.billingOptions();
+        if (!options.mercadopago_enabled) {
+          hintEl.textContent = "Recarga PIX em breve — configure o Mercado Pago na API.";
+        } else {
+          hintEl.textContent = "Escolha um valor. O crédito cai na hora após o PIX.";
+          amountsEl.hidden = false;
+          amountsEl.innerHTML = "";
+          (options.amounts_cents || []).forEach((cents) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "btn btn-primary topup-btn";
+            btn.textContent = brl(cents);
+            btn.addEventListener("click", async () => {
+              btn.disabled = true;
+              try {
+                const topup = await MuhAuth.createTopup(cents);
+                showPix(topup);
+                startPoll(topup.id);
+              } catch (err) {
+                alert(err.message || "Falha ao gerar PIX.");
+              } finally {
+                btn.disabled = false;
+              }
+            });
+            amountsEl.appendChild(btn);
+          });
+        }
       } catch (err) {
+        stopPoll();
         await MuhAuth.logout();
         location.href = "/login.html?error=authentication_failed";
       }

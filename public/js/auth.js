@@ -4,6 +4,7 @@
  */
 (function (global) {
   const API_BASE = global.API_BASE || "https://api.muhbianco.com.br";
+  const API_PREFIX = "/api/latest";
   const STORAGE_KEY = "mb_session";
 
   function readSession() {
@@ -63,7 +64,7 @@
       username: email,
       password,
     });
-    const response = await fetch(`${API_BASE}/api/v1/auth/token`, {
+    const response = await fetch(`${API_BASE}${API_PREFIX}/auth/token`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body,
@@ -79,7 +80,7 @@
   async function refresh() {
     const session = readSession();
     if (!session?.refresh_token) return false;
-    const response = await fetch(`${API_BASE}/api/v1/auth/refresh`, {
+    const response = await fetch(`${API_BASE}${API_PREFIX}/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh_token: session.refresh_token }),
@@ -97,7 +98,7 @@
     const session = readSession();
     try {
       if (session?.access_token) {
-        await api("/api/v1/auth/logout", {
+        await api(`${API_PREFIX}/auth/logout`, {
           method: "POST",
           body: JSON.stringify({ refresh_token: session.refresh_token || null }),
         });
@@ -109,7 +110,7 @@
   }
 
   async function me() {
-    const response = await api("/api/v1/users/me");
+    const response = await api(`${API_PREFIX}/users/me`);
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       throw new Error(data.message || "Sessão inválida.");
@@ -118,7 +119,7 @@
   }
 
   async function providers() {
-    const response = await fetch(`${API_BASE}/api/v1/auth/providers`);
+    const response = await fetch(`${API_BASE}${API_PREFIX}/auth/providers`);
     if (!response.ok) return { password: true, google: false, discord: false };
     return response.json();
   }
@@ -137,11 +138,66 @@
   }
 
   function oauthStart(provider) {
-    location.href = `${API_BASE}/api/v1/auth/${provider}/login`;
+    location.href = `${API_BASE}${API_PREFIX}/auth/${provider}/login`;
+  }
+
+  async function uploadAvatar(file) {
+    const body = new FormData();
+    body.append("file", file);
+    const response = await api(`${API_PREFIX}/users/me/avatar`, {
+      method: "POST",
+      body,
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.message || "Não foi possível enviar a foto.");
+    }
+    return data;
+  }
+
+  function avatarSrc(url) {
+    if (!url) return null;
+    if (/^https?:\/\//i.test(url)) return url;
+    return `${API_BASE}${url.startsWith("/") ? url : `/${url}`}`;
+  }
+
+  async function wallet() {
+    const response = await api(`${API_PREFIX}/billing/wallet`);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.message || "Não foi possível ler o saldo.");
+    return data;
+  }
+
+  async function billingOptions() {
+    const response = await fetch(`${API_BASE}${API_PREFIX}/billing/options`);
+    if (!response.ok) {
+      return { amounts_cents: [2000, 5000, 10000], mercadopago_enabled: false };
+    }
+    return response.json();
+  }
+
+  async function createTopup(amountCents) {
+    const response = await api(`${API_PREFIX}/billing/topups`, {
+      method: "POST",
+      body: JSON.stringify({ amount_cents: amountCents }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.message || "Não foi possível criar a recarga.");
+    return data;
+  }
+
+  async function getTopup(id, sync = true) {
+    const response = await api(
+      `${API_PREFIX}/billing/topups/${encodeURIComponent(id)}?sync=${sync ? "true" : "false"}`
+    );
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.message || "Recarga não encontrada.");
+    return data;
   }
 
   global.MuhAuth = {
     API_BASE,
+    API_PREFIX,
     saveTokens,
     clearSession,
     readSession,
@@ -153,6 +209,12 @@
     isLoggedIn,
     requireAuth,
     oauthStart,
+    uploadAvatar,
+    avatarSrc,
+    wallet,
+    billingOptions,
+    createTopup,
+    getTopup,
     api,
   };
 })(window);

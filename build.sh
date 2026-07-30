@@ -16,5 +16,5 @@ if [ "$1" = "prod" ]; then
 else
   echo "Build local ok: $IMAGE_LOCAL"
   echo "Tag pronta: $IMAGE_REMOTE"
-  echo "Para publicar: ./build.sh prod"
+  echo "Para publicar: ./build.sh prod  |  no Windows: .\\build.ps1 prod"
 fi
