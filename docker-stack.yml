@@ -1,0 +1,71 @@
+# =============================================================================
+# MuhBianco Site (portfólio) — Stack Portainer (Docker Swarm + Traefik)
+# Domínios: muhbianco.com.br + www.muhbianco.com.br
+# Rede: chatbot-net (mesma do Traefik)
+# Imagem: muhrilobianco/app_site:latest (Docker Hub)
+# Site estático (nginx) — sem DB / sem envs obrigatórios
+#
+# Fluxo:
+# 1. ./build.sh prod
+# 2. Portainer → Stacks → colar este YAML → Deploy
+# 3. DNS A/AAAA (e CNAME www) apontando para a máquina do Traefik
+# =============================================================================
+
+version: "3.8"
+
+services:
+  app_site:
+    image: muhrilobianco/app_site:latest
+    networks:
+      - chatbot-net
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 5
+      update_config:
+        order: start-first
+        failure_action: rollback
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+        reservations:
+          cpus: "0.05"
+          memory: 32M
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=chatbot-net
+        # Apex
+        - traefik.http.routers.app_site.rule=Host(`muhbianco.com.br`)
+        - traefik.http.routers.app_site.entrypoints=websecure
+        - traefik.http.routers.app_site.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.app_site.priority=1
+        - traefik.http.routers.app_site.service=app_site
+        - traefik.http.routers.app_site.middlewares=app_site_headers
+        # www → apex
+        - traefik.http.routers.app_site_www.rule=Host(`www.muhbianco.com.br`)
+        - traefik.http.routers.app_site_www.entrypoints=websecure
+        - traefik.http.routers.app_site_www.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.app_site_www.priority=1
+        - traefik.http.routers.app_site_www.middlewares=app_site_www_redirect
+        - traefik.http.routers.app_site_www.service=app_site
+        - traefik.http.middlewares.app_site_www_redirect.redirectregex.regex=^https://www\\.muhbianco\\.com\\.br/(.*)
+        - traefik.http.middlewares.app_site_www_redirect.redirectregex.replacement=https://muhbianco.com.br/$${1}
+        - traefik.http.middlewares.app_site_www_redirect.redirectregex.permanent=true
+        - traefik.http.services.app_site.loadbalancer.server.port=80
+        - traefik.http.services.app_site.loadbalancer.passHostHeader=true
+        - traefik.http.middlewares.app_site_headers.headers.stsSeconds=31536000
+        - traefik.http.middlewares.app_site_headers.headers.stsIncludeSubdomains=true
+        - traefik.http.middlewares.app_site_headers.headers.contentTypeNosniff=true
+        - traefik.http.middlewares.app_site_headers.headers.browserXssFilter=true
+        - traefik.http.middlewares.app_site_headers.headers.referrerPolicy=no-referrer
+        - traefik.http.middlewares.app_site_headers.headers.customFrameOptionsValue=DENY
+        - traefik.http.middlewares.app_site_headers.headers.permissionsPolicy=camera=(), microphone=(), geolocation=()
+
+networks:
+  chatbot-net:
+    external: true
+    name: chatbot-net

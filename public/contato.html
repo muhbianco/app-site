@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Fale com a MuhBianco — orçamento para automação, chatbots, agentes e sites." />
+  <title>Contato — MuhBianco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="logo" href="/">MuhBianco</a>
+    <nav class="nav" aria-label="Principal">
+      <a href="/#servicos">Serviços</a>
+      <a href="/contato.html" class="nav-cta" aria-current="page">Contato</a>
+    </nav>
+  </header>
+
+  <main class="contact-page">
+    <section class="section contact-hero">
+      <header class="section-head">
+        <p class="brand-mark compact">MuhBianco</p>
+        <h1>Vamos conversar</h1>
+        <p>Descreva o que precisa. Respondo com próximo passo e estimativa.</p>
+      </header>
+
+      <div class="contact-layout">
+        <form id="contact-form" class="contact-form" novalidate>
+          <label>
+            <span>Nome</span>
+            <input type="text" name="name" autocomplete="name" required placeholder="Seu nome" />
+          </label>
+          <label>
+            <span>E-mail</span>
+            <input type="email" name="email" autocomplete="email" required placeholder="voce@empresa.com" />
+          </label>
+          <label>
+            <span>Telefone / WhatsApp</span>
+            <input type="tel" name="phone" autocomplete="tel" placeholder="(11) 99999-9999" />
+          </label>
+          <label>
+            <span>Interesse</span>
+            <select name="interest" required>
+              <option value="" disabled selected>Escolha um serviço</option>
+              <option value="Typebot">Typebot / chatbot</option>
+              <option value="n8n">n8n / automações</option>
+              <option value="WuzAPI">WuzAPI / agentes</option>
+              <option value="Sites">Sites e sistemas</option>
+              <option value="Scraping">Robôs de scraping</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </label>
+          <label class="full">
+            <span>Mensagem</span>
+            <textarea name="message" rows="5" required placeholder="Contexto, prazo e o que já tentou..."></textarea>
+          </label>
+          <div class="form-actions full">
+            <button type="submit" class="btn btn-primary">Enviar pelo WhatsApp</button>
+            <button type="button" class="btn btn-ghost" id="btn-email">Enviar por e-mail</button>
+          </div>
+          <p class="form-hint full" id="form-status" role="status" aria-live="polite"></p>
+        </form>
+
+        <aside class="contact-aside">
+          <h2>Canais diretos</h2>
+          <ul class="contact-channels">
+            <li>
+              <span>WhatsApp</span>
+              <a id="wa-direct" href="#" target="_blank" rel="noopener noreferrer">Abrir conversa</a>
+            </li>
+            <li>
+              <span>E-mail</span>
+              <a id="email-direct" href="mailto:contato@muhbianco.com.br">contato@muhbianco.com.br</a>
+            </li>
+          </ul>
+          <p class="aside-note">Horário comercial · resposta em até 1 dia útil.</p>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>© <span id="year"></span> MuhBianco</span>
+    <a href="https://muhbianco.com.br">muhbianco.com.br</a>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script src="/js/contact.js"></script>
+</body>
+</html>
