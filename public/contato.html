@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/css/styles.css?v=2" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -31,6 +31,10 @@
 
       <div class="contact-layout">
         <form id="contact-form" class="contact-form" novalidate>
+          <label class="hp" aria-hidden="true">
+            <span>Não preencha</span>
+            <input type="text" name="honeypot" tabindex="-1" autocomplete="off" />
+          </label>
           <label>
             <span>Nome</span>
             <input type="text" name="name" autocomplete="name" required placeholder="Seu nome" />
@@ -60,8 +64,8 @@
             <textarea name="message" rows="5" required placeholder="Contexto, prazo e o que já tentou..."></textarea>
           </label>
           <div class="form-actions full">
-            <button type="submit" class="btn btn-primary">Enviar pelo WhatsApp</button>
-            <button type="button" class="btn btn-ghost" id="btn-email">Enviar por e-mail</button>
+            <button type="submit" class="btn btn-primary" id="btn-submit">Enviar mensagem</button>
+            <button type="button" class="btn btn-ghost" id="btn-whatsapp">WhatsApp</button>
           </div>
           <p class="form-hint full" id="form-status" role="status" aria-live="polite"></p>
         </form>
@@ -89,7 +93,7 @@
     <a href="https://muhbianco.com.br">muhbianco.com.br</a>
   </footer>
 
-  <script src="/js/main.js"></script>
-  <script src="/js/contact.js"></script>
+  <script src="/js/main.js?v=2"></script>
+  <script src="/js/contact.js?v=2"></script>
 </body>
 </html>

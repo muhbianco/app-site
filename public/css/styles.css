@@ -399,6 +399,7 @@ img {
 }
 
 .contact-form {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem 1.1rem;
@@ -516,6 +517,14 @@ img {
   margin: 0;
   font-size: 0.9rem;
   color: var(--ink-soft);
+}
+
+.contact-form .hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
 }
 
 .reveal {

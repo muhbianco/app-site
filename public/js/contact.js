@@ -1,13 +1,15 @@
 /**
- * Contato — WhatsApp e e-mail.
- * Ajuste WHATSAPP_NUMBER (DDI+DDD+número, só dígitos) e CONTACT_EMAIL.
+ * Contato — envia para o n8n (webhook) e opcionalmente WhatsApp.
+ * Ajuste WHATSAPP_NUMBER se mudar o número.
  */
-const WHATSAPP_NUMBER = "5511999999999";
+const WHATSAPP_NUMBER = "5511910432912";
 const CONTACT_EMAIL = "contato@muhbianco.com.br";
+const CONTACT_WEBHOOK_URL = "/api/contato";
 
 const form = document.getElementById("contact-form");
 const statusEl = document.getElementById("form-status");
-const btnEmail = document.getElementById("btn-email");
+const btnSubmit = document.getElementById("btn-submit");
+const btnWhatsapp = document.getElementById("btn-whatsapp");
 const waDirect = document.getElementById("wa-direct");
 const emailDirect = document.getElementById("email-direct");
 
@@ -28,6 +30,7 @@ function readForm() {
     phone: String(data.get("phone") || "").trim(),
     interest: String(data.get("interest") || "").trim(),
     message: String(data.get("message") || "").trim(),
+    honeypot: String(data.get("honeypot") || "").trim(),
   };
 }
 
@@ -62,8 +65,52 @@ function setStatus(text, isError = false) {
   statusEl.classList.toggle("error", isError);
 }
 
-form?.addEventListener("submit", (event) => {
+function setLoading(loading) {
+  if (!btnSubmit) return;
+  btnSubmit.disabled = loading;
+  btnSubmit.textContent = loading ? "Enviando…" : "Enviar mensagem";
+}
+
+form?.addEventListener("submit", async (event) => {
   event.preventDefault();
+  const fields = readForm();
+  const error = validate(fields);
+  if (error) {
+    setStatus(error, true);
+    return;
+  }
+
+  setLoading(true);
+  setStatus("Enviando…");
+
+  try {
+    const response = await fetch(CONTACT_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(fields),
+    });
+
+    let payload = null;
+    try {
+      payload = await response.json();
+    } catch {
+      payload = null;
+    }
+
+    if (!response.ok || payload?.ok === false) {
+      throw new Error(payload?.message || "Falha ao enviar. Tente WhatsApp ou e-mail direto.");
+    }
+
+    setStatus(payload?.message || "Mensagem enviada! Em breve retorno.");
+    form.reset();
+  } catch (err) {
+    setStatus(err?.message || "Não foi possível enviar agora. Use WhatsApp ou e-mail.", true);
+  } finally {
+    setLoading(false);
+  }
+});
+
+btnWhatsapp?.addEventListener("click", () => {
   const fields = readForm();
   const error = validate(fields);
   if (error) {
@@ -74,18 +121,4 @@ form?.addEventListener("submit", (event) => {
   const text = encodeURIComponent(buildMessage(fields));
   window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${text}`, "_blank", "noopener,noreferrer");
   setStatus("Abrindo WhatsApp com sua mensagem…");
-});
-
-btnEmail?.addEventListener("click", () => {
-  const fields = readForm();
-  const error = validate(fields);
-  if (error) {
-    setStatus(error, true);
-    return;
-  }
-
-  const subject = encodeURIComponent(`[MuhBianco] ${fields.interest} — ${fields.name}`);
-  const body = encodeURIComponent(buildMessage(fields));
-  window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
-  setStatus("Abrindo seu cliente de e-mail…");
 });
