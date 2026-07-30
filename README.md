@@ -28,10 +28,9 @@ O formulário de contato envia `POST /api/contato` (nginx) → webhook n8n
 
 Workflow: **MuhBianco Site — Contato** (`gWpBz0tV70eLenXG`)
 
-1. Abra o node **Enviar e-mail**
-2. Conecte credencial **Gmail OAuth2** da conta que recebe (ex.: `muhbianco@gmail.com`) com permissão de enviar
-3. Ative o workflow
-4. O ImprovMX entrega `contato@` na sua caixa; o Gmail envia *para* `contato@` (reply-to = e-mail do visitante)
+1. Node **Send email** usa SMTP `muhbianco@gmail.com` → `contato@muhbianco.com.br`
+2. Ative o workflow (se ainda estiver inativo)
+3. Reply-to = e-mail do visitante
 
 ## Deploy
 

@@ -8,3 +8,16 @@
 Thumbs.db
 .idea/
 .vscode/
+
+# paths
+/node_modules/
+/dist/
+/build/
+/public/
+/src/
+/test/
+/docs/
+/examples/
+/tests/
+/vendor/
+/api-agents/
