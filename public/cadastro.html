@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=10" />
+  <link rel="stylesheet" href="/css/styles.css?v=11" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -27,15 +27,16 @@
       <p class="brand-mark compact">MuhBianco</p>
       <h1>Criar conta</h1>
       <p class="auth-lede">
-        Cadastre com e-mail permanente. Enviamos um código de confirmação antes de liberar o acesso.
-        Em breve também via WhatsApp.
+        Escolha como cadastrar. E-mail e Google pedem um código de confirmação;
+        Discord (membros do servidor) entra direto com acesso admin.
+        Em breve o código também vai por WhatsApp.
       </p>
 
       <div id="auth-error" class="auth-alert" hidden></div>
 
       <div class="oauth-row" id="oauth-row">
-        <button type="button" class="btn btn-oauth google" id="btn-google" hidden>Continuar com Google</button>
-        <button type="button" class="btn btn-oauth discord" id="btn-discord" hidden>Continuar com Discord</button>
+        <button type="button" class="btn btn-oauth google" id="btn-google" hidden>Cadastrar com Google</button>
+        <button type="button" class="btn btn-oauth discord" id="btn-discord" hidden>Cadastrar com Discord</button>
       </div>
 
       <div class="auth-divider" id="auth-divider" hidden><span>ou e-mail</span></div>
@@ -107,7 +108,7 @@
     </section>
   </main>
 
-  <script src="/js/auth.js?v=7"></script>
+  <script src="/js/auth.js?v=8"></script>
   <script>
     (async function () {
       if (MuhAuth.isLoggedIn()) {
@@ -136,6 +137,11 @@
       if (params.get("step") === "verify" && params.get("email")) {
         showVerify(params.get("email"));
       }
+      if (params.get("error") || params.get("message")) {
+        const box = verifyPanel.hidden ? errorBox : verifyError;
+        box.hidden = false;
+        box.textContent = params.get("message") || "Não foi possível concluir. Tente de novo.";
+      }
 
       const providers = await MuhAuth.providers();
       const googleBtn = document.getElementById("btn-google");
@@ -145,12 +151,12 @@
       if (providers.google) {
         googleBtn.hidden = false;
         anyOauth = true;
-        googleBtn.addEventListener("click", () => MuhAuth.oauthStart("google"));
+        googleBtn.addEventListener("click", () => MuhAuth.oauthStart("google", "signup"));
       }
       if (providers.discord) {
         discordBtn.hidden = false;
         anyOauth = true;
-        discordBtn.addEventListener("click", () => MuhAuth.oauthStart("discord"));
+        discordBtn.addEventListener("click", () => MuhAuth.oauthStart("discord", "signup"));
       }
       if (anyOauth) divider.hidden = false;
 

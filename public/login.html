@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=10" />
+  <link rel="stylesheet" href="/css/styles.css?v=11" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -27,8 +27,8 @@
       <p class="brand-mark compact">MuhBianco</p>
       <h1>Entrar</h1>
       <p class="auth-lede">
-        Já tem conta? Entre com e-mail ou Google. Discord é para quem está no servidor
-        (acesso admin).
+        Entre com e-mail, Google ou Discord. O login só funciona depois do cadastro —
+        se ainda não tem conta, crie o cadastro primeiro.
       </p>
 
       <div id="auth-error" class="auth-alert" hidden></div>
@@ -59,7 +59,7 @@
     </section>
   </main>
 
-  <script src="/js/auth.js?v=7"></script>
+  <script src="/js/auth.js?v=8"></script>
   <script>
     (async function () {
       if (MuhAuth.isLoggedIn()) {
@@ -82,12 +82,12 @@
       if (providers.google) {
         googleBtn.hidden = false;
         anyOauth = true;
-        googleBtn.addEventListener("click", () => MuhAuth.oauthStart("google"));
+        googleBtn.addEventListener("click", () => MuhAuth.oauthStart("google", "login"));
       }
       if (providers.discord) {
         discordBtn.hidden = false;
         anyOauth = true;
-        discordBtn.addEventListener("click", () => MuhAuth.oauthStart("discord"));
+        discordBtn.addEventListener("click", () => MuhAuth.oauthStart("discord", "login"));
       }
       if (anyOauth) divider.hidden = false;
 
@@ -121,6 +121,7 @@
           oauth_failed: "Não foi possível concluir o login social.",
           authentication_failed: "Não foi possível autenticar.",
           email_unverified: "Confirme seu e-mail antes de entrar.",
+          registration_required: "Você ainda não tem cadastro. Crie a conta primeiro.",
         };
         return map[code] || "Não foi possível entrar. Tente de novo.";
       }

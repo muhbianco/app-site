@@ -190,8 +190,9 @@
     return true;
   }
 
-  function oauthStart(provider) {
-    location.href = `${API_BASE}${API_PREFIX}/auth/${provider}/login`;
+  function oauthStart(provider, intent = "login") {
+    const mode = intent === "signup" ? "signup" : "login";
+    location.href = `${API_BASE}${API_PREFIX}/auth/${provider}/login?intent=${mode}`;
   }
 
   async function uploadAvatar(file) {
