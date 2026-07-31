@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=3" />
+  <link rel="stylesheet" href="/css/styles.css?v=10" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -26,7 +26,10 @@
     <section class="auth-card">
       <p class="brand-mark compact">MuhBianco</p>
       <h1>Entrar</h1>
-      <p class="auth-lede">Acesse a área de APIs. Google para qualquer um; Discord só para quem está no servidor.</p>
+      <p class="auth-lede">
+        Já tem conta? Entre com e-mail ou Google. Discord é para quem está no servidor
+        (acesso admin).
+      </p>
 
       <div id="auth-error" class="auth-alert" hidden></div>
 
@@ -48,10 +51,15 @@
         </label>
         <button type="submit" class="btn btn-primary btn-block" id="btn-submit">Entrar</button>
       </form>
+
+      <p class="auth-switch">
+        Não tem conta?
+        <a href="/cadastro.html">Criar cadastro</a>
+      </p>
     </section>
   </main>
 
-  <script src="/js/auth.js?v=2"></script>
+  <script src="/js/auth.js?v=7"></script>
   <script>
     (async function () {
       if (MuhAuth.isLoggedIn()) {
@@ -89,11 +97,16 @@
         const form = event.currentTarget;
         const submit = document.getElementById("btn-submit");
         submit.disabled = true;
+        const email = form.email.value.trim();
         try {
-          await MuhAuth.loginWithPassword(form.email.value.trim(), form.password.value);
+          await MuhAuth.loginWithPassword(email, form.password.value);
           const next = params.get("next") || "/conta.html";
           location.replace(next.startsWith("/") ? next : "/conta.html");
         } catch (err) {
+          if (err.code === "email_unverified") {
+            location.href = `/cadastro.html?step=verify&email=${encodeURIComponent(email)}`;
+            return;
+          }
           errorBox.hidden = false;
           errorBox.textContent = err.message || "Falha no login.";
           submit.disabled = false;
@@ -107,6 +120,7 @@
           missing_code: "Login cancelado ou incompleto.",
           oauth_failed: "Não foi possível concluir o login social.",
           authentication_failed: "Não foi possível autenticar.",
+          email_unverified: "Confirme seu e-mail antes de entrar.",
         };
         return map[code] || "Não foi possível entrar. Tente de novo.";
       }

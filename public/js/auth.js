@@ -71,9 +71,62 @@
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(data.message || "Não foi possível entrar.");
+      const err = new Error(data.message || "Não foi possível entrar.");
+      err.code = data.error || null;
+      err.details = data.details || null;
+      throw err;
     }
     saveTokens(data);
+    return data;
+  }
+
+  async function register(email, password, fullName) {
+    const response = await fetch(`${API_BASE}${API_PREFIX}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        password,
+        full_name: fullName,
+      }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const err = new Error(data.message || "Não foi possível criar a conta.");
+      err.code = data.error || null;
+      throw err;
+    }
+    return data;
+  }
+
+  async function verifyEmail(email, code) {
+    const response = await fetch(`${API_BASE}${API_PREFIX}/auth/verify-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code: String(code).trim() }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const err = new Error(data.message || "Código inválido.");
+      err.code = data.error || null;
+      throw err;
+    }
+    saveTokens(data);
+    return data;
+  }
+
+  async function resendVerification(email) {
+    const response = await fetch(`${API_BASE}${API_PREFIX}/auth/resend-verification`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const err = new Error(data.message || "Não foi possível reenviar o código.");
+      err.code = data.error || null;
+      throw err;
+    }
     return data;
   }
 
@@ -211,6 +264,9 @@
     clearSession,
     readSession,
     loginWithPassword,
+    register,
+    verifyEmail,
+    resendVerification,
     refresh,
     logout,
     me,

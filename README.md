@@ -24,13 +24,25 @@ Antes de publicar, ajuste em `public/js/contact.js`:
 O formulário de contato envia `POST /api/contato` (nginx) → webhook n8n  
 `https://backn8n.hook.muhbianco.com.br/webhook/site-contato` → e-mail `contato@muhbianco.com.br`.
 
+Cadastro da API Agents chama  
+`https://backn8n.hook.muhbianco.com.br/webhook/site-verificacao-email`  
+(workflow **MuhBianco Site — Verificação de e-mail**) para enviar o código com From `contato@muhbianco.com.br`.
+
 ## n8n (obrigatório uma vez)
 
 Workflow: **MuhBianco Site — Contato** (`gWpBz0tV70eLenXG`)
 
-1. Node **Send email** usa SMTP `muhbianco@gmail.com` → `contato@muhbianco.com.br`
+1. Node **Send email** usa SMTP `mear.mind smtp` → `contato@muhbianco.com.br`
 2. Ative o workflow (se ainda estiver inativo)
 3. Reply-to = e-mail do visitante
+
+Workflow: **MuhBianco Site — Verificação de e-mail** (`WUu55xGbqhD4LjU1`)
+
+1. Webhook `POST /webhook/site-verificacao-email`
+2. Mesma credencial SMTP; From `MuhBianco <contato@muhbianco.com.br>`
+3. Body: `{ to, code, full_name, subject?, ttl_minutes?, secret? }`
+4. Secret opcional: env `MUHBIANCO_EMAIL_WEBHOOK_SECRET` no n8n = `EMAIL_WEBHOOK_SECRET` na API
+5. Ative o workflow
 
 ## Deploy
 

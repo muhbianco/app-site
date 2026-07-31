@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Criar conta na MuhBianco — cadastro com confirmação por e-mail." />
+  <title>Cadastro — MuhBianco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css?v=10" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="logo" href="/">MuhBianco</a>
+    <nav class="nav" aria-label="Principal">
+      <a href="/#servicos">Serviços</a>
+      <a href="/contato.html">Contato</a>
+      <a href="/login.html" class="nav-cta">Entrar</a>
+    </nav>
+  </header>
+
+  <main class="auth-page">
+    <section class="auth-card" id="panel-register">
+      <p class="brand-mark compact">MuhBianco</p>
+      <h1>Criar conta</h1>
+      <p class="auth-lede">
+        Cadastre com e-mail permanente. Enviamos um código de confirmação antes de liberar o acesso.
+        Em breve também via WhatsApp.
+      </p>
+
+      <div id="auth-error" class="auth-alert" hidden></div>
+
+      <div class="oauth-row" id="oauth-row">
+        <button type="button" class="btn btn-oauth google" id="btn-google" hidden>Continuar com Google</button>
+        <button type="button" class="btn btn-oauth discord" id="btn-discord" hidden>Continuar com Discord</button>
+      </div>
+
+      <div class="auth-divider" id="auth-divider" hidden><span>ou e-mail</span></div>
+
+      <form id="register-form" class="auth-form" method="post" action="#" novalidate>
+        <label>
+          <span>Nome</span>
+          <input type="text" name="full_name" autocomplete="name" required minlength="2" maxlength="120" placeholder="Seu nome" />
+        </label>
+        <label>
+          <span>E-mail</span>
+          <input type="email" name="email" autocomplete="email" required placeholder="voce@empresa.com" />
+        </label>
+        <label>
+          <span>Senha</span>
+          <input type="password" name="password" autocomplete="new-password" required minlength="12" placeholder="Mínimo 12 caracteres" />
+        </label>
+        <button type="submit" class="btn btn-primary btn-block" id="btn-submit">Continuar</button>
+      </form>
+
+      <p class="auth-switch">
+        Já tem conta?
+        <a href="/login.html">Entrar</a>
+      </p>
+    </section>
+
+    <section class="auth-card" id="panel-verify" hidden>
+      <p class="brand-mark compact">MuhBianco</p>
+      <h1>Confirme seu e-mail</h1>
+      <p class="auth-lede" id="verify-lede">
+        Digite o código de 6 dígitos que enviamos. Depois disso a conta fica liberada.
+      </p>
+
+      <div id="verify-error" class="auth-alert" hidden></div>
+      <div id="verify-ok" class="auth-ok" hidden></div>
+
+      <form id="verify-form" class="auth-form" method="post" action="#" novalidate>
+        <label>
+          <span>E-mail</span>
+          <input type="email" name="email" id="verify-email" autocomplete="email" required readonly />
+        </label>
+        <label>
+          <span>Código</span>
+          <input
+            type="text"
+            name="code"
+            id="verify-code"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            required
+            minlength="6"
+            maxlength="6"
+            pattern="[0-9]{6}"
+            placeholder="000000"
+          />
+        </label>
+        <button type="submit" class="btn btn-primary btn-block" id="btn-verify">Confirmar e entrar</button>
+      </form>
+
+      <p class="auth-switch">
+        Não chegou?
+        <button type="button" class="linkish" id="btn-resend">Reenviar código</button>
+      </p>
+      <p class="auth-switch">
+        <a href="/cadastro.html">Voltar ao cadastro</a>
+        ·
+        <a href="/login.html">Entrar</a>
+      </p>
+    </section>
+  </main>
+
+  <script src="/js/auth.js?v=7"></script>
+  <script>
+    (async function () {
+      if (MuhAuth.isLoggedIn()) {
+        location.replace("/conta.html");
+        return;
+      }
+
+      const params = new URLSearchParams(location.search);
+      const registerPanel = document.getElementById("panel-register");
+      const verifyPanel = document.getElementById("panel-verify");
+      const errorBox = document.getElementById("auth-error");
+      const verifyError = document.getElementById("verify-error");
+      const verifyOk = document.getElementById("verify-ok");
+      const verifyEmailInput = document.getElementById("verify-email");
+      const verifyLede = document.getElementById("verify-lede");
+
+      function showVerify(email) {
+        registerPanel.hidden = true;
+        verifyPanel.hidden = false;
+        verifyEmailInput.value = email;
+        verifyLede.textContent =
+          `Enviamos um código para ${email}. Digite os 6 dígitos para liberar o acesso.`;
+        document.getElementById("verify-code").focus();
+      }
+
+      if (params.get("step") === "verify" && params.get("email")) {
+        showVerify(params.get("email"));
+      }
+
+      const providers = await MuhAuth.providers();
+      const googleBtn = document.getElementById("btn-google");
+      const discordBtn = document.getElementById("btn-discord");
+      const divider = document.getElementById("auth-divider");
+      let anyOauth = false;
+      if (providers.google) {
+        googleBtn.hidden = false;
+        anyOauth = true;
+        googleBtn.addEventListener("click", () => MuhAuth.oauthStart("google"));
+      }
+      if (providers.discord) {
+        discordBtn.hidden = false;
+        anyOauth = true;
+        discordBtn.addEventListener("click", () => MuhAuth.oauthStart("discord"));
+      }
+      if (anyOauth) divider.hidden = false;
+
+      document.getElementById("register-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        errorBox.hidden = true;
+        const form = event.currentTarget;
+        const submit = document.getElementById("btn-submit");
+        submit.disabled = true;
+        const email = form.email.value.trim();
+        try {
+          await MuhAuth.register(email, form.password.value, form.full_name.value.trim());
+          showVerify(email);
+        } catch (err) {
+          errorBox.hidden = false;
+          errorBox.textContent = err.message || "Falha no cadastro.";
+          submit.disabled = false;
+        }
+      });
+
+      document.getElementById("verify-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        verifyError.hidden = true;
+        verifyOk.hidden = true;
+        const form = event.currentTarget;
+        const btn = document.getElementById("btn-verify");
+        btn.disabled = true;
+        try {
+          await MuhAuth.verifyEmail(form.email.value.trim(), form.code.value.trim());
+          location.replace("/conta.html");
+        } catch (err) {
+          verifyError.hidden = false;
+          verifyError.textContent = err.message || "Código inválido.";
+          btn.disabled = false;
+        }
+      });
+
+      document.getElementById("btn-resend").addEventListener("click", async () => {
+        verifyError.hidden = true;
+        verifyOk.hidden = true;
+        const email = verifyEmailInput.value.trim();
+        if (!email) return;
+        try {
+          const result = await MuhAuth.resendVerification(email);
+          verifyOk.hidden = false;
+          verifyOk.textContent = result.message || "Código reenviado.";
+        } catch (err) {
+          verifyError.hidden = false;
+          verifyError.textContent = err.message || "Não foi possível reenviar.";
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
