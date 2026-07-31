@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Retorno do pagamento — MuhBianco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css?v=6" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="logo" href="/">MuhBianco</a>
+    <nav class="nav" aria-label="Principal">
+      <a href="/conta.html" class="nav-cta">Conta</a>
+    </nav>
+  </header>
+
+  <main class="checkout-page">
+    <section class="checkout-card">
+      <p class="brand-mark compact">Pagamento</p>
+      <h1 id="title">Confirmando…</h1>
+      <p class="auth-lede" id="message">Aguarde enquanto confirmamos com o Mercado Pago.</p>
+      <a class="btn btn-primary" href="/conta.html">Ir para a conta</a>
+      <a class="btn btn-ghost" href="/checkout.html">Tentar de novo</a>
+    </section>
+  </main>
+
+  <script src="/js/auth.js?v=5"></script>
+  <script>
+    (async function () {
+      if (!MuhAuth.requireAuth()) return;
+
+      const params = new URLSearchParams(location.search);
+      const topupId = params.get("topup_id");
+      const statusHint = params.get("status") || params.get("collection_status") || "";
+      const title = document.getElementById("title");
+      const message = document.getElementById("message");
+
+      function set(uiTitle, uiMessage) {
+        title.textContent = uiTitle;
+        message.textContent = uiMessage;
+      }
+
+      if (!topupId) {
+        if (statusHint === "failure" || statusHint === "rejected") {
+          set("Pagamento não concluído", "Nenhum valor foi creditado. Você pode tentar de novo.");
+        } else {
+          set("Retorno incompleto", "Não encontramos a recarga. Veja o saldo na conta.");
+        }
+        return;
+      }
+
+      try {
+        let topup = await MuhAuth.getTopup(topupId, true);
+        // Webhook pode atrasar alguns segundos.
+        for (let i = 0; i < 5 && topup.status === "pending"; i += 1) {
+          await new Promise((r) => setTimeout(r, 1500));
+          topup = await MuhAuth.getTopup(topupId, true);
+        }
+
+        if (topup.status === "paid") {
+          set("Saldo creditado", "O pagamento foi confirmado. Seu saldo já está disponível.");
+        } else if (topup.status === "pending") {
+          set(
+            "Pagamento em análise",
+            "Assim que o Mercado Pago confirmar, o saldo entra automaticamente. Você pode fechar esta página."
+          );
+        } else {
+          set("Pagamento não concluído", "Nenhum valor foi creditado. Você pode tentar de novo.");
+        }
+      } catch (err) {
+        set("Não foi possível confirmar", err.message || "Veja o saldo na conta em instantes.");
+      }
+    })();
+  </script>
+</body>
+</html>

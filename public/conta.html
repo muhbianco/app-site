@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=5" />
+  <link rel="stylesheet" href="/css/styles.css?v=6" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -54,20 +54,11 @@
         <button type="button" class="btn btn-ghost" id="btn-logout">Sair</button>
       </article>
 
-      <article class="account-panel">
+      <article class="account-panel balance-panel">
         <h2>Saldo</h2>
         <p class="balance-value" id="balance-value">R$&nbsp;0,00</p>
-        <p class="hint" id="billing-hint">Carregando opções de recarga…</p>
-        <div class="topup-amounts" id="topup-amounts" hidden></div>
-        <div class="pix-box" id="pix-box" hidden>
-          <p class="pix-status" id="pix-status">Pague com PIX para creditar o saldo.</p>
-          <img class="pix-qr" id="pix-qr" alt="QR Code PIX" hidden />
-          <label class="pix-copy-label">
-            <span>PIX copia e cola</span>
-            <textarea id="pix-copy" readonly rows="3"></textarea>
-          </label>
-          <button type="button" class="btn btn-ghost btn-block" id="btn-copy-pix">Copiar código</button>
-        </div>
+        <p class="hint" id="billing-hint">Disponível para consumir nas APIs.</p>
+        <a class="btn btn-primary" id="btn-add-balance" href="/checkout.html">Adicionar saldo</a>
       </article>
 
       <article class="account-panel muted account-span">
@@ -81,7 +72,7 @@
     </section>
   </main>
 
-  <script src="/js/auth.js?v=4"></script>
+  <script src="/js/auth.js?v=5"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -92,13 +83,8 @@
       const avatarEdit = document.getElementById("avatar-edit");
       const avatarInput = document.getElementById("avatar-input");
       const balanceEl = document.getElementById("balance-value");
-      const amountsEl = document.getElementById("topup-amounts");
       const hintEl = document.getElementById("billing-hint");
-      const pixBox = document.getElementById("pix-box");
-      const pixStatus = document.getElementById("pix-status");
-      const pixQr = document.getElementById("pix-qr");
-      const pixCopy = document.getElementById("pix-copy");
-      let pollTimer = null;
+      const addBtn = document.getElementById("btn-add-balance");
 
       function brl(cents) {
         return (Number(cents) / 100).toLocaleString("pt-BR", {
@@ -107,65 +93,9 @@
         });
       }
 
-      async function refreshBalance() {
-        const wallet = await MuhAuth.wallet();
-        balanceEl.textContent = brl(wallet.balance_cents);
-      }
-
-      function stopPoll() {
-        if (pollTimer) {
-          clearInterval(pollTimer);
-          pollTimer = null;
-        }
-      }
-
-      function showPix(topup) {
-        pixBox.hidden = false;
-        pixCopy.value = topup.pix_copy_paste || topup.pix_qr_code || "";
-        if (topup.pix_qr_code_base64) {
-          pixQr.hidden = false;
-          pixQr.src = `data:image/png;base64,${topup.pix_qr_code_base64}`;
-        } else {
-          pixQr.hidden = true;
-        }
-        pixStatus.textContent = `Aguardando PIX de ${brl(topup.amount_cents)}…`;
-      }
-
-      function startPoll(topupId) {
-        stopPoll();
-        pollTimer = setInterval(async () => {
-          try {
-            const topup = await MuhAuth.getTopup(topupId, true);
-            if (topup.status === "paid") {
-              stopPoll();
-              pixStatus.textContent = "Pagamento confirmado. Saldo atualizado.";
-              await refreshBalance();
-            } else if (topup.status === "cancelled" || topup.status === "failed" || topup.status === "expired") {
-              stopPoll();
-              pixStatus.textContent = "Pagamento não concluído. Gere um novo PIX.";
-            }
-          } catch {
-            /* ignore transient errors while polling */
-          }
-        }, 4000);
-      }
-
       document.getElementById("btn-logout").addEventListener("click", async () => {
-        stopPoll();
         await MuhAuth.logout();
         location.href = "/login.html";
-      });
-
-      document.getElementById("btn-copy-pix").addEventListener("click", async () => {
-        const text = pixCopy.value;
-        if (!text) return;
-        try {
-          await navigator.clipboard.writeText(text);
-          pixStatus.textContent = "Código PIX copiado.";
-        } catch {
-          pixCopy.select();
-          pixStatus.textContent = "Selecione e copie o código manualmente.";
-        }
       });
 
       function renderAvatar(user) {
@@ -218,36 +148,17 @@
         document.getElementById("p-auth").textContent = links.join(" · ") || "—";
         renderAvatar(user);
 
-        await refreshBalance();
+        const wallet = await MuhAuth.wallet();
+        balanceEl.textContent = brl(wallet.balance_cents);
+
         const options = await MuhAuth.billingOptions();
         if (!options.mercadopago_enabled) {
-          hintEl.textContent = "Recarga PIX em breve — configure o Mercado Pago na API.";
-        } else {
-          hintEl.textContent = "Escolha um valor. O crédito cai na hora após o PIX.";
-          amountsEl.hidden = false;
-          amountsEl.innerHTML = "";
-          (options.amounts_cents || []).forEach((cents) => {
-            const btn = document.createElement("button");
-            btn.type = "button";
-            btn.className = "btn btn-primary topup-btn";
-            btn.textContent = brl(cents);
-            btn.addEventListener("click", async () => {
-              btn.disabled = true;
-              try {
-                const topup = await MuhAuth.createTopup(cents);
-                showPix(topup);
-                startPoll(topup.id);
-              } catch (err) {
-                alert(err.message || "Falha ao gerar PIX.");
-              } finally {
-                btn.disabled = false;
-              }
-            });
-            amountsEl.appendChild(btn);
-          });
+          hintEl.textContent = "Recarga em breve — configure o Mercado Pago na API.";
+          addBtn.setAttribute("aria-disabled", "true");
+          addBtn.classList.add("is-disabled");
+          addBtn.addEventListener("click", (e) => e.preventDefault());
         }
       } catch (err) {
-        stopPoll();
         await MuhAuth.logout();
         location.href = "/login.html?error=authentication_failed";
       }

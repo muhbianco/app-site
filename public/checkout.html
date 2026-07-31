@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Adicionar saldo — checkout MuhBianco via Mercado Pago." />
+  <title>Adicionar saldo — MuhBianco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css?v=6" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="logo" href="/">MuhBianco</a>
+    <nav class="nav" aria-label="Principal">
+      <a href="/conta.html">Conta</a>
+      <a href="/checkout.html" class="nav-cta" aria-current="page">Checkout</a>
+    </nav>
+  </header>
+
+  <main class="checkout-page">
+    <section class="checkout-card">
+      <p class="brand-mark compact">Checkout</p>
+      <h1>Adicionar saldo</h1>
+      <p class="auth-lede" id="lede">
+        Escolha o valor. Você será redirecionado ao Mercado Pago para pagar com PIX, crédito ou débito.
+      </p>
+
+      <div id="checkout-error" class="auth-alert" hidden></div>
+
+      <div class="checkout-amounts" id="amounts" aria-label="Valores disponíveis"></div>
+
+      <p class="hint" id="methods-hint">Carregando…</p>
+
+      <a class="btn btn-ghost" href="/conta.html">Voltar para a conta</a>
+    </section>
+  </main>
+
+  <script src="/js/auth.js?v=5"></script>
+  <script>
+    (async function () {
+      if (!MuhAuth.requireAuth()) return;
+
+      const amountsEl = document.getElementById("amounts");
+      const hintEl = document.getElementById("methods-hint");
+      const errorBox = document.getElementById("checkout-error");
+
+      function brl(cents) {
+        return (Number(cents) / 100).toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        });
+      }
+
+      function showError(message) {
+        errorBox.hidden = false;
+        errorBox.textContent = message;
+      }
+
+      try {
+        const options = await MuhAuth.billingOptions();
+        if (!options.mercadopago_enabled) {
+          hintEl.textContent = "Pagamentos ainda não estão habilitados nesta conta.";
+          return;
+        }
+
+        hintEl.textContent =
+          options.methods_note ||
+          "PIX, cartão de crédito/débito e demais meios liberados no Mercado Pago.";
+
+        amountsEl.innerHTML = "";
+        (options.amounts_cents || []).forEach((cents) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "btn btn-primary checkout-amount-btn";
+          btn.innerHTML = `<span class="amount-label">${brl(cents)}</span><span class="amount-cta">Continuar</span>`;
+          btn.addEventListener("click", async () => {
+            errorBox.hidden = true;
+            btn.disabled = true;
+            try {
+              const topup = await MuhAuth.createTopup(cents);
+              if (!topup.checkout_url) {
+                throw new Error("Checkout sem URL do Mercado Pago.");
+              }
+              location.href = topup.checkout_url;
+            } catch (err) {
+              showError(err.message || "Não foi possível iniciar o pagamento.");
+              btn.disabled = false;
+            }
+          });
+          amountsEl.appendChild(btn);
+        });
+      } catch (err) {
+        showError(err.message || "Falha ao carregar o checkout.");
+      }
+    })();
+  </script>
+</body>
+</html>
