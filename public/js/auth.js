@@ -219,6 +219,34 @@
     return data;
   }
 
+  async function sendPhoneVerification(phone) {
+    const response = await api(`${API_PREFIX}/users/me/phone-verification`, {
+      method: "POST",
+      body: JSON.stringify({ phone: String(phone).trim() }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const err = new Error(data.message || "Não foi possível enviar o código.");
+      err.code = data.error || null;
+      throw err;
+    }
+    return data;
+  }
+
+  async function confirmPhoneVerification(code) {
+    const response = await api(`${API_PREFIX}/users/me/phone-verification/confirm`, {
+      method: "POST",
+      body: JSON.stringify({ code: String(code).trim() }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const err = new Error(data.message || "Código inválido.");
+      err.code = data.error || null;
+      throw err;
+    }
+    return data;
+  }
+
   async function uploadAvatar(file) {
     const body = new FormData();
     body.append("file", file);
@@ -301,6 +329,8 @@
     oauthStart,
     sendEmailVerification,
     confirmEmailVerification,
+    sendPhoneVerification,
+    confirmPhoneVerification,
     uploadAvatar,
     avatarSrc,
     wallet,

@@ -1198,6 +1198,11 @@ img {
   border-top: 1px solid var(--line);
 }
 
+.settings-card-body[hidden],
+.settings-inline-form[hidden] {
+  display: none !important;
+}
+
 .settings-inline-form {
   display: flex;
   flex-wrap: wrap;
