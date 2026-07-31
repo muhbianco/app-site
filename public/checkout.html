@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=7" />
+  <link rel="stylesheet" href="/css/styles.css?v=8" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -26,12 +26,29 @@
       <p class="brand-mark compact">Checkout</p>
       <h1>Adicionar saldo</h1>
       <p class="auth-lede" id="lede">
-        Escolha o valor. Você será redirecionado ao Mercado Pago para pagar com PIX, crédito ou débito.
+        Escolha um valor ou digite outro. Depois você paga no Mercado Pago (PIX, crédito ou débito).
       </p>
 
       <div id="checkout-error" class="auth-alert" hidden></div>
 
       <div class="checkout-amounts" id="amounts" aria-label="Valores disponíveis"></div>
+
+      <div class="custom-amount" id="custom-box" hidden>
+        <label for="custom-input">
+          <span>Outro valor (R$)</span>
+          <input
+            id="custom-input"
+            type="text"
+            inputmode="decimal"
+            autocomplete="off"
+            placeholder="Ex.: 35,50"
+          />
+        </label>
+        <p class="hint" id="custom-hint"></p>
+        <button type="button" class="btn btn-primary btn-block" id="btn-custom-pay">
+          Continuar com este valor
+        </button>
+      </div>
 
       <p class="hint" id="methods-hint">Carregando…</p>
 
@@ -47,6 +64,14 @@
       const amountsEl = document.getElementById("amounts");
       const hintEl = document.getElementById("methods-hint");
       const errorBox = document.getElementById("checkout-error");
+      const customBox = document.getElementById("custom-box");
+      const customInput = document.getElementById("custom-input");
+      const customHint = document.getElementById("custom-hint");
+      const customPayBtn = document.getElementById("btn-custom-pay");
+
+      let minCents = 500;
+      let maxCents = 500000;
+      let busy = false;
 
       function brl(cents) {
         return (Number(cents) / 100).toLocaleString("pt-BR", {
@@ -60,12 +85,59 @@
         errorBox.textContent = message;
       }
 
+      function clearError() {
+        errorBox.hidden = true;
+      }
+
+      /** Aceita "35,50", "35.50", "35" → centavos. */
+      function parseReaisToCents(raw) {
+        const cleaned = String(raw || "")
+          .trim()
+          .replace(/\s/g, "")
+          .replace(/R\$\s?/i, "");
+        if (!cleaned) return null;
+        let normalized = cleaned;
+        if (normalized.includes(",") && normalized.includes(".")) {
+          normalized = normalized.replace(/\./g, "").replace(",", ".");
+        } else if (normalized.includes(",")) {
+          normalized = normalized.replace(",", ".");
+        }
+        const value = Number(normalized);
+        if (!Number.isFinite(value) || value <= 0) return null;
+        return Math.round(value * 100);
+      }
+
+      async function startCheckout(cents, button) {
+        if (busy) return;
+        clearError();
+        if (cents < minCents || cents > maxCents) {
+          showError(`Valor deve ser entre ${brl(minCents)} e ${brl(maxCents)}.`);
+          return;
+        }
+        busy = true;
+        if (button) button.disabled = true;
+        try {
+          const topup = await MuhAuth.createTopup(cents);
+          if (!topup.checkout_url) {
+            throw new Error("Checkout sem URL do Mercado Pago.");
+          }
+          location.href = topup.checkout_url;
+        } catch (err) {
+          showError(err.message || "Não foi possível iniciar o pagamento.");
+          busy = false;
+          if (button) button.disabled = false;
+        }
+      }
+
       try {
         const options = await MuhAuth.billingOptions();
         if (!options.mercadopago_enabled) {
           hintEl.textContent = "Pagamentos ainda não estão habilitados nesta conta.";
           return;
         }
+
+        minCents = Number(options.min_cents) || minCents;
+        maxCents = Number(options.max_cents) || maxCents;
 
         hintEl.textContent =
           options.methods_note ||
@@ -77,22 +149,40 @@
           btn.type = "button";
           btn.className = "btn btn-primary checkout-amount-btn";
           btn.innerHTML = `<span class="amount-label">${brl(cents)}</span><span class="amount-cta">Continuar</span>`;
-          btn.addEventListener("click", async () => {
-            errorBox.hidden = true;
-            btn.disabled = true;
-            try {
-              const topup = await MuhAuth.createTopup(cents);
-              if (!topup.checkout_url) {
-                throw new Error("Checkout sem URL do Mercado Pago.");
-              }
-              location.href = topup.checkout_url;
-            } catch (err) {
-              showError(err.message || "Não foi possível iniciar o pagamento.");
-              btn.disabled = false;
-            }
-          });
+          btn.addEventListener("click", () => startCheckout(cents, btn));
           amountsEl.appendChild(btn);
         });
+
+        if (options.allow_custom !== false) {
+          const otherBtn = document.createElement("button");
+          otherBtn.type = "button";
+          otherBtn.className = "btn btn-ghost checkout-amount-btn";
+          otherBtn.innerHTML =
+            '<span class="amount-label">Outro valor</span><span class="amount-cta">Digitar</span>';
+          otherBtn.addEventListener("click", () => {
+            customBox.hidden = false;
+            customHint.textContent = `Mínimo ${brl(minCents)} · máximo ${brl(maxCents)}`;
+            customInput.focus();
+            otherBtn.hidden = true;
+          });
+          amountsEl.appendChild(otherBtn);
+
+          customPayBtn.addEventListener("click", () => {
+            const cents = parseReaisToCents(customInput.value);
+            if (cents == null) {
+              showError("Digite um valor válido, por exemplo 35,50.");
+              return;
+            }
+            startCheckout(cents, customPayBtn);
+          });
+
+          customInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              customPayBtn.click();
+            }
+          });
+        }
       } catch (err) {
         showError(err.message || "Falha ao carregar o checkout.");
       }
