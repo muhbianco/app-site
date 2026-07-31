@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=7" />
+  <link rel="stylesheet" href="/css/styles.css?v=11" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -51,7 +51,14 @@
           <div><dt>Papel</dt><dd id="p-role">—</dd></div>
           <div><dt>Login</dt><dd id="p-auth">—</dd></div>
         </dl>
-        <button type="button" class="btn btn-ghost" id="btn-logout">Sair</button>
+        <p class="auth-alert" id="email-pending" hidden>
+          E-mail ainda não confirmado.
+          <a href="/configuracoes.html">Confirmar agora</a>
+        </p>
+        <div class="profile-actions">
+          <a class="btn btn-primary" href="/configuracoes.html">Configurações da conta</a>
+          <button type="button" class="btn btn-ghost" id="btn-logout">Sair</button>
+        </div>
       </article>
 
       <article class="account-panel balance-panel">
@@ -75,7 +82,7 @@
     </section>
   </main>
 
-  <script src="/js/auth.js?v=6"></script>
+  <script src="/js/auth.js?v=8"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -149,6 +156,7 @@
         if (user.google_linked) links.push("Google");
         if (user.discord_linked) links.push("Discord");
         document.getElementById("p-auth").textContent = links.join(" · ") || "—";
+        document.getElementById("email-pending").hidden = Boolean(user.email_verified);
         renderAvatar(user);
 
         const wallet = await MuhAuth.wallet();

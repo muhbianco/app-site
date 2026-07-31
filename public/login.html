@@ -27,8 +27,8 @@
       <p class="brand-mark compact">MuhBianco</p>
       <h1>Entrar</h1>
       <p class="auth-lede">
-        Entre com e-mail, Google ou Discord. O login só funciona depois do cadastro —
-        se ainda não tem conta, crie o cadastro primeiro.
+        Google e Discord entram direto. Com e-mail e senha, é preciso ter cadastro
+        confirmado — Discord (membros do servidor) tem acesso admin.
       </p>
 
       <div id="auth-error" class="auth-alert" hidden></div>
@@ -82,12 +82,12 @@
       if (providers.google) {
         googleBtn.hidden = false;
         anyOauth = true;
-        googleBtn.addEventListener("click", () => MuhAuth.oauthStart("google", "login"));
+        googleBtn.addEventListener("click", () => MuhAuth.oauthStart("google"));
       }
       if (providers.discord) {
         discordBtn.hidden = false;
         anyOauth = true;
-        discordBtn.addEventListener("click", () => MuhAuth.oauthStart("discord", "login"));
+        discordBtn.addEventListener("click", () => MuhAuth.oauthStart("discord"));
       }
       if (anyOauth) divider.hidden = false;
 
@@ -121,7 +121,6 @@
           oauth_failed: "Não foi possível concluir o login social.",
           authentication_failed: "Não foi possível autenticar.",
           email_unverified: "Confirme seu e-mail antes de entrar.",
-          registration_required: "Você ainda não tem cadastro. Crie a conta primeiro.",
         };
         return map[code] || "Não foi possível entrar. Tente de novo.";
       }

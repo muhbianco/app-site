@@ -190,9 +190,33 @@
     return true;
   }
 
-  function oauthStart(provider, intent = "login") {
-    const mode = intent === "signup" ? "signup" : "login";
-    location.href = `${API_BASE}${API_PREFIX}/auth/${provider}/login?intent=${mode}`;
+  function oauthStart(provider) {
+    location.href = `${API_BASE}${API_PREFIX}/auth/${provider}/login`;
+  }
+
+  async function sendEmailVerification() {
+    const response = await api(`${API_PREFIX}/users/me/email-verification`, { method: "POST" });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const err = new Error(data.message || "Não foi possível enviar o código.");
+      err.code = data.error || null;
+      throw err;
+    }
+    return data;
+  }
+
+  async function confirmEmailVerification(code) {
+    const response = await api(`${API_PREFIX}/users/me/email-verification/confirm`, {
+      method: "POST",
+      body: JSON.stringify({ code: String(code).trim() }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const err = new Error(data.message || "Código inválido.");
+      err.code = data.error || null;
+      throw err;
+    }
+    return data;
   }
 
   async function uploadAvatar(file) {
@@ -275,6 +299,8 @@
     isLoggedIn,
     requireAuth,
     oauthStart,
+    sendEmailVerification,
+    confirmEmailVerification,
     uploadAvatar,
     avatarSrc,
     wallet,

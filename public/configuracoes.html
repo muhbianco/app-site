@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Configurações da conta MuhBianco." />
+  <title>Configurações da conta — MuhBianco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css?v=11" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="logo" href="/">MuhBianco</a>
+    <nav class="nav" aria-label="Principal">
+      <a href="/#servicos">Serviços</a>
+      <a href="/contato.html">Contato</a>
+      <a href="/conta.html" class="nav-cta">Conta</a>
+    </nav>
+  </header>
+
+  <main class="settings-page">
+    <section class="settings-head">
+      <p class="brand-mark compact">Configurações</p>
+      <h1>Configurações da conta</h1>
+      <p class="auth-lede" id="settings-lede">Verificações e preferências da sua conta.</p>
+    </section>
+
+    <div class="settings-layout">
+      <nav class="settings-nav" aria-label="Seções">
+        <a href="#secao-verificacoes" class="is-current">Verificações</a>
+        <a href="#secao-acesso">Acesso</a>
+      </nav>
+
+      <div class="settings-sections">
+        <section class="settings-section" id="secao-verificacoes">
+          <h2>Verificações</h2>
+
+          <article class="settings-card" id="card-email">
+            <header class="settings-card-head">
+              <div>
+                <h3>Confirmar e-mail</h3>
+                <p class="hint" id="email-hint">Carregando…</p>
+              </div>
+              <span class="settings-badge" id="email-badge" data-state="pending">Pendente</span>
+            </header>
+
+            <div id="email-alert" class="auth-alert" hidden></div>
+            <div id="email-ok" class="auth-ok" hidden></div>
+
+            <div class="settings-card-body" id="email-actions" hidden>
+              <button type="button" class="btn btn-primary" id="btn-send-code">Enviar código</button>
+
+              <form class="settings-inline-form" id="code-form" hidden>
+                <label>
+                  <span>Código recebido</span>
+                  <input
+                    type="text"
+                    id="code-input"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    minlength="6"
+                    maxlength="6"
+                    pattern="[0-9]{6}"
+                    placeholder="000000"
+                    required
+                  />
+                </label>
+                <button type="submit" class="btn btn-primary" id="btn-confirm-code">Confirmar</button>
+              </form>
+            </div>
+          </article>
+
+          <article class="settings-card is-soon">
+            <header class="settings-card-head">
+              <div>
+                <h3>Confirmar WhatsApp</h3>
+                <p class="hint">Receber o código por WhatsApp em vez de e-mail.</p>
+              </div>
+              <span class="settings-badge" data-state="soon">Em breve</span>
+            </header>
+          </article>
+        </section>
+
+        <section class="settings-section" id="secao-acesso">
+          <h2>Acesso</h2>
+
+          <article class="settings-card">
+            <header class="settings-card-head">
+              <div>
+                <h3>Formas de entrar</h3>
+                <p class="hint" id="access-hint">—</p>
+              </div>
+              <span class="settings-badge" data-state="info" id="role-badge">—</span>
+            </header>
+          </article>
+
+          <article class="settings-card is-soon">
+            <header class="settings-card-head">
+              <div>
+                <h3>Trocar senha</h3>
+                <p class="hint">Disponível para contas com e-mail e senha.</p>
+              </div>
+              <span class="settings-badge" data-state="soon">Em breve</span>
+            </header>
+          </article>
+        </section>
+      </div>
+    </div>
+
+    <p class="auth-switch"><a href="/conta.html">Voltar para a conta</a></p>
+  </main>
+
+  <script src="/js/auth.js?v=8"></script>
+  <script>
+    (async function () {
+      if (!MuhAuth.requireAuth()) return;
+
+      const badge = document.getElementById("email-badge");
+      const hint = document.getElementById("email-hint");
+      const actions = document.getElementById("email-actions");
+      const alertBox = document.getElementById("email-alert");
+      const okBox = document.getElementById("email-ok");
+      const sendBtn = document.getElementById("btn-send-code");
+      const codeForm = document.getElementById("code-form");
+      const codeInput = document.getElementById("code-input");
+      const confirmBtn = document.getElementById("btn-confirm-code");
+      const accessHint = document.getElementById("access-hint");
+      const roleBadge = document.getElementById("role-badge");
+
+      function showError(message) {
+        okBox.hidden = true;
+        alertBox.hidden = false;
+        alertBox.textContent = message;
+      }
+
+      function showOk(message) {
+        alertBox.hidden = true;
+        okBox.hidden = false;
+        okBox.textContent = message;
+      }
+
+      function renderEmailState(user) {
+        if (user.email_verified) {
+          badge.dataset.state = "done";
+          badge.textContent = "Concluído";
+          hint.textContent = `${user.email} confirmado.`;
+          actions.hidden = true;
+          codeForm.hidden = true;
+          return;
+        }
+        badge.dataset.state = "pending";
+        badge.textContent = "Pendente";
+        hint.textContent = `Enviaremos um código de 6 dígitos para ${user.email}.`;
+        actions.hidden = false;
+      }
+
+      function renderAccess(user) {
+        const links = [];
+        if (user.has_password) links.push("e-mail e senha");
+        if (user.google_linked) links.push("Google");
+        if (user.discord_linked) links.push("Discord");
+        accessHint.textContent = links.join(" · ") || "—";
+        roleBadge.textContent = user.role;
+      }
+
+      sendBtn.addEventListener("click", async () => {
+        sendBtn.disabled = true;
+        try {
+          const result = await MuhAuth.sendEmailVerification();
+          showOk(result.message || "Código enviado para o seu e-mail.");
+          codeForm.hidden = false;
+          codeInput.focus();
+        } catch (err) {
+          showError(err.message || "Não foi possível enviar o código.");
+        } finally {
+          sendBtn.disabled = false;
+        }
+      });
+
+      codeForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        confirmBtn.disabled = true;
+        try {
+          const user = await MuhAuth.confirmEmailVerification(codeInput.value);
+          showOk("E-mail confirmado.");
+          renderEmailState(user);
+          renderAccess(user);
+        } catch (err) {
+          showError(err.message || "Código inválido.");
+        } finally {
+          confirmBtn.disabled = false;
+        }
+      });
+
+      try {
+        const user = await MuhAuth.me();
+        document.getElementById("settings-lede").textContent =
+          `Conta de ${user.full_name}. Verificações e preferências.`;
+        renderEmailState(user);
+        renderAccess(user);
+      } catch (err) {
+        await MuhAuth.logout();
+        location.href = "/login.html?error=authentication_failed";
+      }
+    })();
+  </script>
+</body>
+</html>
