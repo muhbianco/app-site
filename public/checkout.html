@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=8" />
+  <link rel="stylesheet" href="/css/styles.css?v=9" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -22,11 +22,12 @@
   </header>
 
   <main class="checkout-page">
-    <section class="checkout-card">
+    <section class="checkout-card" id="select-panel">
       <p class="brand-mark compact">Checkout</p>
       <h1>Adicionar saldo</h1>
       <p class="auth-lede" id="lede">
-        Escolha um valor ou digite outro. Depois você paga no Mercado Pago (PIX, crédito ou débito).
+        Escolha um valor ou digite outro. O pagamento abre numa janela do Mercado Pago;
+        esta página fica aberta e confirma o saldo automaticamente.
       </p>
 
       <div id="checkout-error" class="auth-alert" hidden></div>
@@ -54,6 +55,20 @@
 
       <a class="btn btn-ghost" href="/conta.html">Voltar para a conta</a>
     </section>
+
+    <section class="checkout-card" id="wait-panel" hidden>
+      <p class="brand-mark compact">Pagamento</p>
+      <h1 id="wait-title">Aguardando pagamento…</h1>
+      <p class="auth-lede" id="wait-message">
+        Conclua o pagamento na janela do Mercado Pago. Esta página atualiza sozinha.
+      </p>
+      <div class="checkout-wait-pulse" id="wait-pulse" aria-hidden="true"></div>
+      <div class="checkout-wait-actions">
+        <a class="btn btn-primary" href="/conta.html">Ir para a conta</a>
+        <button type="button" class="btn btn-ghost" id="btn-wait-retry" hidden>Tentar de novo</button>
+        <button type="button" class="btn btn-ghost" id="btn-reopen" hidden>Reabrir Mercado Pago</button>
+      </div>
+    </section>
   </main>
 
   <script src="/js/auth.js?v=6"></script>
@@ -61,6 +76,8 @@
     (async function () {
       if (!MuhAuth.requireAuth()) return;
 
+      const selectPanel = document.getElementById("select-panel");
+      const waitPanel = document.getElementById("wait-panel");
       const amountsEl = document.getElementById("amounts");
       const hintEl = document.getElementById("methods-hint");
       const errorBox = document.getElementById("checkout-error");
@@ -68,10 +85,20 @@
       const customInput = document.getElementById("custom-input");
       const customHint = document.getElementById("custom-hint");
       const customPayBtn = document.getElementById("btn-custom-pay");
+      const waitTitle = document.getElementById("wait-title");
+      const waitMessage = document.getElementById("wait-message");
+      const waitPulse = document.getElementById("wait-pulse");
+      const retryBtn = document.getElementById("btn-wait-retry");
+      const reopenBtn = document.getElementById("btn-reopen");
 
       let minCents = 500;
       let maxCents = 500000;
       let busy = false;
+      let activeTopupId = null;
+      let checkoutUrl = null;
+      let mpWindow = null;
+      let pollTimer = null;
+      let watchTimer = null;
 
       function brl(cents) {
         return (Number(cents) / 100).toLocaleString("pt-BR", {
@@ -89,7 +116,6 @@
         errorBox.hidden = true;
       }
 
-      /** Aceita "35,50", "35.50", "35" → centavos. */
       function parseReaisToCents(raw) {
         const cleaned = String(raw || "")
           .trim()
@@ -107,6 +133,176 @@
         return Math.round(value * 100);
       }
 
+      function popupFeatures() {
+        const width = Math.min(980, Math.max(720, screen.availWidth - 80));
+        const height = Math.min(820, Math.max(640, screen.availHeight - 80));
+        const left = Math.max(0, Math.round((screen.availWidth - width) / 2 + (screen.availLeft || 0)));
+        const top = Math.max(0, Math.round((screen.availHeight - height) / 2 + (screen.availTop || 0)));
+        return [
+          "popup=yes",
+          `width=${width}`,
+          `height=${height}`,
+          `left=${left}`,
+          `top=${top}`,
+          "scrollbars=yes",
+          "resizable=yes",
+        ].join(",");
+      }
+
+      /** Abre janela no clique (antes do await) para não cair no bloqueador. */
+      function openCheckoutWindow() {
+        const win = window.open("about:blank", "muhbianco_mp_checkout", popupFeatures());
+        if (win) {
+          try {
+            win.document.write(
+              "<!doctype html><title>Mercado Pago</title><body style=\"font-family:sans-serif;padding:2rem;color:#333\">Abrindo checkout…</body>"
+            );
+            win.document.close();
+          } catch (_) {
+            /* cross-origin depois do redirect — ok */
+          }
+          try {
+            win.focus();
+          } catch (_) {}
+        }
+        return win;
+      }
+
+      function stopWatchers() {
+        if (pollTimer) {
+          clearInterval(pollTimer);
+          pollTimer = null;
+        }
+        if (watchTimer) {
+          clearInterval(watchTimer);
+          watchTimer = null;
+        }
+      }
+
+      function showWaiting(title, message, { waiting = true, showRetry = false, showReopen = false } = {}) {
+        selectPanel.hidden = true;
+        waitPanel.hidden = false;
+        waitTitle.textContent = title;
+        waitMessage.textContent = message;
+        waitPulse.hidden = !waiting;
+        retryBtn.hidden = !showRetry;
+        reopenBtn.hidden = !showReopen;
+      }
+
+      function finishPaid(amountCents) {
+        stopWatchers();
+        try {
+          if (mpWindow && !mpWindow.closed) mpWindow.close();
+        } catch (_) {}
+        const extra = amountCents != null ? ` ${brl(amountCents)}` : "";
+        showWaiting(
+          "Saldo creditado",
+          `Pagamento confirmado${extra}. Seu saldo já está disponível.`,
+          { waiting: false }
+        );
+      }
+
+      function finishFailed(message) {
+        stopWatchers();
+        showWaiting("Pagamento não concluído", message || "Nenhum valor foi creditado.", {
+          waiting: false,
+          showRetry: true,
+        });
+      }
+
+      async function checkTopupOnce() {
+        if (!activeTopupId) return null;
+        const topup = await MuhAuth.getTopup(activeTopupId, true);
+        if (topup.status === "paid") {
+          finishPaid(topup.amount_cents);
+          return topup;
+        }
+        if (topup.status === "failed" || topup.status === "cancelled") {
+          finishFailed("Nenhum valor foi creditado. Você pode tentar de novo.");
+          return topup;
+        }
+        return topup;
+      }
+
+      function startPolling() {
+        stopWatchers();
+        let ticks = 0;
+        const maxTicks = 150; // ~5 min a cada 2s
+
+        pollTimer = setInterval(async () => {
+          ticks += 1;
+          try {
+            const topup = await checkTopupOnce();
+            if (!topup) return;
+            if (topup.status === "paid" || topup.status === "failed" || topup.status === "cancelled") {
+              return;
+            }
+            if (ticks >= maxTicks) {
+              stopWatchers();
+              showWaiting(
+                "Ainda confirmando…",
+                "Se você já pagou, o saldo deve aparecer em breve na conta. Pode fechar esta página.",
+                { waiting: false, showReopen: Boolean(checkoutUrl) }
+              );
+            }
+          } catch (_) {
+            /* tenta de novo no próximo tick */
+          }
+        }, 2000);
+
+        watchTimer = setInterval(() => {
+          if (!mpWindow) return;
+          try {
+            if (mpWindow.closed) {
+              mpWindow = null;
+              if (activeTopupId) {
+                showWaiting(
+                  "Confirmando pagamento…",
+                  "A janela do Mercado Pago foi fechada. Estamos verificando se o pagamento entrou.",
+                  { waiting: true, showReopen: Boolean(checkoutUrl) }
+                );
+                checkTopupOnce().catch(() => {});
+              }
+            }
+          } catch (_) {}
+        }, 800);
+      }
+
+      window.addEventListener("message", (event) => {
+        if (event.origin !== location.origin) return;
+        const data = event.data;
+        if (!data || data.type !== "muhbianco-topup") return;
+        if (data.topupId && activeTopupId && data.topupId !== activeTopupId) return;
+        checkTopupOnce().catch(() => {});
+      });
+
+      retryBtn.addEventListener("click", () => {
+        stopWatchers();
+        activeTopupId = null;
+        checkoutUrl = null;
+        mpWindow = null;
+        busy = false;
+        waitPanel.hidden = true;
+        selectPanel.hidden = false;
+        clearError();
+        location.reload();
+      });
+
+      reopenBtn.addEventListener("click", () => {
+        if (!checkoutUrl) return;
+        mpWindow = openCheckoutWindow();
+        if (mpWindow) {
+          mpWindow.location = checkoutUrl;
+          showWaiting(
+            "Aguardando pagamento…",
+            "Conclua o pagamento na janela do Mercado Pago. Esta página atualiza sozinha.",
+            { waiting: true, showReopen: true }
+          );
+        } else {
+          showError("Permita pop-ups neste site para reabrir o Mercado Pago.");
+        }
+      });
+
       async function startCheckout(cents, button) {
         if (busy) return;
         clearError();
@@ -114,15 +310,41 @@
           showError(`Valor deve ser entre ${brl(minCents)} e ${brl(maxCents)}.`);
           return;
         }
+
+        // Abrir no gesto do clique — evita bloqueio de pop-up.
+        const popup = openCheckoutWindow();
+        if (!popup) {
+          showError(
+            "O navegador bloqueou a janela do Mercado Pago. Permita pop-ups para muhbianco.com.br e tente de novo."
+          );
+          return;
+        }
+
         busy = true;
         if (button) button.disabled = true;
+        mpWindow = popup;
+
         try {
           const topup = await MuhAuth.createTopup(cents);
           if (!topup.checkout_url) {
             throw new Error("Checkout sem URL do Mercado Pago.");
           }
-          location.href = topup.checkout_url;
+          activeTopupId = topup.id;
+          checkoutUrl = topup.checkout_url;
+          mpWindow.location = topup.checkout_url;
+
+          showWaiting(
+            "Aguardando pagamento…",
+            `Janela aberta para ${brl(cents)}. Conclua o pagamento lá — o saldo aparece aqui assim que confirmar.`,
+            { waiting: true, showReopen: true }
+          );
+          startPolling();
+          checkTopupOnce().catch(() => {});
         } catch (err) {
+          try {
+            if (mpWindow && !mpWindow.closed) mpWindow.close();
+          } catch (_) {}
+          mpWindow = null;
           showError(err.message || "Não foi possível iniciar o pagamento.");
           busy = false;
           if (button) button.disabled = false;

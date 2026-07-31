@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=7" />
+  <link rel="stylesheet" href="/css/styles.css?v=9" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -24,8 +24,8 @@
       <p class="brand-mark compact">Pagamento</p>
       <h1 id="title">Confirmando…</h1>
       <p class="auth-lede" id="message">Aguarde enquanto confirmamos com o Mercado Pago.</p>
-      <a class="btn btn-primary" href="/conta.html">Ir para a conta</a>
-      <a class="btn btn-ghost" href="/checkout.html">Tentar de novo</a>
+      <a class="btn btn-primary" id="btn-account" href="/conta.html">Ir para a conta</a>
+      <a class="btn btn-ghost" id="btn-retry" href="/checkout.html" hidden>Tentar de novo</a>
     </section>
   </main>
 
@@ -39,41 +39,87 @@
       const statusHint = params.get("status") || params.get("collection_status") || "";
       const title = document.getElementById("title");
       const message = document.getElementById("message");
+      const retryBtn = document.getElementById("btn-retry");
+      const accountBtn = document.getElementById("btn-account");
+      const hasOpener = Boolean(window.opener && !window.opener.closed);
 
-      function set(uiTitle, uiMessage) {
+      function notifyOpener(status) {
+        if (!hasOpener) return;
+        try {
+          window.opener.postMessage(
+            { type: "muhbianco-topup", topupId, status },
+            location.origin
+          );
+        } catch (_) {}
+      }
+
+      function set(uiTitle, uiMessage, { showRetry = false, closeSoon = false } = {}) {
         title.textContent = uiTitle;
         message.textContent = uiMessage;
+        retryBtn.hidden = !showRetry;
+        if (hasOpener) {
+          accountBtn.hidden = true;
+          if (closeSoon) {
+            message.textContent = uiMessage + " Esta janela pode fechar sozinha.";
+            setTimeout(() => {
+              try {
+                window.close();
+              } catch (_) {}
+            }, 900);
+          }
+        }
       }
 
       if (!topupId) {
         if (statusHint === "failure" || statusHint === "rejected") {
-          set("Pagamento não concluído", "Nenhum valor foi creditado. Você pode tentar de novo.");
+          notifyOpener("failed");
+          set("Pagamento não concluído", "Nenhum valor foi creditado. Você pode tentar de novo.", {
+            showRetry: !hasOpener,
+            closeSoon: hasOpener,
+          });
         } else {
-          set("Retorno incompleto", "Não encontramos a recarga. Veja o saldo na conta.");
+          notifyOpener("unknown");
+          set("Retorno incompleto", "Não encontramos a recarga. Veja o saldo na conta.", {
+            showRetry: !hasOpener,
+            closeSoon: hasOpener,
+          });
         }
         return;
       }
 
       try {
         let topup = await MuhAuth.getTopup(topupId, true);
-        // Webhook pode atrasar alguns segundos.
         for (let i = 0; i < 5 && topup.status === "pending"; i += 1) {
           await new Promise((r) => setTimeout(r, 1500));
           topup = await MuhAuth.getTopup(topupId, true);
         }
 
         if (topup.status === "paid") {
-          set("Saldo creditado", "O pagamento foi confirmado. Seu saldo já está disponível.");
+          notifyOpener("paid");
+          set("Saldo creditado", "O pagamento foi confirmado. Seu saldo já está disponível.", {
+            closeSoon: hasOpener,
+          });
         } else if (topup.status === "pending") {
+          notifyOpener("pending");
           set(
             "Pagamento em análise",
-            "Assim que o Mercado Pago confirmar, o saldo entra automaticamente. Você pode fechar esta página."
+            hasOpener
+              ? "Pode fechar esta janela. A página principal continua confirmando o saldo."
+              : "Assim que o Mercado Pago confirmar, o saldo entra automaticamente. Você pode fechar esta página."
           );
         } else {
-          set("Pagamento não concluído", "Nenhum valor foi creditado. Você pode tentar de novo.");
+          notifyOpener(topup.status);
+          set("Pagamento não concluído", "Nenhum valor foi creditado. Você pode tentar de novo.", {
+            showRetry: !hasOpener,
+            closeSoon: hasOpener,
+          });
         }
       } catch (err) {
-        set("Não foi possível confirmar", err.message || "Veja o saldo na conta em instantes.");
+        notifyOpener("error");
+        set("Não foi possível confirmar", err.message || "Veja o saldo na conta em instantes.", {
+          showRetry: !hasOpener,
+          closeSoon: hasOpener,
+        });
       }
     })();
   </script>

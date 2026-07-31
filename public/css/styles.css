@@ -939,6 +939,29 @@ img {
   margin-top: 0.5rem;
 }
 
+.checkout-wait-pulse {
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: 1.25rem 0 0.5rem;
+  border: 2.5px solid var(--line);
+  border-top-color: var(--coral, #e85d4c);
+  border-radius: 50%;
+  animation: checkout-spin 0.85s linear infinite;
+}
+
+@keyframes checkout-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.checkout-wait-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
+}
+
 .topup-amounts {
   display: flex;
   flex-wrap: wrap;
