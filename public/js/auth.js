@@ -195,6 +195,15 @@
     return data;
   }
 
+  async function listTopups() {
+    const response = await api(`${API_PREFIX}/billing/topups`);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.message || "Não foi possível carregar as transações.");
+    }
+    return Array.isArray(data) ? data : [];
+  }
+
   global.MuhAuth = {
     API_BASE,
     API_PREFIX,
@@ -215,6 +224,7 @@
     billingOptions,
     createTopup,
     getTopup,
+    listTopups,
     api,
   };
 })(window);

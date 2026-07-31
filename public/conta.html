@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=6" />
+  <link rel="stylesheet" href="/css/styles.css?v=7" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -58,7 +58,10 @@
         <h2>Saldo</h2>
         <p class="balance-value" id="balance-value">R$&nbsp;0,00</p>
         <p class="hint" id="billing-hint">Disponível para consumir nas APIs.</p>
-        <a class="btn btn-primary" id="btn-add-balance" href="/checkout.html">Adicionar saldo</a>
+        <div class="balance-actions">
+          <a class="btn btn-primary" id="btn-add-balance" href="/checkout.html">Adicionar saldo</a>
+          <a class="btn btn-ghost" href="/transacoes.html">Transações</a>
+        </div>
       </article>
 
       <article class="account-panel muted account-span">
@@ -72,7 +75,7 @@
     </section>
   </main>
 
-  <script src="/js/auth.js?v=5"></script>
+  <script src="/js/auth.js?v=6"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;

@@ -584,7 +584,8 @@ img {
 }
 
 .auth-card h1,
-.account-hello h1 {
+.account-hello h1,
+.account-hero > h1 {
   margin: 0 0 0.5rem;
   font-family: var(--font-display);
   font-weight: 700;
@@ -775,12 +776,94 @@ img {
 }
 
 .balance-panel .btn-primary {
+  margin-top: 0;
+}
+
+.balance-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
   margin-top: 0.75rem;
 }
 
 .btn.is-disabled {
   opacity: 0.55;
   pointer-events: none;
+}
+
+.tx-panel {
+  max-width: 720px;
+}
+
+.tx-empty {
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+  color: var(--ink-soft);
+}
+
+.tx-table-wrap {
+  overflow-x: auto;
+}
+
+.tx-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.tx-table th {
+  text-align: left;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  font-weight: 700;
+  padding: 0 0.5rem 0.75rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.tx-table td {
+  padding: 0.95rem 0.5rem 0.95rem 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.tx-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.tx-amount {
+  font-weight: 700;
+}
+
+.tx-date {
+  font-variant-numeric: tabular-nums;
+}
+
+.tx-status {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.tx-status--ok {
+  color: #1a7a4c;
+}
+
+.tx-status--wait {
+  color: #9a6b00;
+}
+
+.tx-status--err {
+  color: var(--coral-deep);
+}
+
+.tx-detail {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
 }
 
 .checkout-page {
