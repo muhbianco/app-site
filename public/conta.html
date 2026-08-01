@@ -68,6 +68,7 @@
         <div class="balance-actions">
           <a class="btn btn-primary" id="btn-add-balance" href="/checkout.html">Adicionar saldo</a>
           <a class="btn btn-ghost" href="/transacoes.html">Transações</a>
+          <a class="btn btn-ghost" id="btn-admin-tx" href="/admin-transacoes.html" hidden>Admin · transações</a>
         </div>
       </article>
 
@@ -82,7 +83,7 @@
     </section>
   </main>
 
-  <script src="/js/auth.js?v=8"></script>
+  <script src="/js/auth.js?v=10"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -95,6 +96,7 @@
       const balanceEl = document.getElementById("balance-value");
       const hintEl = document.getElementById("billing-hint");
       const addBtn = document.getElementById("btn-add-balance");
+      const adminTxBtn = document.getElementById("btn-admin-tx");
 
       function brl(cents) {
         return (Number(cents) / 100).toLocaleString("pt-BR", {
@@ -151,6 +153,7 @@
         document.getElementById("hello").textContent = `Olá, ${user.full_name.split(" ")[0]}.`;
         document.getElementById("p-email").textContent = user.email;
         document.getElementById("p-role").textContent = user.role;
+        adminTxBtn.hidden = user.role !== "admin";
         const links = [];
         if (user.has_password) links.push("e-mail/senha");
         if (user.google_linked) links.push("Google");

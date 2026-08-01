@@ -310,6 +310,40 @@
     return Array.isArray(data) ? data : [];
   }
 
+  async function adminListTopups(params = {}) {
+    const qs = new URLSearchParams();
+    if (params.page) qs.set("page", String(params.page));
+    if (params.page_size) qs.set("page_size", String(params.page_size));
+    if (params.search) qs.set("search", params.search);
+    if (params.status) qs.set("status", params.status);
+    if (params.created_from) qs.set("created_from", params.created_from);
+    if (params.created_to) qs.set("created_to", params.created_to);
+    const response = await api(`${API_PREFIX}/billing/admin/topups?${qs.toString()}`);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.message || "Não foi possível carregar as transações.");
+    }
+    return data;
+  }
+
+  async function adminRefundTopup(id) {
+    const response = await api(`${API_PREFIX}/billing/admin/topups/${encodeURIComponent(id)}/refund`, {
+      method: "POST",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.message || "Não foi possível estornar.");
+    return data;
+  }
+
+  async function adminCancelTopup(id) {
+    const response = await api(`${API_PREFIX}/billing/admin/topups/${encodeURIComponent(id)}/cancel`, {
+      method: "POST",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.message || "Não foi possível cancelar.");
+    return data;
+  }
+
   global.MuhAuth = {
     API_BASE,
     API_PREFIX,
@@ -338,6 +372,9 @@
     createTopup,
     getTopup,
     listTopups,
+    adminListTopups,
+    adminRefundTopup,
+    adminCancelTopup,
     api,
   };
 })(window);
