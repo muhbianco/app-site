@@ -310,6 +310,67 @@
     return Array.isArray(data) ? data : [];
   }
 
+  async function jsonOrThrow(response, fallback) {
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const err = new Error(data.message || fallback);
+      err.code = data.error || null;
+      err.details = data.details || null;
+      throw err;
+    }
+    return data;
+  }
+
+  async function listServices() {
+    const response = await api(`${API_PREFIX}/services`);
+    const data = await jsonOrThrow(response, "Não foi possível carregar os serviços.");
+    return Array.isArray(data) ? data : [];
+  }
+
+  async function enableService(code, phone) {
+    const response = await api(`${API_PREFIX}/services/${encodeURIComponent(code)}/enable`, {
+      method: "POST",
+      body: JSON.stringify({ phone: phone ? String(phone).trim() : null }),
+    });
+    return jsonOrThrow(response, "Não foi possível habilitar o serviço.");
+  }
+
+  async function resendServiceCode(code) {
+    const response = await api(`${API_PREFIX}/services/${encodeURIComponent(code)}/resend-code`, {
+      method: "POST",
+    });
+    return jsonOrThrow(response, "Não foi possível reenviar o código.");
+  }
+
+  async function confirmServicePhone(code, verificationCode) {
+    const response = await api(
+      `${API_PREFIX}/services/${encodeURIComponent(code)}/confirm-phone`,
+      { method: "POST", body: JSON.stringify({ code: String(verificationCode).trim() }) }
+    );
+    return jsonOrThrow(response, "Código inválido.");
+  }
+
+  async function disableService(code) {
+    const response = await api(`${API_PREFIX}/services/${encodeURIComponent(code)}/disable`, {
+      method: "POST",
+    });
+    return jsonOrThrow(response, "Não foi possível cancelar o serviço.");
+  }
+
+  async function adminListServices() {
+    const response = await api(`${API_PREFIX}/services/admin/catalog`);
+    const data = await jsonOrThrow(response, "Não foi possível carregar o catálogo.");
+    return Array.isArray(data) ? data : [];
+  }
+
+  async function adminUpdateService(serviceId, payload) {
+    const response = await api(
+      `${API_PREFIX}/services/admin/catalog/${encodeURIComponent(serviceId)}`,
+      { method: "PATCH", body: JSON.stringify(payload) }
+    );
+    return jsonOrThrow(response, "Não foi possível salvar o serviço.");
+  }
+
   async function adminListTopups(params = {}) {
     const qs = new URLSearchParams();
     if (params.page) qs.set("page", String(params.page));
@@ -372,6 +433,13 @@
     createTopup,
     getTopup,
     listTopups,
+    listServices,
+    enableService,
+    resendServiceCode,
+    confirmServicePhone,
+    disableService,
+    adminListServices,
+    adminUpdateService,
     adminListTopups,
     adminRefundTopup,
     adminCancelTopup,

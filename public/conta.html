@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=11" />
+  <link rel="stylesheet" href="/css/styles.css?v=14" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -72,18 +72,23 @@
         </div>
       </article>
 
-      <article class="account-panel muted account-span">
-        <h2>Serviços de API</h2>
-        <ul class="service-teasers">
-          <li><strong>Screenshot de URL</strong> — capture qualquer página sob demanda.</li>
-          <li><strong>Agentes customizados</strong> — fluxos que vamos publicar aqui.</li>
+      <article class="account-panel account-span">
+        <h2>Serviços</h2>
+        <ul class="service-teasers" id="services-summary">
+          <li class="hint">Carregando…</li>
         </ul>
-        <p class="hint">O consumo por request desconta deste saldo (próximo passo).</p>
+        <p class="hint">A cobrança de cada serviço desconta do seu saldo.</p>
+        <div class="balance-actions">
+          <a class="btn btn-primary" href="/servicos.html">Ver serviços</a>
+          <a class="btn btn-ghost" id="btn-admin-services" href="/admin-servicos.html" hidden>
+            Admin · serviços
+          </a>
+        </div>
       </article>
     </section>
   </main>
 
-  <script src="/js/auth.js?v=10"></script>
+  <script src="/js/auth.js?v=11"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -97,6 +102,8 @@
       const hintEl = document.getElementById("billing-hint");
       const addBtn = document.getElementById("btn-add-balance");
       const adminTxBtn = document.getElementById("btn-admin-tx");
+      const adminServicesBtn = document.getElementById("btn-admin-services");
+      const servicesSummary = document.getElementById("services-summary");
 
       function brl(cents) {
         return (Number(cents) / 100).toLocaleString("pt-BR", {
@@ -109,6 +116,22 @@
         await MuhAuth.logout();
         location.href = "/login.html";
       });
+
+      function renderServices(services) {
+        servicesSummary.innerHTML = "";
+        if (!services.length) {
+          servicesSummary.innerHTML = '<li class="hint">Nenhum serviço disponível ainda.</li>';
+          return;
+        }
+        services.forEach((service) => {
+          const active = service.subscription && service.subscription.status === "active";
+          const item = document.createElement("li");
+          item.innerHTML = `<strong>${service.name}</strong> — ${
+            active ? "ativo" : "disponível"
+          }`;
+          servicesSummary.appendChild(item);
+        });
+      }
 
       function renderAvatar(user) {
         const first = (user.full_name || "?").trim().charAt(0).toUpperCase() || "?";
@@ -154,6 +177,7 @@
         document.getElementById("p-email").textContent = user.email;
         document.getElementById("p-role").textContent = user.role;
         adminTxBtn.hidden = user.role !== "admin";
+        adminServicesBtn.hidden = user.role !== "admin";
         const links = [];
         if (user.has_password) links.push("e-mail/senha");
         if (user.google_linked) links.push("Google");
@@ -164,6 +188,8 @@
 
         const wallet = await MuhAuth.wallet();
         balanceEl.textContent = brl(wallet.balance_cents);
+
+        renderServices(await MuhAuth.listServices().catch(() => []));
 
         const options = await MuhAuth.billingOptions();
         if (!options.mercadopago_enabled) {

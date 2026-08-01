@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Serviços MuhBianco — habilite e pague com seu saldo." />
+  <title>Serviços — MuhBianco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css?v=14" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="logo" href="/">MuhBianco</a>
+    <nav class="nav" aria-label="Principal">
+      <a href="/conta.html">Conta</a>
+      <a href="/servicos.html" class="nav-cta" aria-current="page">Serviços</a>
+    </nav>
+  </header>
+
+  <main class="settings-page">
+    <section class="settings-head">
+      <p class="brand-mark compact">Serviços</p>
+      <h1>Serviços disponíveis</h1>
+      <p class="auth-lede" id="services-lede">
+        Habilite o que quiser usar. A cobrança sai do seu saldo.
+      </p>
+    </section>
+
+    <div class="settings-layout">
+      <nav class="settings-nav" aria-label="Seções">
+        <a href="/conta.html">Conta</a>
+        <a href="/transacoes.html">Transações</a>
+        <a href="/checkout.html">Adicionar saldo</a>
+      </nav>
+
+      <div class="settings-sections">
+        <section class="settings-section">
+          <h2>Catálogo</h2>
+          <div id="services-error" class="auth-alert" hidden></div>
+          <div id="services-empty" class="tx-empty" hidden>
+            <p>Nenhum serviço disponível no momento.</p>
+          </div>
+          <div id="services-list"></div>
+        </section>
+      </div>
+    </div>
+
+    <p class="auth-switch"><a href="/conta.html">Voltar para a conta</a></p>
+  </main>
+
+  <template id="tpl-service">
+    <article class="settings-card" data-code="">
+      <header class="settings-card-head">
+        <div>
+          <h3 data-field="name"></h3>
+          <p class="hint" data-field="description"></p>
+          <p class="hint" data-field="price"></p>
+        </div>
+        <span class="settings-badge" data-field="badge" data-state="pending">Disponível</span>
+      </header>
+
+      <div class="auth-alert" data-field="alert" hidden></div>
+      <div class="auth-ok" data-field="ok" hidden></div>
+
+      <div class="settings-card-body" data-field="body">
+        <p class="hint" data-field="status-detail" hidden></p>
+
+        <form class="settings-inline-form" data-field="enable-form" hidden>
+          <label data-field="phone-label">
+            <span>Celular do WhatsApp (com DDD)</span>
+            <input type="tel" data-field="phone" inputmode="tel" autocomplete="tel"
+                   placeholder="(11) 99999-8888" maxlength="20" />
+          </label>
+          <button type="submit" class="btn btn-primary" data-field="enable-btn">Habilitar</button>
+        </form>
+
+        <form class="settings-inline-form" data-field="code-form" hidden>
+          <label>
+            <span>Código recebido no WhatsApp</span>
+            <input type="text" data-field="code" inputmode="numeric" autocomplete="one-time-code"
+                   minlength="6" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required />
+          </label>
+          <button type="submit" class="btn btn-primary" data-field="confirm-btn">Confirmar</button>
+          <button type="button" class="btn btn-ghost btn-compact" data-field="resend-btn">Reenviar</button>
+        </form>
+
+        <div class="balance-actions" data-field="active-actions" hidden>
+          <button type="button" class="btn btn-ghost btn-compact" data-field="disable-btn">
+            Cancelar serviço
+          </button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script src="/js/auth.js?v=11"></script>
+  <script>
+    (async function () {
+      if (!MuhAuth.requireAuth()) return;
+
+      const listEl = document.getElementById("services-list");
+      const emptyEl = document.getElementById("services-empty");
+      const errorEl = document.getElementById("services-error");
+      const tpl = document.getElementById("tpl-service");
+
+      function brl(cents) {
+        return (Number(cents) / 100).toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        });
+      }
+
+      function formatPhone(phone) {
+        const digits = String(phone || "").replace(/\D+/g, "");
+        if (digits.startsWith("55") && digits.length >= 12) {
+          const rest = digits.slice(2);
+          const ddd = rest.slice(0, 2);
+          const num = rest.slice(2);
+          if (num.length === 9) return `+55 (${ddd}) ${num.slice(0, 5)}-${num.slice(5)}`;
+          if (num.length === 8) return `+55 (${ddd}) ${num.slice(0, 4)}-${num.slice(4)}`;
+        }
+        return phone || "";
+      }
+
+      function formatDate(iso) {
+        if (!iso) return "";
+        const d = new Date(iso);
+        return Number.isNaN(d.getTime())
+          ? ""
+          : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+      }
+
+      function priceLabel(service) {
+        if (service.billing_mode === "monthly") {
+          const periodo = service.period_days === 30 ? "mês" : `${service.period_days} dias`;
+          return `${brl(service.price_cents)} por ${periodo}, debitado do saldo.`;
+        }
+        return `${brl(service.price_cents)} por uso, debitado do saldo.`;
+      }
+
+      function render(services) {
+        listEl.innerHTML = "";
+        if (!services.length) {
+          emptyEl.hidden = false;
+          return;
+        }
+        emptyEl.hidden = true;
+        services.forEach((service) => listEl.appendChild(buildCard(service)));
+      }
+
+      function buildCard(service) {
+        const node = tpl.content.firstElementChild.cloneNode(true);
+        const q = (name) => node.querySelector(`[data-field="${name}"]`);
+        node.dataset.code = service.code;
+
+        q("name").textContent = service.name;
+        q("description").textContent = service.description;
+        q("price").textContent = priceLabel(service);
+
+        const badge = q("badge");
+        const sub = service.subscription;
+        const status = sub ? sub.status : null;
+        const statusDetail = q("status-detail");
+        const enableForm = q("enable-form");
+        const codeForm = q("code-form");
+        const activeActions = q("active-actions");
+        const phoneInput = q("phone");
+
+        if (!service.requires_phone) q("phone-label").hidden = true;
+        else phoneInput.required = true;
+
+        if (status === "active") {
+          badge.dataset.state = "done";
+          badge.textContent = "Ativo";
+          activeActions.hidden = false;
+          const partes = [];
+          if (sub.phone) partes.push(`Número: ${formatPhone(sub.phone)}`);
+          if (sub.current_period_end) {
+            partes.push(
+              sub.cancel_at_period_end
+                ? `Ativo até ${formatDate(sub.current_period_end)} (não renova)`
+                : `Renova em ${formatDate(sub.current_period_end)}`
+            );
+          }
+          statusDetail.textContent = partes.join(" · ");
+          statusDetail.hidden = partes.length === 0;
+        } else if (status === "pending_phone") {
+          badge.dataset.state = "pending";
+          badge.textContent = "Confirmação pendente";
+          enableForm.hidden = false;
+          codeForm.hidden = false;
+          if (sub.phone) phoneInput.value = formatPhone(sub.phone);
+          statusDetail.textContent = "Confirme o código enviado no WhatsApp para ativar.";
+          statusDetail.hidden = false;
+        } else if (status === "suspended") {
+          badge.dataset.state = "pending";
+          badge.textContent = "Suspenso";
+          enableForm.hidden = false;
+          if (sub.phone) phoneInput.value = formatPhone(sub.phone);
+          statusDetail.textContent =
+            "Suspenso por saldo insuficiente. Adicione saldo e habilite de novo.";
+          statusDetail.hidden = false;
+        } else {
+          badge.dataset.state = "info";
+          badge.textContent = "Disponível";
+          enableForm.hidden = false;
+          if (!service.can_enable) {
+            statusDetail.textContent = service.blocked_reason || "";
+            statusDetail.hidden = !service.blocked_reason;
+          }
+        }
+
+        function showError(message) {
+          q("ok").hidden = true;
+          q("alert").hidden = false;
+          q("alert").textContent = message;
+        }
+
+        function showOk(message) {
+          q("alert").hidden = true;
+          q("ok").hidden = false;
+          q("ok").textContent = message;
+        }
+
+        enableForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const btn = q("enable-btn");
+          btn.disabled = true;
+          try {
+            const result = await MuhAuth.enableService(service.code, phoneInput.value);
+            showOk(result.message || "Serviço habilitado.");
+            if (result.verification_required) {
+              codeForm.hidden = false;
+              q("code").focus();
+            } else {
+              await reload();
+            }
+          } catch (err) {
+            showError(err.message || "Não foi possível habilitar.");
+          } finally {
+            btn.disabled = false;
+          }
+        });
+
+        codeForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const btn = q("confirm-btn");
+          btn.disabled = true;
+          try {
+            await MuhAuth.confirmServicePhone(service.code, q("code").value);
+            await reload("Serviço ativado. Já pode mandar mensagem no WhatsApp.");
+          } catch (err) {
+            showError(err.message || "Código inválido.");
+            btn.disabled = false;
+          }
+        });
+
+        q("resend-btn").addEventListener("click", async () => {
+          const btn = q("resend-btn");
+          btn.disabled = true;
+          try {
+            const result = await MuhAuth.resendServiceCode(service.code);
+            showOk(result.message || "Novo código enviado.");
+          } catch (err) {
+            showError(err.message || "Não foi possível reenviar.");
+          } finally {
+            btn.disabled = false;
+          }
+        });
+
+        q("disable-btn").addEventListener("click", async () => {
+          if (!confirm("Cancelar este serviço no fim do período pago?")) return;
+          const btn = q("disable-btn");
+          btn.disabled = true;
+          try {
+            await MuhAuth.disableService(service.code);
+            await reload("Serviço cancelado.");
+          } catch (err) {
+            showError(err.message || "Não foi possível cancelar.");
+            btn.disabled = false;
+          }
+        });
+
+        return node;
+      }
+
+      let pendingMessage = "";
+
+      async function reload(message) {
+        if (message) pendingMessage = message;
+        try {
+          errorEl.hidden = true;
+          render(await MuhAuth.listServices());
+          if (pendingMessage) {
+            const first = listEl.querySelector('[data-field="ok"]');
+            if (first) {
+              first.hidden = false;
+              first.textContent = pendingMessage;
+            }
+            pendingMessage = "";
+          }
+        } catch (err) {
+          errorEl.hidden = false;
+          errorEl.textContent = err.message || "Falha ao carregar os serviços.";
+        }
+      }
+
+      try {
+        const [user, wallet] = await Promise.all([MuhAuth.me(), MuhAuth.wallet()]);
+        document.getElementById("services-lede").textContent =
+          `Saldo disponível: ${brl(wallet.balance_cents)}. A cobrança dos serviços sai daqui.`;
+        if (user.role === "admin") {
+          const nav = document.querySelector(".settings-nav");
+          const link = document.createElement("a");
+          link.href = "/admin-servicos.html";
+          link.textContent = "Admin · serviços";
+          nav.appendChild(link);
+        }
+        await reload();
+      } catch (err) {
+        await MuhAuth.logout();
+        location.href = "/login.html?error=authentication_failed";
+      }
+    })();
+  </script>
+</body>
+</html>
