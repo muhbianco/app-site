@@ -20,6 +20,11 @@
   box-sizing: border-box;
 }
 
+/* Classes com `display` explícito venciam o atributo hidden e vazavam estado vazio na tela. */
+[hidden] {
+  display: none !important;
+}
+
 html {
   scroll-behavior: smooth;
 }

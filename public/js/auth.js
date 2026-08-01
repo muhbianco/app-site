@@ -350,6 +350,20 @@
     return jsonOrThrow(response, "Código inválido.");
   }
 
+  async function pauseService(code) {
+    const response = await api(`${API_PREFIX}/services/${encodeURIComponent(code)}/pause`, {
+      method: "POST",
+    });
+    return jsonOrThrow(response, "Não foi possível pausar o agente.");
+  }
+
+  async function resumeService(code) {
+    const response = await api(`${API_PREFIX}/services/${encodeURIComponent(code)}/resume`, {
+      method: "POST",
+    });
+    return jsonOrThrow(response, "Não foi possível retomar o agente.");
+  }
+
   async function disableService(code) {
     const response = await api(`${API_PREFIX}/services/${encodeURIComponent(code)}/disable`, {
       method: "POST",
@@ -437,6 +451,8 @@
     enableService,
     resendServiceCode,
     confirmServicePhone,
+    pauseService,
+    resumeService,
     disableService,
     adminListServices,
     adminUpdateService,
