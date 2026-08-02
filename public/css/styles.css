@@ -1159,6 +1159,56 @@ img {
   font-weight: 600;
 }
 
+.admin-llm-totals {
+  margin: 0.75rem 0 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+
+.admin-credit-dialog {
+  border: 0;
+  border-radius: 16px;
+  padding: 0;
+  max-width: 420px;
+  width: calc(100% - 2rem);
+  box-shadow: 0 24px 60px color-mix(in srgb, var(--ink) 18%, transparent);
+}
+
+.admin-credit-dialog::backdrop {
+  background: color-mix(in srgb, var(--ink) 45%, transparent);
+}
+
+.admin-credit-dialog form {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.25rem 1.35rem 1.4rem;
+}
+
+.admin-credit-dialog h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+
+.admin-credit-dialog label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+
+.admin-credit-dialog input {
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  color: var(--ink);
+  background: #fff;
+}
+
 .tx-actions {
   white-space: nowrap;
 }

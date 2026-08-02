@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=19" />
+  <link rel="stylesheet" href="/css/styles.css?v=20" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -34,6 +34,8 @@
     <div class="settings-layout">
       <nav class="settings-nav" aria-label="Seções do admin" id="admin-nav">
         <a href="#servicos" data-panel="servicos" class="is-current">Serviços</a>
+        <a href="#usuarios" data-panel="usuarios">Usuários</a>
+        <a href="#llm" data-panel="llm">LLM</a>
         <a href="#transacoes" data-panel="transacoes">Transações</a>
         <a href="/conta.html">Conta</a>
       </nav>
@@ -45,6 +47,102 @@
           <div id="svc-error" class="auth-alert" hidden></div>
           <div id="svc-ok" class="auth-ok" hidden></div>
           <div id="svc-list"></div>
+        </section>
+
+        <!-- Usuários -->
+        <section class="settings-section admin-panel" id="panel-usuarios" data-panel="usuarios" hidden>
+          <h2>Cadastrados</h2>
+          <form class="admin-filters" id="usr-filters" autocomplete="off">
+            <label>
+              <span>Busca</span>
+              <input type="search" id="usr-search" placeholder="E-mail, nome, telefone ou id" />
+            </label>
+            <label>
+              <span>Situação</span>
+              <select id="usr-active">
+                <option value="">Todas</option>
+                <option value="true">Ativas</option>
+                <option value="false">Inativas</option>
+              </select>
+            </label>
+            <div class="admin-filters-actions">
+              <button type="submit" class="btn btn-primary">Filtrar</button>
+              <button type="button" class="btn btn-ghost" id="usr-clear">Limpar</button>
+            </div>
+          </form>
+          <div id="usr-error" class="auth-alert" hidden></div>
+          <div id="usr-ok" class="auth-ok" hidden></div>
+          <div id="usr-empty" class="tx-empty" hidden>
+            <p>Nenhum usuário encontrado.</p>
+          </div>
+          <div class="tx-table-wrap" id="usr-table-wrap" hidden>
+            <table class="tx-table admin-tx-table" aria-label="Usuários e saldo">
+              <thead>
+                <tr>
+                  <th scope="col">Cliente</th>
+                  <th scope="col">Papel</th>
+                  <th scope="col">Saldo</th>
+                  <th scope="col">Cadastro</th>
+                  <th scope="col">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="usr-body"></tbody>
+            </table>
+          </div>
+          <div class="admin-pager" id="usr-pager" hidden>
+            <button type="button" class="btn btn-ghost" id="usr-prev">Anterior</button>
+            <span id="usr-pager-label">—</span>
+            <button type="button" class="btn btn-ghost" id="usr-next">Próxima</button>
+          </div>
+        </section>
+
+        <!-- LLM -->
+        <section class="settings-section admin-panel" id="panel-llm" data-panel="llm" hidden>
+          <h2>Uso estimado</h2>
+          <p class="hint" id="llm-pricing-note">Termômetro de custo — não debita a carteira.</p>
+          <form class="admin-filters" id="llm-filters" autocomplete="off">
+            <label>
+              <span>Cliente</span>
+              <input type="search" id="llm-search" placeholder="E-mail, nome ou id" />
+            </label>
+            <label>
+              <span>De</span>
+              <input type="date" id="llm-from" />
+            </label>
+            <label>
+              <span>Até</span>
+              <input type="date" id="llm-to" />
+            </label>
+            <div class="admin-filters-actions">
+              <button type="submit" class="btn btn-primary">Filtrar</button>
+              <button type="button" class="btn btn-ghost" id="llm-clear">Limpar</button>
+            </div>
+          </form>
+          <div id="llm-totals" class="admin-llm-totals" hidden></div>
+          <div id="llm-error" class="auth-alert" hidden></div>
+          <div id="llm-empty" class="tx-empty" hidden>
+            <p>Nenhum uso de LLM no período.</p>
+          </div>
+          <div class="tx-table-wrap" id="llm-table-wrap" hidden>
+            <table class="tx-table admin-tx-table" aria-label="Uso de LLM por usuário">
+              <thead>
+                <tr>
+                  <th scope="col">Cliente</th>
+                  <th scope="col">Tokens in</th>
+                  <th scope="col">Tokens out</th>
+                  <th scope="col">Turnos</th>
+                  <th scope="col">Custo est.</th>
+                  <th scope="col">Último uso</th>
+                </tr>
+              </thead>
+              <tbody id="llm-body"></tbody>
+            </table>
+          </div>
+          <div class="admin-pager" id="llm-pager" hidden>
+            <button type="button" class="btn btn-ghost" id="llm-prev">Anterior</button>
+            <span id="llm-pager-label">—</span>
+            <button type="button" class="btn btn-ghost" id="llm-next">Próxima</button>
+          </div>
         </section>
 
         <!-- Transações -->
@@ -120,6 +218,25 @@
     </div>
   </main>
 
+  <dialog class="admin-credit-dialog" id="credit-dialog">
+    <form method="dialog" id="credit-form">
+      <h3>Conceder saldo bonificado</h3>
+      <p class="hint" id="credit-user-label">—</p>
+      <label>
+        <span>Valor (R$)</span>
+        <input type="number" id="credit-amount" min="0.01" step="0.01" required />
+      </label>
+      <label>
+        <span>Motivo (opcional)</span>
+        <input type="text" id="credit-note" maxlength="240" placeholder="Ex.: bônus família / treino LLM" />
+      </label>
+      <div class="admin-filters-actions">
+        <button type="submit" class="btn btn-primary" value="confirm">Conceder</button>
+        <button type="submit" class="btn btn-ghost" value="cancel">Cancelar</button>
+      </div>
+    </form>
+  </dialog>
+
   <template id="tpl-admin-service">
     <article class="settings-card">
       <header class="settings-card-head">
@@ -174,7 +291,7 @@
     </article>
   </template>
 
-  <script src="/js/auth.js?v=15"></script>
+  <script src="/js/auth.js?v=16"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -184,6 +301,14 @@
           title: "Cobrança dos serviços",
           lede:
             "Cada serviço define seu modo de cobrança. Alterações valem para novas assinaturas — quem já assinou mantém o preço congelado até renovar.",
+        },
+        usuarios: {
+          title: "Usuários e saldo",
+          lede: "Todo mundo cadastrado na plataforma. Conceda saldo bonificado para treino ou família.",
+        },
+        llm: {
+          title: "Uso de LLM",
+          lede: "Termômetro de custo por usuário (tokens do agente). Serve para alinhar a cobrança do serviço.",
         },
         transacoes: {
           title: "Extrato do saldo",
@@ -196,12 +321,12 @@
       const navLinks = document.querySelectorAll("#admin-nav a[data-panel]");
       const panels = document.querySelectorAll(".admin-panel");
 
-      let currentPanel = "servicos";
       let txLoadedOnce = false;
+      let usrLoadedOnce = false;
+      let llmLoadedOnce = false;
 
       function showPanel(name) {
         if (!PANELS[name]) name = "servicos";
-        currentPanel = name;
         const meta = PANELS[name];
         titleEl.textContent = meta.title;
         ledeEl.textContent = meta.lede;
@@ -219,6 +344,18 @@
         }
 
         if (name === "servicos") loadServices();
+        if (name === "usuarios") {
+          if (!usrLoadedOnce) {
+            usrLoadedOnce = true;
+            loadUsers();
+          }
+        }
+        if (name === "llm") {
+          if (!llmLoadedOnce) {
+            llmLoadedOnce = true;
+            loadLlm();
+          }
+        }
         if (name === "transacoes") {
           if (!txLoadedOnce) {
             txLoadedOnce = true;
@@ -237,6 +374,26 @@
       window.addEventListener("hashchange", () => {
         showPanel((location.hash || "#servicos").slice(1));
       });
+
+      function brl(cents) {
+        return (Number(cents) / 100).toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        });
+      }
+
+      function formatDate(iso) {
+        if (!iso) return "—";
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return "—";
+        return d.toLocaleString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
 
       // ---------- Serviços ----------
       const svcList = document.getElementById("svc-list");
@@ -309,6 +466,251 @@
         }
       }
 
+      // ---------- Usuários ----------
+      const usrError = document.getElementById("usr-error");
+      const usrOk = document.getElementById("usr-ok");
+      const usrEmpty = document.getElementById("usr-empty");
+      const usrTableWrap = document.getElementById("usr-table-wrap");
+      const usrBody = document.getElementById("usr-body");
+      const usrPager = document.getElementById("usr-pager");
+      const usrPagerLabel = document.getElementById("usr-pager-label");
+      const creditDialog = document.getElementById("credit-dialog");
+      const creditForm = document.getElementById("credit-form");
+      let usrPage = 1;
+      let usrPages = 1;
+      let creditUserId = null;
+
+      function showUsrError(msg) {
+        usrOk.hidden = true;
+        usrError.hidden = false;
+        usrError.textContent = msg;
+      }
+      function showUsrOk(msg) {
+        usrError.hidden = true;
+        usrOk.hidden = false;
+        usrOk.textContent = msg;
+      }
+
+      function usrFilters() {
+        const search = document.getElementById("usr-search").value.trim();
+        const active = document.getElementById("usr-active").value;
+        const payload = { page: usrPage, page_size: 20 };
+        if (search) payload.search = search;
+        if (active === "true") payload.is_active = true;
+        if (active === "false") payload.is_active = false;
+        return payload;
+      }
+
+      function renderUsers(items) {
+        usrBody.innerHTML = "";
+        items.forEach((u) => {
+          const tr = document.createElement("tr");
+          tr.dataset.userId = u.user_id;
+          tr.innerHTML = `
+            <td>
+              <span class="tx-client">${u.full_name || "—"}</span>
+              <span class="tx-detail">${u.email || ""}</span>
+              <span class="tx-detail">${u.phone || ""}</span>
+            </td>
+            <td><span class="tx-detail">${u.role || "—"} · ${u.is_active ? "ativo" : "inativo"}</span></td>
+            <td><span class="tx-amount">${brl(u.balance_cents)}</span></td>
+            <td><span class="tx-date">${formatDate(u.created_at)}</span></td>
+            <td class="tx-actions">
+              <button type="button" class="btn btn-ghost btn-compact" data-action="credit">Bonificar</button>
+            </td>
+          `;
+          usrBody.appendChild(tr);
+        });
+      }
+
+      async function loadUsers() {
+        usrError.hidden = true;
+        try {
+          const data = await MuhAuth.adminListWallets(usrFilters());
+          const items = data.items || [];
+          usrPages = data.pages || 1;
+          usrPage = data.page || 1;
+          usrEmpty.hidden = items.length > 0;
+          usrTableWrap.hidden = items.length === 0;
+          usrPager.hidden = items.length === 0;
+          usrPagerLabel.textContent = `Página ${usrPage} de ${usrPages} · ${data.total || 0} usuários`;
+          document.getElementById("usr-prev").disabled = usrPage <= 1;
+          document.getElementById("usr-next").disabled = usrPage >= usrPages;
+          if (items.length) renderUsers(items);
+        } catch (err) {
+          usrTableWrap.hidden = true;
+          usrEmpty.hidden = true;
+          usrPager.hidden = true;
+          showUsrError(err.message || "Falha ao carregar usuários.");
+        }
+      }
+
+      document.getElementById("usr-filters").addEventListener("submit", (e) => {
+        e.preventDefault();
+        usrPage = 1;
+        loadUsers();
+      });
+      document.getElementById("usr-clear").addEventListener("click", () => {
+        document.getElementById("usr-search").value = "";
+        document.getElementById("usr-active").value = "";
+        usrPage = 1;
+        loadUsers();
+      });
+      document.getElementById("usr-prev").addEventListener("click", () => {
+        if (usrPage > 1) {
+          usrPage -= 1;
+          loadUsers();
+        }
+      });
+      document.getElementById("usr-next").addEventListener("click", () => {
+        if (usrPage < usrPages) {
+          usrPage += 1;
+          loadUsers();
+        }
+      });
+
+      usrBody.addEventListener("click", (event) => {
+        const btn = event.target.closest("[data-action=credit]");
+        if (!btn) return;
+        const tr = btn.closest("tr");
+        creditUserId = tr && tr.dataset.userId;
+        if (!creditUserId) return;
+        const name = tr.querySelector(".tx-client")?.textContent || "";
+        const email = tr.querySelector(".tx-detail")?.textContent || "";
+        document.getElementById("credit-user-label").textContent = `${name} · ${email}`;
+        document.getElementById("credit-amount").value = "50.00";
+        document.getElementById("credit-note").value = "";
+        creditDialog.showModal();
+      });
+
+      creditForm.addEventListener("submit", async (event) => {
+        const submitter = event.submitter;
+        if (!submitter || submitter.value !== "confirm") {
+          creditUserId = null;
+          return;
+        }
+        event.preventDefault();
+        const amount = Math.round(Number(document.getElementById("credit-amount").value) * 100);
+        const description = document.getElementById("credit-note").value.trim();
+        if (!creditUserId || !(amount > 0)) return;
+        try {
+          await MuhAuth.adminCreditWallet(creditUserId, {
+            amountCents: amount,
+            description: description || undefined,
+          });
+          creditDialog.close();
+          showUsrOk(`Saldo bonificado de ${brl(amount)} concedido.`);
+          await loadUsers();
+        } catch (err) {
+          showUsrError(err.message || "Falha ao conceder saldo.");
+          creditDialog.close();
+        } finally {
+          creditUserId = null;
+        }
+      });
+
+      // ---------- LLM ----------
+      const llmError = document.getElementById("llm-error");
+      const llmEmpty = document.getElementById("llm-empty");
+      const llmTableWrap = document.getElementById("llm-table-wrap");
+      const llmBody = document.getElementById("llm-body");
+      const llmTotals = document.getElementById("llm-totals");
+      let llmPage = 1;
+      let llmPages = 1;
+
+      function llmFilters() {
+        const search = document.getElementById("llm-search").value.trim();
+        const from = document.getElementById("llm-from").value;
+        const to = document.getElementById("llm-to").value;
+        const payload = { page: llmPage, page_size: 20 };
+        if (search) payload.search = search;
+        if (from) payload.created_from = `${from}T00:00:00`;
+        if (to) payload.created_to = `${to}T23:59:59`;
+        return payload;
+      }
+
+      function renderLlm(items) {
+        llmBody.innerHTML = "";
+        items.forEach((row) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>
+              <span class="tx-client">${row.full_name || "—"}</span>
+              <span class="tx-detail">${row.email || ""}</span>
+            </td>
+            <td><span class="tx-detail">${Number(row.prompt_tokens).toLocaleString("pt-BR")}</span></td>
+            <td><span class="tx-detail">${Number(row.completion_tokens).toLocaleString("pt-BR")}</span></td>
+            <td><span class="tx-detail">${row.assistant_messages}</span></td>
+            <td>
+              <span class="tx-amount">${brl(row.estimated_cost_cents)}</span>
+              <span class="tx-detail">US$ ${Number(row.estimated_cost_usd).toFixed(4)}</span>
+            </td>
+            <td><span class="tx-date">${formatDate(row.last_usage_at)}</span></td>
+          `;
+          llmBody.appendChild(tr);
+        });
+      }
+
+      async function loadLlm() {
+        llmError.hidden = true;
+        try {
+          const data = await MuhAuth.adminLlmUsage(llmFilters());
+          const items = data.items || [];
+          llmPages = data.pages || 1;
+          llmPage = data.page || 1;
+          document.getElementById("llm-pricing-note").textContent =
+            data.pricing_note || "Estimativa de custo LLM.";
+          llmTotals.hidden = false;
+          llmTotals.innerHTML = `
+            <strong>Total filtrado:</strong>
+            ${(Number(data.total_prompt_tokens) || 0).toLocaleString("pt-BR")} in ·
+            ${(Number(data.total_completion_tokens) || 0).toLocaleString("pt-BR")} out ·
+            ${brl(data.total_estimated_cost_cents || 0)}
+            (US$ ${Number(data.total_estimated_cost_usd || 0).toFixed(4)})
+          `;
+          llmEmpty.hidden = items.length > 0;
+          llmTableWrap.hidden = items.length === 0;
+          document.getElementById("llm-pager").hidden = items.length === 0;
+          document.getElementById("llm-pager-label").textContent =
+            `Página ${llmPage} de ${llmPages} · ${data.total || 0} usuários`;
+          document.getElementById("llm-prev").disabled = llmPage <= 1;
+          document.getElementById("llm-next").disabled = llmPage >= llmPages;
+          if (items.length) renderLlm(items);
+        } catch (err) {
+          llmTableWrap.hidden = true;
+          llmEmpty.hidden = true;
+          document.getElementById("llm-pager").hidden = true;
+          llmTotals.hidden = true;
+          llmError.hidden = false;
+          llmError.textContent = err.message || "Falha ao carregar uso de LLM.";
+        }
+      }
+
+      document.getElementById("llm-filters").addEventListener("submit", (e) => {
+        e.preventDefault();
+        llmPage = 1;
+        loadLlm();
+      });
+      document.getElementById("llm-clear").addEventListener("click", () => {
+        document.getElementById("llm-search").value = "";
+        document.getElementById("llm-from").value = "";
+        document.getElementById("llm-to").value = "";
+        llmPage = 1;
+        loadLlm();
+      });
+      document.getElementById("llm-prev").addEventListener("click", () => {
+        if (llmPage > 1) {
+          llmPage -= 1;
+          loadLlm();
+        }
+      });
+      document.getElementById("llm-next").addEventListener("click", () => {
+        if (llmPage < llmPages) {
+          llmPage += 1;
+          loadLlm();
+        }
+      });
+
       // ---------- Transações ----------
       const txError = document.getElementById("tx-error");
       const txOk = document.getElementById("tx-ok");
@@ -323,26 +725,6 @@
       let page = 1;
       const pageSize = 20;
       let pages = 1;
-
-      function brl(cents) {
-        return (Number(cents) / 100).toLocaleString("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-        });
-      }
-
-      function formatDate(iso) {
-        if (!iso) return "—";
-        const d = new Date(iso);
-        if (Number.isNaN(d.getTime())) return "—";
-        return d.toLocaleString("pt-BR", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-      }
 
       function showTxError(msg) {
         txOk.hidden = true;

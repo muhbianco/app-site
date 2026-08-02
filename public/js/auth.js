@@ -456,6 +456,41 @@
     return data;
   }
 
+  async function adminListWallets(params = {}) {
+    const qs = new URLSearchParams();
+    if (params.page) qs.set("page", String(params.page));
+    if (params.page_size) qs.set("page_size", String(params.page_size));
+    if (params.search) qs.set("search", params.search);
+    if (params.is_active === true || params.is_active === false) {
+      qs.set("is_active", String(params.is_active));
+    }
+    const response = await api(`${API_PREFIX}/billing/admin/wallets?${qs.toString()}`);
+    return jsonOrThrow(response, "Não foi possível carregar os usuários.");
+  }
+
+  async function adminCreditWallet(userId, { amountCents, description, idempotencyKey } = {}) {
+    const body = { amount_cents: Number(amountCents) };
+    if (description) body.description = String(description).trim();
+    if (idempotencyKey) body.idempotency_key = String(idempotencyKey);
+    const response = await api(
+      `${API_PREFIX}/billing/admin/wallets/${encodeURIComponent(userId)}/credit`,
+      { method: "POST", body: JSON.stringify(body) }
+    );
+    return jsonOrThrow(response, "Não foi possível conceder o saldo.");
+  }
+
+  async function adminLlmUsage(params = {}) {
+    const qs = new URLSearchParams();
+    if (params.page) qs.set("page", String(params.page));
+    if (params.page_size) qs.set("page_size", String(params.page_size));
+    if (params.search) qs.set("search", params.search);
+    if (params.created_from) qs.set("created_from", params.created_from);
+    if (params.created_to) qs.set("created_to", params.created_to);
+    if (params.only_with_usage === false) qs.set("only_with_usage", "false");
+    const response = await api(`${API_PREFIX}/agents/admin/llm-usage?${qs.toString()}`);
+    return jsonOrThrow(response, "Não foi possível carregar o uso de LLM.");
+  }
+
   async function adminRefundTopup(id) {
     const response = await api(`${API_PREFIX}/billing/admin/topups/${encodeURIComponent(id)}/refund`, {
       method: "POST",
@@ -517,6 +552,9 @@
     adminListServices,
     adminUpdateService,
     adminListTopups,
+    adminListWallets,
+    adminCreditWallet,
+    adminLlmUsage,
     adminRefundTopup,
     adminCancelTopup,
     api,
