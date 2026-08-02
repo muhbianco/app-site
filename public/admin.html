@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Painel administrativo MuhBianco." />
+  <title>Admin — MuhBianco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css?v=16" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="logo" href="/">MuhBianco</a>
+    <nav class="nav" aria-label="Principal">
+      <a href="/conta.html">Conta</a>
+      <a href="/admin.html" class="nav-cta" aria-current="page">Admin</a>
+    </nav>
+  </header>
+
+  <main class="settings-page">
+    <section class="settings-head">
+      <p class="brand-mark compact">Administração</p>
+      <h1 id="admin-title">Cobrança dos serviços</h1>
+      <p class="auth-lede" id="admin-lede">
+        Cada serviço define seu modo de cobrança. Alterações valem para novas assinaturas —
+        quem já assinou mantém o preço congelado até renovar.
+      </p>
+    </section>
+
+    <div class="settings-layout">
+      <nav class="settings-nav" aria-label="Seções do admin" id="admin-nav">
+        <a href="#servicos" data-panel="servicos" class="is-current">Serviços</a>
+        <a href="#transacoes" data-panel="transacoes">Transações</a>
+        <a href="/conta.html">Conta</a>
+      </nav>
+
+      <div class="settings-sections">
+        <!-- Serviços -->
+        <section class="settings-section admin-panel" id="panel-servicos" data-panel="servicos">
+          <h2>Catálogo</h2>
+          <div id="svc-error" class="auth-alert" hidden></div>
+          <div id="svc-ok" class="auth-ok" hidden></div>
+          <div id="svc-list"></div>
+        </section>
+
+        <!-- Transações -->
+        <section class="settings-section admin-panel" id="panel-transacoes" data-panel="transacoes" hidden>
+          <h2>Recargas</h2>
+          <form class="admin-filters" id="tx-filters" autocomplete="off">
+            <label>
+              <span>Cliente</span>
+              <input type="search" id="f-search" placeholder="E-mail, nome ou id" />
+            </label>
+            <label>
+              <span>Status</span>
+              <select id="f-status">
+                <option value="">Todos</option>
+                <option value="pending">Pendente</option>
+                <option value="paid">Pago</option>
+                <option value="refunded">Estornado</option>
+                <option value="cancelled">Cancelado</option>
+                <option value="failed">Falhou</option>
+                <option value="expired">Expirado</option>
+              </select>
+            </label>
+            <label>
+              <span>De</span>
+              <input type="date" id="f-from" />
+            </label>
+            <label>
+              <span>Até</span>
+              <input type="date" id="f-to" />
+            </label>
+            <div class="admin-filters-actions">
+              <button type="submit" class="btn btn-primary">Filtrar</button>
+              <button type="button" class="btn btn-ghost" id="btn-clear">Limpar</button>
+            </div>
+          </form>
+
+          <div id="tx-error" class="auth-alert" hidden></div>
+          <div id="tx-ok" class="auth-ok" hidden></div>
+          <div id="tx-empty" class="tx-empty" hidden>
+            <p>Nenhuma transação com esses filtros.</p>
+          </div>
+
+          <div class="tx-table-wrap" id="tx-table-wrap" hidden>
+            <table class="tx-table admin-tx-table" aria-label="Transações admin">
+              <thead>
+                <tr>
+                  <th scope="col">Data</th>
+                  <th scope="col">Cliente</th>
+                  <th scope="col">Valor</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Saldo</th>
+                  <th scope="col">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tx-body"></tbody>
+            </table>
+          </div>
+
+          <div class="admin-pager" id="pager" hidden>
+            <button type="button" class="btn btn-ghost" id="btn-prev">Anterior</button>
+            <span id="pager-label">—</span>
+            <button type="button" class="btn btn-ghost" id="btn-next">Próxima</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <template id="tpl-admin-service">
+    <article class="settings-card">
+      <header class="settings-card-head">
+        <div>
+          <h3 data-field="name"></h3>
+          <p class="hint" data-field="code"></p>
+          <p class="hint" data-field="subscribers"></p>
+        </div>
+        <span class="settings-badge" data-field="badge" data-state="info">—</span>
+      </header>
+
+      <form class="settings-card-body" data-field="form">
+        <div class="admin-filters">
+          <label>
+            <span>Modo de cobrança</span>
+            <select data-field="billing_mode">
+              <option value="monthly">Assinatura por período</option>
+              <option value="per_use">Por uso</option>
+            </select>
+          </label>
+          <label>
+            <span>Preço (R$)</span>
+            <input type="number" data-field="price" min="0" step="0.01" required />
+          </label>
+          <label>
+            <span>Período (dias)</span>
+            <input type="number" data-field="period_days" min="1" max="365" required />
+          </label>
+          <label>
+            <span>Saldo mínimo (R$)</span>
+            <input type="number" data-field="min_balance" min="0" step="0.01" required />
+          </label>
+          <label>
+            <span>Situação</span>
+            <select data-field="is_active">
+              <option value="true">Ativo no catálogo</option>
+              <option value="false">Oculto</option>
+            </select>
+          </label>
+          <label>
+            <span>Exige WhatsApp</span>
+            <select data-field="requires_phone">
+              <option value="true">Sim</option>
+              <option value="false">Não</option>
+            </select>
+          </label>
+        </div>
+        <div class="admin-filters-actions">
+          <button type="submit" class="btn btn-primary" data-field="save">Salvar</button>
+        </div>
+      </form>
+    </article>
+  </template>
+
+  <script src="/js/auth.js?v=12"></script>
+  <script>
+    (async function () {
+      if (!MuhAuth.requireAuth()) return;
+
+      const PANELS = {
+        servicos: {
+          title: "Cobrança dos serviços",
+          lede:
+            "Cada serviço define seu modo de cobrança. Alterações valem para novas assinaturas — quem já assinou mantém o preço congelado até renovar.",
+        },
+        transacoes: {
+          title: "Todas as transações",
+          lede: "Filtre por cliente e data. Estorne pagamentos confirmados ou cancele pendentes.",
+        },
+      };
+
+      const titleEl = document.getElementById("admin-title");
+      const ledeEl = document.getElementById("admin-lede");
+      const navLinks = document.querySelectorAll("#admin-nav a[data-panel]");
+      const panels = document.querySelectorAll(".admin-panel");
+
+      let currentPanel = "servicos";
+      let txLoadedOnce = false;
+
+      function showPanel(name) {
+        if (!PANELS[name]) name = "servicos";
+        currentPanel = name;
+        const meta = PANELS[name];
+        titleEl.textContent = meta.title;
+        ledeEl.textContent = meta.lede;
+
+        panels.forEach((panel) => {
+          panel.hidden = panel.dataset.panel !== name;
+        });
+        navLinks.forEach((link) => {
+          link.classList.toggle("is-current", link.dataset.panel === name);
+        });
+
+        const hash = `#${name}`;
+        if (location.hash !== hash) {
+          history.replaceState(null, "", hash);
+        }
+
+        if (name === "servicos") loadServices();
+        if (name === "transacoes") {
+          if (!txLoadedOnce) {
+            txLoadedOnce = true;
+            loadTransactions();
+          }
+        }
+      }
+
+      navLinks.forEach((link) => {
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          showPanel(link.dataset.panel);
+        });
+      });
+
+      window.addEventListener("hashchange", () => {
+        showPanel((location.hash || "#servicos").slice(1));
+      });
+
+      // ---------- Serviços ----------
+      const svcList = document.getElementById("svc-list");
+      const svcError = document.getElementById("svc-error");
+      const svcOk = document.getElementById("svc-ok");
+      const svcTpl = document.getElementById("tpl-admin-service");
+
+      function showSvcError(message) {
+        svcOk.hidden = true;
+        svcError.hidden = false;
+        svcError.textContent = message;
+      }
+
+      function showSvcOk(message) {
+        svcError.hidden = true;
+        svcOk.hidden = false;
+        svcOk.textContent = message;
+      }
+
+      function buildServiceCard(service) {
+        const node = svcTpl.content.firstElementChild.cloneNode(true);
+        const q = (name) => node.querySelector(`[data-field="${name}"]`);
+
+        q("name").textContent = service.name;
+        q("code").textContent = service.code;
+        q("subscribers").textContent = `${service.active_subscriptions} assinatura(s) ativa(s)`;
+        q("badge").textContent = service.is_active ? "No catálogo" : "Oculto";
+        q("badge").dataset.state = service.is_active ? "done" : "pending";
+
+        q("billing_mode").value = service.billing_mode;
+        q("price").value = (service.price_cents / 100).toFixed(2);
+        q("period_days").value = service.period_days;
+        q("min_balance").value = (service.min_balance_cents / 100).toFixed(2);
+        q("is_active").value = String(service.is_active);
+        q("requires_phone").value = String(service.requires_phone);
+
+        q("form").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const btn = q("save");
+          btn.disabled = true;
+          try {
+            await MuhAuth.adminUpdateService(service.id, {
+              billing_mode: q("billing_mode").value,
+              price_cents: Math.round(Number(q("price").value) * 100),
+              period_days: Number(q("period_days").value),
+              min_balance_cents: Math.round(Number(q("min_balance").value) * 100),
+              is_active: q("is_active").value === "true",
+              requires_phone: q("requires_phone").value === "true",
+            });
+            showSvcOk(`"${service.name}" atualizado.`);
+            await loadServices();
+          } catch (err) {
+            showSvcError(err.message || "Não foi possível salvar.");
+          } finally {
+            btn.disabled = false;
+          }
+        });
+
+        return node;
+      }
+
+      async function loadServices() {
+        try {
+          svcError.hidden = true;
+          const services = await MuhAuth.adminListServices();
+          svcList.innerHTML = "";
+          services.forEach((service) => svcList.appendChild(buildServiceCard(service)));
+        } catch (err) {
+          showSvcError(err.message || "Falha ao carregar o catálogo.");
+        }
+      }
+
+      // ---------- Transações ----------
+      const txError = document.getElementById("tx-error");
+      const txOk = document.getElementById("tx-ok");
+      const txEmpty = document.getElementById("tx-empty");
+      const txTableWrap = document.getElementById("tx-table-wrap");
+      const txBody = document.getElementById("tx-body");
+      const pager = document.getElementById("pager");
+      const pagerLabel = document.getElementById("pager-label");
+      const btnPrev = document.getElementById("btn-prev");
+      const btnNext = document.getElementById("btn-next");
+
+      let page = 1;
+      const pageSize = 20;
+      let pages = 1;
+
+      function brl(cents) {
+        return (Number(cents) / 100).toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        });
+      }
+
+      function formatDate(iso) {
+        if (!iso) return "—";
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return "—";
+        return d.toLocaleString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+
+      function statusMeta(status) {
+        const map = {
+          paid: { label: "Pago", tone: "ok" },
+          pending: { label: "Pendente", tone: "wait" },
+          failed: { label: "Falhou", tone: "err" },
+          cancelled: { label: "Cancelado", tone: "err" },
+          expired: { label: "Expirado", tone: "err" },
+          refunded: { label: "Estornado", tone: "err" },
+        };
+        return map[status] || { label: status || "—", tone: "wait" };
+      }
+
+      function showTxError(msg) {
+        txOk.hidden = true;
+        txError.hidden = false;
+        txError.textContent = msg;
+      }
+
+      function showTxOk(msg) {
+        txError.hidden = true;
+        txOk.hidden = false;
+        txOk.textContent = msg;
+      }
+
+      function filtersPayload() {
+        const search = document.getElementById("f-search").value.trim();
+        const status = document.getElementById("f-status").value;
+        const from = document.getElementById("f-from").value;
+        const to = document.getElementById("f-to").value;
+        const payload = { page, page_size: pageSize };
+        if (search) payload.search = search;
+        if (status) payload.status = status;
+        if (from) payload.created_from = `${from}T00:00:00`;
+        if (to) payload.created_to = `${to}T23:59:59`;
+        return payload;
+      }
+
+      function renderRows(items) {
+        txBody.innerHTML = "";
+        items.forEach((tx) => {
+          const meta = statusMeta(tx.status);
+          const when = tx.paid_at || tx.created_at;
+          const tr = document.createElement("tr");
+          tr.dataset.id = tx.id;
+
+          let actions = '<span class="tx-detail">—</span>';
+          if (tx.can_refund) {
+            actions =
+              '<button type="button" class="btn btn-ghost btn-compact" data-action="refund">Estornar</button>';
+          } else if (tx.can_cancel) {
+            actions =
+              '<button type="button" class="btn btn-ghost btn-compact" data-action="cancel">Cancelar</button>';
+          }
+
+          tr.innerHTML = `
+            <td><span class="tx-date">${formatDate(when)}</span></td>
+            <td>
+              <span class="tx-client">${tx.user_full_name || "—"}</span>
+              <span class="tx-detail">${tx.user_email || ""}</span>
+            </td>
+            <td><span class="tx-amount">${brl(tx.amount_cents)}</span></td>
+            <td><span class="tx-status tx-status--${meta.tone}">${meta.label}</span></td>
+            <td><span class="tx-detail">${brl(tx.wallet_balance_cents)}</span></td>
+            <td class="tx-actions">${actions}</td>
+          `;
+          txBody.appendChild(tr);
+        });
+      }
+
+      async function loadTransactions() {
+        txError.hidden = true;
+        try {
+          const data = await MuhAuth.adminListTopups(filtersPayload());
+          const items = data.items || [];
+          pages = data.pages || 1;
+          page = data.page || 1;
+
+          txEmpty.hidden = items.length > 0;
+          txTableWrap.hidden = items.length === 0;
+          pager.hidden = items.length === 0;
+          pagerLabel.textContent = `Página ${page} de ${pages} · ${data.total || 0} itens`;
+          btnPrev.disabled = page <= 1;
+          btnNext.disabled = page >= pages;
+
+          if (items.length) renderRows(items);
+        } catch (err) {
+          txTableWrap.hidden = true;
+          txEmpty.hidden = true;
+          pager.hidden = true;
+          showTxError(err.message || "Falha ao carregar.");
+        }
+      }
+
+      document.getElementById("tx-filters").addEventListener("submit", (event) => {
+        event.preventDefault();
+        page = 1;
+        loadTransactions();
+      });
+
+      document.getElementById("btn-clear").addEventListener("click", () => {
+        document.getElementById("f-search").value = "";
+        document.getElementById("f-status").value = "";
+        document.getElementById("f-from").value = "";
+        document.getElementById("f-to").value = "";
+        page = 1;
+        loadTransactions();
+      });
+
+      btnPrev.addEventListener("click", () => {
+        if (page > 1) {
+          page -= 1;
+          loadTransactions();
+        }
+      });
+      btnNext.addEventListener("click", () => {
+        if (page < pages) {
+          page += 1;
+          loadTransactions();
+        }
+      });
+
+      txBody.addEventListener("click", async (event) => {
+        const btn = event.target.closest("[data-action]");
+        if (!btn) return;
+        const tr = btn.closest("tr");
+        const id = tr && tr.dataset.id;
+        if (!id) return;
+
+        const action = btn.dataset.action;
+        const label = action === "refund" ? "estornar" : "cancelar";
+        if (!confirm(`Confirma ${label} esta recarga?`)) return;
+
+        btn.disabled = true;
+        try {
+          if (action === "refund") {
+            await MuhAuth.adminRefundTopup(id);
+            showTxOk("Estorno concluído (saldo debitado e solicitado no Mercado Pago).");
+          } else {
+            await MuhAuth.adminCancelTopup(id);
+            showTxOk("Recarga pendente cancelada.");
+          }
+          await loadTransactions();
+        } catch (err) {
+          showTxError(err.message || `Falha ao ${label}.`);
+          btn.disabled = false;
+        }
+      });
+
+      // ---------- boot ----------
+      try {
+        const user = await MuhAuth.me();
+        if (user.role !== "admin") {
+          location.href = "/conta.html";
+          return;
+        }
+        const initial = (location.hash || "#servicos").slice(1);
+        showPanel(initial);
+      } catch (err) {
+        await MuhAuth.logout();
+        location.href = "/login.html?error=authentication_failed";
+      }
+    })();
+  </script>
+</body>
+</html>
