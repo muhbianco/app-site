@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=20" />
+  <link rel="stylesheet" href="/css/styles.css?v=21" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -111,7 +111,11 @@
 
         <!-- Transações -->
         <section class="settings-section client-panel" id="panel-transacoes" data-panel="transacoes" hidden>
-          <h2>Extrato do saldo</h2>
+          <h2>Recargas pendentes</h2>
+          <div id="pending-topups" class="pending-topups" hidden></div>
+          <div id="pending-empty" class="hint" hidden>Nenhuma recarga pendente.</div>
+
+          <h2 style="margin-top: 1.75rem">Extrato do saldo</h2>
           <form class="admin-filters" id="tx-filters" autocomplete="off">
             <label>
               <span>Tipo</span>
@@ -410,7 +414,7 @@
     </form>
   </dialog>
 
-  <script src="/js/auth.js?v=16"></script>
+  <script src="/js/auth.js?v=17"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -990,6 +994,8 @@
         const pagerLabel = document.getElementById("tx-pager-label");
         const btnPrev = document.getElementById("btn-tx-prev");
         const btnNext = document.getElementById("btn-tx-next");
+        const pendingBox = document.getElementById("pending-topups");
+        const pendingEmpty = document.getElementById("pending-empty");
 
         function formatTxDate(iso) {
           if (!iso) return "—";
@@ -1013,7 +1019,39 @@
 
         errorBox.hidden = true;
         try {
-          const data = await MuhAuth.listLedger(txFiltersPayload());
+          const [topups, data] = await Promise.all([
+            MuhAuth.listTopups().catch(() => []),
+            MuhAuth.listLedger(txFiltersPayload()),
+          ]);
+          const pending = (topups || []).filter((t) => t.status === "pending");
+          pendingBox.innerHTML = "";
+          if (pending.length) {
+            pendingEmpty.hidden = true;
+            pendingBox.hidden = false;
+            pending.forEach((topup) => {
+              const card = document.createElement("article");
+              card.className = "settings-card pending-topup-card";
+              card.innerHTML = `
+                <header class="settings-card-head">
+                  <div>
+                    <h3>Recarga ${brl(topup.amount_cents)}</h3>
+                    <p class="hint">Pendente · criada em ${formatTxDate(topup.created_at)}</p>
+                  </div>
+                  <span class="settings-badge" data-state="pending">Pendente</span>
+                </header>
+                <div class="settings-card-body">
+                  <button type="button" class="btn btn-ghost btn-compact" data-cancel-topup="${topup.id}">
+                    Cancelar recarga
+                  </button>
+                </div>
+              `;
+              pendingBox.appendChild(card);
+            });
+          } else {
+            pendingBox.hidden = true;
+            pendingEmpty.hidden = false;
+          }
+
           const items = data.items || [];
           txPages = data.pages || 1;
           txPage = data.page || 1;
@@ -1046,10 +1084,30 @@
           tableWrap.hidden = true;
           emptyBox.hidden = true;
           pager.hidden = true;
+          pendingBox.hidden = true;
+          pendingEmpty.hidden = true;
           errorBox.hidden = false;
           errorBox.textContent = err.message || "Falha ao carregar transações.";
         }
       }
+
+      document.getElementById("pending-topups").addEventListener("click", async (event) => {
+        const btn = event.target.closest("[data-cancel-topup]");
+        if (!btn) return;
+        const id = btn.getAttribute("data-cancel-topup");
+        if (!id) return;
+        if (!confirm("Cancelar esta recarga pendente?")) return;
+        btn.disabled = true;
+        try {
+          await MuhAuth.cancelTopup(id);
+          await loadTransacoes();
+        } catch (err) {
+          document.getElementById("tx-error").hidden = false;
+          document.getElementById("tx-error").textContent =
+            err.message || "Não foi possível cancelar.";
+          btn.disabled = false;
+        }
+      });
 
       document.getElementById("tx-filters").addEventListener("submit", (event) => {
         event.preventDefault();
@@ -1102,6 +1160,9 @@
         let mpWindow = null;
         let pollTimer = null;
         let watchTimer = null;
+        let closeRetryTimer = null;
+        const CLOSE_RETRY_MS = 30000;
+        const MAX_PENDING_TOPUPS = 2;
 
         function showError(message) {
           errorBox.hidden = false;
@@ -1170,6 +1231,10 @@
             clearInterval(watchTimer);
             watchTimer = null;
           }
+          if (closeRetryTimer) {
+            clearTimeout(closeRetryTimer);
+            closeRetryTimer = null;
+          }
         }
 
         function showWaiting(title, message, { waiting = true, showRetry = false, showReopen = false } = {}) {
@@ -1222,6 +1287,7 @@
           stopWatchers();
           let ticks = 0;
           const maxTicks = 150;
+          let windowClosedAt = null;
 
           pollTimer = setInterval(async () => {
             ticks += 1;
@@ -1235,9 +1301,10 @@
                 stopWatchers();
                 showWaiting(
                   "Ainda confirmando…",
-                  "Se você já pagou, o saldo deve aparecer em breve na conta. Pode fechar esta página.",
-                  { waiting: false, showReopen: Boolean(checkoutUrl) }
+                  "Se você já pagou, o saldo deve aparecer em breve na conta. Pode tentar de novo ou cancelar a pendente em Transações.",
+                  { waiting: false, showRetry: true, showReopen: Boolean(checkoutUrl) }
                 );
+                busy = false;
               }
             } catch (_) {}
           }, 2000);
@@ -1247,14 +1314,24 @@
             try {
               if (mpWindow.closed) {
                 mpWindow = null;
-                if (activeTopupId) {
+                if (!activeTopupId || windowClosedAt) return;
+                windowClosedAt = Date.now();
+                showWaiting(
+                  "Confirmando pagamento…",
+                  "A janela do Mercado Pago foi fechada. Verificando por até 30 segundos…",
+                  { waiting: true, showReopen: Boolean(checkoutUrl) }
+                );
+                checkTopupOnce().catch(() => {});
+                closeRetryTimer = setTimeout(() => {
+                  closeRetryTimer = null;
+                  if (!activeTopupId) return;
                   showWaiting(
-                    "Confirmando pagamento…",
-                    "A janela do Mercado Pago foi fechada. Estamos verificando se o pagamento entrou.",
-                    { waiting: true, showReopen: Boolean(checkoutUrl) }
+                    "Pagamento não confirmado",
+                    "Não vimos o pagamento em 30 segundos. Tente de novo ou cancele a recarga pendente em Transações.",
+                    { waiting: false, showRetry: true, showReopen: Boolean(checkoutUrl) }
                   );
-                  checkTopupOnce().catch(() => {});
-                }
+                  busy = false;
+                }, CLOSE_RETRY_MS);
               }
             } catch (_) {}
           }, 800);
@@ -1302,6 +1379,19 @@
           if (cents < minCents || cents > maxCents) {
             showError(`Valor deve ser entre ${brl(minCents)} e ${brl(maxCents)}.`);
             return;
+          }
+
+          try {
+            const topups = await MuhAuth.listTopups();
+            const pending = (topups || []).filter((t) => t.status === "pending");
+            if (pending.length >= MAX_PENDING_TOPUPS) {
+              showError(
+                "Você já tem 2 recargas pendentes. Vá em Transações, cancele as antigas e tente de novo."
+              );
+              return;
+            }
+          } catch (_) {
+            // Se a lista falhar, o backend ainda bloqueia no create.
           }
 
           const popup = openCheckoutWindow();

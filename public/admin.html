@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=20" />
+  <link rel="stylesheet" href="/css/styles.css?v=21" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -291,7 +291,7 @@
     </article>
   </template>
 
-  <script src="/js/auth.js?v=16"></script>
+  <script src="/js/auth.js?v=17"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -506,11 +506,30 @@
         items.forEach((u) => {
           const tr = document.createElement("tr");
           tr.dataset.userId = u.user_id;
+          const subs = u.subscriptions || [];
+          const agentBits = subs
+            .map((s) => {
+              const label =
+                s.status === "paused"
+                  ? "pausado (mudo)"
+                  : s.status === "active"
+                    ? "ativo"
+                    : s.status;
+              let action = "";
+              if (s.can_pause) {
+                action = `<button type="button" class="btn btn-ghost btn-compact" data-action="pause" data-sub="${s.id}">Pausar agente</button>`;
+              } else if (s.can_resume) {
+                action = `<button type="button" class="btn btn-ghost btn-compact" data-action="resume" data-sub="${s.id}">Retomar agente</button>`;
+              }
+              return `<span class="tx-detail">${s.name}: ${label}</span>${action}`;
+            })
+            .join("");
           tr.innerHTML = `
             <td>
               <span class="tx-client">${u.full_name || "—"}</span>
               <span class="tx-detail">${u.email || ""}</span>
               <span class="tx-detail">${u.phone || ""}</span>
+              ${agentBits || '<span class="tx-detail">Sem agente</span>'}
             </td>
             <td><span class="tx-detail">${u.role || "—"} · ${u.is_active ? "ativo" : "inativo"}</span></td>
             <td><span class="tx-amount">${brl(u.balance_cents)}</span></td>
@@ -569,7 +588,35 @@
         }
       });
 
-      usrBody.addEventListener("click", (event) => {
+      usrBody.addEventListener("click", async (event) => {
+        const pauseBtn = event.target.closest("[data-action=pause]");
+        const resumeBtn = event.target.closest("[data-action=resume]");
+        if (pauseBtn || resumeBtn) {
+          const btn = pauseBtn || resumeBtn;
+          const subId = btn.getAttribute("data-sub");
+          if (!subId) return;
+          const pausing = Boolean(pauseBtn);
+          if (
+            !confirm(
+              pausing
+                ? "Pausar o agente deste usuário? Ele fica mudo no WhatsApp."
+                : "Retomar o agente deste usuário?"
+            )
+          )
+            return;
+          btn.disabled = true;
+          try {
+            if (pausing) await MuhAuth.adminPauseSubscription(subId);
+            else await MuhAuth.adminResumeSubscription(subId);
+            showUsrOk(pausing ? "Agente pausado (mudo)." : "Agente retomado.");
+            await loadUsers();
+          } catch (err) {
+            showUsrError(err.message || "Falha ao alterar o agente.");
+            btn.disabled = false;
+          }
+          return;
+        }
+
         const btn = event.target.closest("[data-action=credit]");
         if (!btn) return;
         const tr = btn.closest("tr");

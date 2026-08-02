@@ -509,6 +509,29 @@
     return data;
   }
 
+  async function cancelTopup(id) {
+    const response = await api(`${API_PREFIX}/billing/topups/${encodeURIComponent(id)}/cancel`, {
+      method: "POST",
+    });
+    return jsonOrThrow(response, "Não foi possível cancelar a recarga.");
+  }
+
+  async function adminPauseSubscription(userServiceId) {
+    const response = await api(
+      `${API_PREFIX}/services/admin/subscriptions/${encodeURIComponent(userServiceId)}/pause`,
+      { method: "POST" }
+    );
+    return jsonOrThrow(response, "Não foi possível pausar o agente.");
+  }
+
+  async function adminResumeSubscription(userServiceId) {
+    const response = await api(
+      `${API_PREFIX}/services/admin/subscriptions/${encodeURIComponent(userServiceId)}/resume`,
+      { method: "POST" }
+    );
+    return jsonOrThrow(response, "Não foi possível retomar o agente.");
+  }
+
   global.MuhAuth = {
     API_BASE,
     API_PREFIX,
@@ -557,6 +580,9 @@
     adminLlmUsage,
     adminRefundTopup,
     adminCancelTopup,
+    cancelTopup,
+    adminPauseSubscription,
+    adminResumeSubscription,
     api,
   };
 })(window);
