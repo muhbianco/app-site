@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Fale com a MuhBianco — orçamento para automação, chatbots, agentes e sites." />
+  <meta name="description" content="Fale com a MuhBianco — orçamento sob demanda, sugestão de agentes ou suporte da conta." />
   <title>Contato — MuhBianco</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=3" />
+  <link rel="stylesheet" href="/css/styles.css?v=19" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -16,7 +16,8 @@
   <header class="site-header">
     <a class="logo" href="/">MuhBianco</a>
     <nav class="nav" aria-label="Principal">
-      <a href="/#servicos">Serviços</a>
+      <a href="/#agentes">Agentes</a>
+      <a href="/#sob-demanda">Sob demanda</a>
       <a href="/contato.html" aria-current="page">Contato</a>
       <a href="/login.html" class="nav-cta">Entrar</a>
     </nav>
@@ -26,8 +27,8 @@
     <section class="section contact-hero">
       <header class="section-head">
         <p class="brand-mark compact">MuhBianco</p>
-        <h1>Vamos conversar</h1>
-        <p>Descreva o que precisa. Respondo com próximo passo e estimativa.</p>
+        <h1 id="contact-title">Vamos conversar</h1>
+        <p id="contact-lede">Escolha o tipo de contato. Orçamento, agentes ou suporte seguem filas diferentes.</p>
       </header>
 
       <div class="contact-layout">
@@ -49,15 +50,26 @@
             <input type="tel" name="phone" autocomplete="tel" placeholder="(11) 99999-9999" />
           </label>
           <label>
-            <span>Interesse</span>
-            <select name="interest" required>
-              <option value="" disabled selected>Escolha um serviço</option>
-              <option value="Atendimento automatizado">Atendimento automatizado</option>
-              <option value="Integrações e automações">Integrações e automações</option>
-              <option value="Agentes de conversa">Agentes de conversa</option>
-              <option value="Sites e sistemas">Sites e sistemas</option>
-              <option value="Coleta de dados">Coleta inteligente de dados</option>
-              <option value="Outro">Outro</option>
+            <span>Tipo de contato</span>
+            <select name="interest" id="contact-interest" required>
+              <option value="" disabled selected>Escolha uma opção</option>
+              <optgroup label="Agentes (área logada)">
+                <option value="Agente: Gestão financeira">Gestão financeira no WhatsApp</option>
+                <option value="Agente: sugestão de novo agente">Sugerir um novo agente</option>
+              </optgroup>
+              <optgroup label="Orçamento sob demanda">
+                <option value="Orçamento: Atendimento automatizado">Atendimento automatizado</option>
+                <option value="Orçamento: Integrações e automações">Integrações e automações</option>
+                <option value="Orçamento: Agentes sob medida">Agentes de conversa sob medida</option>
+                <option value="Orçamento: Sites e sistemas">Sites e sistemas</option>
+                <option value="Orçamento: Coleta de dados">Coleta inteligente de dados</option>
+                <option value="Orçamento: Outro">Outro projeto</option>
+              </optgroup>
+              <optgroup label="Suporte">
+                <option value="Suporte: Conta e cobrança">Conta, saldo e cobrança</option>
+                <option value="Suporte: Agente financeiro">Agente de gestão financeira</option>
+                <option value="Suporte: Outro">Outro suporte</option>
+              </optgroup>
             </select>
           </label>
           <label class="full">
@@ -83,6 +95,11 @@
               <a id="email-direct" href="mailto:contato@muhbianco.com.br">contato@muhbianco.com.br</a>
             </li>
           </ul>
+          <div class="contact-paths">
+            <p><strong>Orçamento</strong> — projetos sob demanda e integrações.</p>
+            <p><strong>Agentes</strong> — dúvidas comerciais do catálogo da conta.</p>
+            <p><strong>Suporte</strong> — quem já é cliente: saldo, cobrança ou o agente.</p>
+          </div>
           <p class="aside-note">Horário comercial · resposta em até 1 dia útil.</p>
         </aside>
       </div>
@@ -91,10 +108,15 @@
 
   <footer class="site-footer">
     <span>© <span id="year"></span> MuhBianco</span>
-    <a href="https://muhbianco.com.br">muhbianco.com.br</a>
+    <nav class="footer-nav" aria-label="Rodapé">
+      <a href="/#agentes">Agentes</a>
+      <a href="/contato.html?tipo=orcamento">Orçamento</a>
+      <a href="/contato.html?tipo=suporte">Suporte</a>
+      <a href="https://muhbianco.com.br">muhbianco.com.br</a>
+    </nav>
   </footer>
 
-  <script src="/js/main.js?v=2"></script>
-  <script src="/js/contact.js?v=2"></script>
+  <script src="/js/main.js?v=3"></script>
+  <script src="/js/contact.js?v=3"></script>
 </body>
 </html>
