@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=16" />
+  <link rel="stylesheet" href="/css/styles.css?v=17" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -111,26 +111,62 @@
 
         <!-- Transações -->
         <section class="settings-section client-panel" id="panel-transacoes" data-panel="transacoes" hidden>
-          <h2>Histórico</h2>
+          <h2>Extrato do saldo</h2>
+          <form class="admin-filters" id="tx-filters" autocomplete="off">
+            <label>
+              <span>Tipo</span>
+              <select id="f-direction">
+                <option value="">Todos</option>
+                <option value="in">Entradas</option>
+                <option value="out">Saídas</option>
+              </select>
+            </label>
+            <label>
+              <span>Categoria</span>
+              <select id="f-entry-type">
+                <option value="">Todas</option>
+                <option value="topup">Recarga</option>
+                <option value="usage">Uso / assinatura</option>
+                <option value="refund">Estorno</option>
+                <option value="adjustment">Ajuste</option>
+              </select>
+            </label>
+            <label>
+              <span>De</span>
+              <input type="date" id="f-from" />
+            </label>
+            <label>
+              <span>Até</span>
+              <input type="date" id="f-to" />
+            </label>
+            <div class="admin-filters-actions">
+              <button type="submit" class="btn btn-primary">Filtrar</button>
+              <button type="button" class="btn btn-ghost" id="btn-tx-clear">Limpar</button>
+            </div>
+          </form>
           <div id="tx-error" class="auth-alert" hidden></div>
           <div id="tx-empty" class="tx-empty" hidden>
-            <p>Nenhuma transação ainda.</p>
+            <p>Nenhuma movimentação com esses filtros.</p>
             <a class="btn btn-primary" href="#saldo" data-goto="saldo">Adicionar saldo</a>
           </div>
           <div class="tx-table-wrap" id="tx-table-wrap" hidden>
-            <table class="tx-table" aria-label="Histórico de transações">
+            <table class="tx-table" aria-label="Extrato da carteira">
               <thead>
                 <tr>
                   <th scope="col">Data</th>
+                  <th scope="col">Descrição</th>
+                  <th scope="col">Tipo</th>
                   <th scope="col">Valor</th>
-                  <th scope="col">Status</th>
+                  <th scope="col">Saldo</th>
                 </tr>
               </thead>
               <tbody id="tx-body"></tbody>
             </table>
           </div>
-          <div class="balance-actions" style="margin-top: 1.25rem">
-            <a class="btn btn-primary" href="#saldo" data-goto="saldo">Adicionar saldo</a>
+          <div class="admin-pager" id="tx-pager" hidden>
+            <button type="button" class="btn btn-ghost" id="btn-tx-prev">Anterior</button>
+            <span id="tx-pager-label">—</span>
+            <button type="button" class="btn btn-ghost" id="btn-tx-next">Próxima</button>
           </div>
         </section>
 
@@ -296,23 +332,38 @@
       <div class="auth-ok" data-field="ok" hidden></div>
       <div class="settings-card-body" data-field="body">
         <p class="hint" data-field="status-detail" hidden></p>
+
         <form class="settings-inline-form" data-field="enable-form" hidden>
-          <label data-field="phone-label">
-            <span>Celular do WhatsApp (com DDD)</span>
-            <input type="tel" data-field="phone" inputmode="tel" autocomplete="tel"
-                   placeholder="(11) 99999-8888" maxlength="20" />
+          <p class="hint" data-field="enable-phone-hint"></p>
+          <label class="terms-check" data-field="terms-label" hidden>
+            <input type="checkbox" data-field="terms-check" />
+            <span>Li e aceito os <button type="button" class="linkish" data-field="terms-open">termos de uso</button></span>
           </label>
+          <pre class="terms-box" data-field="terms-box" hidden></pre>
           <button type="submit" class="btn btn-primary" data-field="enable-btn">Habilitar</button>
         </form>
-        <form class="settings-inline-form" data-field="code-form" hidden>
-          <label>
-            <span>Código recebido no WhatsApp</span>
-            <input type="text" data-field="code" inputmode="numeric" autocomplete="one-time-code"
-                   minlength="6" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required />
-          </label>
-          <button type="submit" class="btn btn-primary" data-field="confirm-btn">Confirmar</button>
-          <button type="button" class="btn btn-ghost btn-compact" data-field="resend-btn">Reenviar</button>
-        </form>
+
+        <div data-field="phones-block" hidden>
+          <h4 class="settings-subhead">WhatsApp vinculados</h4>
+          <ul class="phone-list" data-field="phone-list"></ul>
+          <form class="settings-inline-form" data-field="add-phone-form">
+            <label>
+              <span>Adicionar outro WhatsApp</span>
+              <input type="tel" data-field="extra-phone" inputmode="tel" autocomplete="tel"
+                     placeholder="(11) 99999-8888" maxlength="20" required />
+            </label>
+            <button type="submit" class="btn btn-ghost" data-field="add-phone-btn">Enviar código</button>
+          </form>
+          <form class="settings-inline-form" data-field="extra-code-form" hidden>
+            <label>
+              <span>Código recebido</span>
+              <input type="text" data-field="extra-code" inputmode="numeric" autocomplete="one-time-code"
+                     minlength="6" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required />
+            </label>
+            <button type="submit" class="btn btn-primary" data-field="extra-confirm-btn">Confirmar número</button>
+          </form>
+        </div>
+
         <div class="balance-actions" data-field="active-actions" hidden>
           <button type="button" class="btn btn-ghost btn-compact" data-field="pause-btn" hidden>
             Pausar agente
@@ -328,7 +379,7 @@
     </article>
   </template>
 
-  <script src="/js/auth.js?v=12"></script>
+  <script src="/js/auth.js?v=13"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -347,7 +398,7 @@
         transacoes: {
           mark: "Carteira",
           title: "Transações",
-          lede: "Recargas via Mercado Pago — status, valor e data.",
+          lede: "Entradas e saídas do saldo — recargas, assinaturas e estornos.",
         },
         saldo: {
           mark: "Checkout",
@@ -589,57 +640,9 @@
         const status = sub ? sub.status : null;
         const statusDetail = q("status-detail");
         const enableForm = q("enable-form");
-        const codeForm = q("code-form");
         const activeActions = q("active-actions");
-        const phoneInput = q("phone");
-
-        if (!service.requires_phone) q("phone-label").hidden = true;
-        else phoneInput.required = true;
-
-        if (status === "active" || status === "paused") {
-          const paused = status === "paused";
-          badge.dataset.state = paused ? "pending" : "done";
-          badge.textContent = paused ? "Pausado" : "Ativo";
-          activeActions.hidden = false;
-          q("pause-btn").hidden = paused;
-          q("resume-btn").hidden = !paused;
-          const partes = [];
-          if (sub.phone) partes.push(`Número: ${formatPhone(sub.phone)}`);
-          if (sub.current_period_end) {
-            partes.push(
-              sub.cancel_at_period_end
-                ? `Ativo até ${formatDate(sub.current_period_end)} (não renova)`
-                : `Renova em ${formatDate(sub.current_period_end)}`
-            );
-          }
-          if (paused) partes.push("Agente silenciado — a cobrança do período segue normal");
-          statusDetail.textContent = partes.join(" · ");
-          statusDetail.hidden = partes.length === 0;
-        } else if (status === "pending_phone") {
-          badge.dataset.state = "pending";
-          badge.textContent = "Confirmação pendente";
-          enableForm.hidden = false;
-          codeForm.hidden = false;
-          if (sub.phone) phoneInput.value = formatPhone(sub.phone);
-          statusDetail.textContent = "Confirme o código enviado no WhatsApp para ativar.";
-          statusDetail.hidden = false;
-        } else if (status === "suspended") {
-          badge.dataset.state = "pending";
-          badge.textContent = "Suspenso";
-          enableForm.hidden = false;
-          if (sub.phone) phoneInput.value = formatPhone(sub.phone);
-          statusDetail.textContent =
-            "Suspenso por saldo insuficiente. Adicione saldo e habilite de novo.";
-          statusDetail.hidden = false;
-        } else {
-          badge.dataset.state = "info";
-          badge.textContent = "Disponível";
-          enableForm.hidden = false;
-          if (!service.can_enable) {
-            statusDetail.textContent = service.blocked_reason || "";
-            statusDetail.hidden = !service.blocked_reason;
-          }
-        }
+        const phonesBlock = q("phones-block");
+        let pendingExtraPhone = "";
 
         function showError(message) {
           q("ok").hidden = true;
@@ -653,19 +656,107 @@
           q("ok").textContent = message;
         }
 
+        function renderPhones() {
+          const list = q("phone-list");
+          list.innerHTML = "";
+          const phones = (sub && sub.phones) || [];
+          phones.forEach((item) => {
+            const li = document.createElement("li");
+            const label = item.is_primary ? "principal" : "extra";
+            li.innerHTML = `<span>${formatPhone(item.phone)} <em>(${label})</em></span>`;
+            if (!item.is_primary && item.verified) {
+              const btn = document.createElement("button");
+              btn.type = "button";
+              btn.className = "btn btn-ghost btn-compact";
+              btn.textContent = "Remover";
+              btn.addEventListener("click", async () => {
+                if (!confirm("Remover este WhatsApp do agente?")) return;
+                btn.disabled = true;
+                try {
+                  await MuhAuth.removeServicePhone(service.code, item.id);
+                  await reloadServicos("Número removido.");
+                } catch (err) {
+                  showError(err.message || "Falha ao remover.");
+                  btn.disabled = false;
+                }
+              });
+              li.appendChild(btn);
+            }
+            list.appendChild(li);
+          });
+        }
+
+        if (status === "active" || status === "paused") {
+          const paused = status === "paused";
+          badge.dataset.state = paused ? "pending" : "done";
+          badge.textContent = paused ? "Pausado" : "Ativo";
+          activeActions.hidden = false;
+          phonesBlock.hidden = false;
+          q("pause-btn").hidden = paused;
+          q("resume-btn").hidden = !paused;
+          renderPhones();
+          const partes = [];
+          if (sub.phone) partes.push(`Principal: ${formatPhone(sub.phone)}`);
+          if (sub.current_period_end) {
+            partes.push(
+              sub.cancel_at_period_end
+                ? `Ativo até ${formatDate(sub.current_period_end)} (não renova)`
+                : `Renova em ${formatDate(sub.current_period_end)}`
+            );
+          }
+          if (paused) partes.push("Agente silenciado — a cobrança do período segue normal");
+          statusDetail.textContent = partes.join(" · ");
+          statusDetail.hidden = partes.length === 0;
+        } else if (status === "suspended") {
+          badge.dataset.state = "pending";
+          badge.textContent = "Suspenso";
+          enableForm.hidden = false;
+          statusDetail.textContent =
+            "Suspenso por saldo insuficiente. Adicione saldo e habilite de novo.";
+          statusDetail.hidden = false;
+        } else {
+          badge.dataset.state = "info";
+          badge.textContent = "Disponível";
+          enableForm.hidden = false;
+          if (!service.can_enable) {
+            statusDetail.textContent = service.blocked_reason || "";
+            statusDetail.hidden = !service.blocked_reason;
+          }
+        }
+
+        if (!enableForm.hidden) {
+          const hint = q("enable-phone-hint");
+          if (service.account_phone_verified && service.account_phone) {
+            hint.textContent = `Será habilitado no WhatsApp principal já confirmado: ${formatPhone(
+              service.account_phone
+            )}.`;
+          } else {
+            hint.textContent =
+              "Confirme seu WhatsApp em Configurações antes de habilitar este serviço.";
+          }
+          if (service.terms) {
+            q("terms-label").hidden = false;
+            q("terms-box").textContent = service.terms.text;
+            q("terms-open").addEventListener("click", () => {
+              q("terms-box").hidden = !q("terms-box").hidden;
+            });
+          }
+        }
+
         enableForm.addEventListener("submit", async (event) => {
           event.preventDefault();
+          if (service.terms && !q("terms-check").checked) {
+            showError("Marque que leu e aceitou os termos de uso.");
+            return;
+          }
           const btn = q("enable-btn");
           btn.disabled = true;
           try {
-            const result = await MuhAuth.enableService(service.code, phoneInput.value);
+            const result = await MuhAuth.enableService(service.code, {
+              termsAccepted: Boolean(q("terms-check") && q("terms-check").checked),
+            });
             showOk(result.message || "Serviço habilitado.");
-            if (result.verification_required) {
-              codeForm.hidden = false;
-              q("code").focus();
-            } else {
-              await reloadServicos();
-            }
+            await reloadServicos();
           } catch (err) {
             showError(err.message || "Não foi possível habilitar.");
           } finally {
@@ -673,28 +764,36 @@
           }
         });
 
-        codeForm.addEventListener("submit", async (event) => {
+        q("add-phone-form").addEventListener("submit", async (event) => {
           event.preventDefault();
-          const btn = q("confirm-btn");
+          const btn = q("add-phone-btn");
           btn.disabled = true;
           try {
-            await MuhAuth.confirmServicePhone(service.code, q("code").value);
-            await reloadServicos("Serviço ativado. Já pode mandar mensagem no WhatsApp.");
+            pendingExtraPhone = q("extra-phone").value;
+            const result = await MuhAuth.addServicePhone(service.code, pendingExtraPhone);
+            showOk(result.message || "Código enviado.");
+            q("extra-code-form").hidden = false;
+            q("extra-code").focus();
           } catch (err) {
-            showError(err.message || "Código inválido.");
+            showError(err.message || "Não foi possível adicionar.");
+          } finally {
             btn.disabled = false;
           }
         });
 
-        q("resend-btn").addEventListener("click", async () => {
-          const btn = q("resend-btn");
+        q("extra-code-form").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const btn = q("extra-confirm-btn");
           btn.disabled = true;
           try {
-            const result = await MuhAuth.resendServiceCode(service.code);
-            showOk(result.message || "Novo código enviado.");
+            await MuhAuth.confirmServiceExtraPhone(
+              service.code,
+              pendingExtraPhone || q("extra-phone").value,
+              q("extra-code").value
+            );
+            await reloadServicos("Número extra confirmado.");
           } catch (err) {
-            showError(err.message || "Não foi possível reenviar.");
-          } finally {
+            showError(err.message || "Código inválido.");
             btn.disabled = false;
           }
         });
@@ -788,11 +887,32 @@
       }
 
       // ---------- Transações ----------
+      let txPage = 1;
+      const txPageSize = 20;
+      let txPages = 1;
+
+      function txFiltersPayload() {
+        const direction = document.getElementById("f-direction").value;
+        const entryType = document.getElementById("f-entry-type").value;
+        const from = document.getElementById("f-from").value;
+        const to = document.getElementById("f-to").value;
+        const payload = { page: txPage, page_size: txPageSize };
+        if (direction) payload.direction = direction;
+        if (entryType) payload.entry_type = entryType;
+        if (from) payload.created_from = `${from}T00:00:00`;
+        if (to) payload.created_to = `${to}T23:59:59`;
+        return payload;
+      }
+
       async function loadTransacoes() {
         const errorBox = document.getElementById("tx-error");
         const emptyBox = document.getElementById("tx-empty");
         const tableWrap = document.getElementById("tx-table-wrap");
         const tbody = document.getElementById("tx-body");
+        const pager = document.getElementById("tx-pager");
+        const pagerLabel = document.getElementById("tx-pager-label");
+        const btnPrev = document.getElementById("btn-tx-prev");
+        const btnNext = document.getElementById("btn-tx-next");
 
         function formatTxDate(iso) {
           if (!iso) return "—";
@@ -807,45 +927,78 @@
           });
         }
 
-        function statusMeta(status) {
-          const map = {
-            paid: { label: "Sucesso", tone: "ok", detail: "Saldo creditado" },
-            pending: { label: "Pendente", tone: "wait", detail: "Aguardando pagamento" },
-            failed: { label: "Erro", tone: "err", detail: "Pagamento recusado" },
-            cancelled: { label: "Cancelada", tone: "err", detail: "Pagamento cancelado" },
-            expired: { label: "Expirada", tone: "err", detail: "Prazo esgotado" },
-            refunded: { label: "Estornada", tone: "err", detail: "Valor devolvido" },
-          };
-          return map[status] || { label: status || "—", tone: "wait", detail: "" };
-        }
+        const TYPE_LABELS = {
+          topup: "Recarga",
+          usage: "Uso",
+          refund: "Estorno",
+          adjustment: "Ajuste",
+        };
 
+        errorBox.hidden = true;
         try {
-          const items = await MuhAuth.listTopups();
-          if (!items.length) {
-            emptyBox.hidden = false;
-            return;
-          }
-          tableWrap.hidden = false;
+          const data = await MuhAuth.listLedger(txFiltersPayload());
+          const items = data.items || [];
+          txPages = data.pages || 1;
+          txPage = data.page || 1;
+
+          emptyBox.hidden = items.length > 0;
+          tableWrap.hidden = items.length === 0;
+          pager.hidden = items.length === 0;
+          pagerLabel.textContent = `Página ${txPage} de ${txPages} · ${data.total || 0} itens`;
+          btnPrev.disabled = txPage <= 1;
+          btnNext.disabled = txPage >= txPages;
+
           tbody.innerHTML = "";
           items.forEach((tx) => {
-            const meta = statusMeta(tx.status);
-            const when = tx.paid_at || tx.created_at;
+            const isIn = tx.direction === "in";
             const tr = document.createElement("tr");
             tr.innerHTML = `
-              <td><span class="tx-date">${formatTxDate(when)}</span></td>
-              <td><span class="tx-amount">${brl(tx.amount_cents)}</span></td>
-              <td>
-                <span class="tx-status tx-status--${meta.tone}">${meta.label}</span>
-                <span class="tx-detail">${meta.detail}</span>
-              </td>
+              <td><span class="tx-date">${formatTxDate(tx.created_at)}</span></td>
+              <td><span class="tx-detail">${tx.description || "—"}</span></td>
+              <td><span class="tx-status tx-status--${isIn ? "ok" : "err"}">${
+                isIn ? "Entrada" : "Saída"
+              } · ${TYPE_LABELS[tx.entry_type] || tx.entry_type}</span></td>
+              <td><span class="tx-amount">${isIn ? "+" : "−"}${brl(
+                Math.abs(tx.amount_cents)
+              )}</span></td>
+              <td><span class="tx-detail">${brl(tx.balance_after_cents)}</span></td>
             `;
             tbody.appendChild(tr);
           });
         } catch (err) {
+          tableWrap.hidden = true;
+          emptyBox.hidden = true;
+          pager.hidden = true;
           errorBox.hidden = false;
           errorBox.textContent = err.message || "Falha ao carregar transações.";
         }
       }
+
+      document.getElementById("tx-filters").addEventListener("submit", (event) => {
+        event.preventDefault();
+        txPage = 1;
+        loadTransacoes();
+      });
+      document.getElementById("btn-tx-clear").addEventListener("click", () => {
+        document.getElementById("f-direction").value = "";
+        document.getElementById("f-entry-type").value = "";
+        document.getElementById("f-from").value = "";
+        document.getElementById("f-to").value = "";
+        txPage = 1;
+        loadTransacoes();
+      });
+      document.getElementById("btn-tx-prev").addEventListener("click", () => {
+        if (txPage > 1) {
+          txPage -= 1;
+          loadTransacoes();
+        }
+      });
+      document.getElementById("btn-tx-next").addEventListener("click", () => {
+        if (txPage < txPages) {
+          txPage += 1;
+          loadTransacoes();
+        }
+      });
 
       // ---------- Saldo / checkout ----------
       function loadSaldo() {

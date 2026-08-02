@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=16" />
+  <link rel="stylesheet" href="/css/styles.css?v=17" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -49,22 +49,28 @@
 
         <!-- Transações -->
         <section class="settings-section admin-panel" id="panel-transacoes" data-panel="transacoes" hidden>
-          <h2>Recargas</h2>
+          <h2>Extrato global</h2>
           <form class="admin-filters" id="tx-filters" autocomplete="off">
             <label>
               <span>Cliente</span>
               <input type="search" id="f-search" placeholder="E-mail, nome ou id" />
             </label>
             <label>
-              <span>Status</span>
-              <select id="f-status">
+              <span>Direção</span>
+              <select id="f-direction">
+                <option value="">Todas</option>
+                <option value="in">Entradas</option>
+                <option value="out">Saídas</option>
+              </select>
+            </label>
+            <label>
+              <span>Tipo</span>
+              <select id="f-entry-type">
                 <option value="">Todos</option>
-                <option value="pending">Pendente</option>
-                <option value="paid">Pago</option>
-                <option value="refunded">Estornado</option>
-                <option value="cancelled">Cancelado</option>
-                <option value="failed">Falhou</option>
-                <option value="expired">Expirado</option>
+                <option value="topup">Recarga</option>
+                <option value="usage">Uso / assinatura</option>
+                <option value="refund">Estorno</option>
+                <option value="adjustment">Ajuste</option>
               </select>
             </label>
             <label>
@@ -84,17 +90,18 @@
           <div id="tx-error" class="auth-alert" hidden></div>
           <div id="tx-ok" class="auth-ok" hidden></div>
           <div id="tx-empty" class="tx-empty" hidden>
-            <p>Nenhuma transação com esses filtros.</p>
+            <p>Nenhuma movimentação com esses filtros.</p>
           </div>
 
           <div class="tx-table-wrap" id="tx-table-wrap" hidden>
-            <table class="tx-table admin-tx-table" aria-label="Transações admin">
+            <table class="tx-table admin-tx-table" aria-label="Extrato admin">
               <thead>
                 <tr>
                   <th scope="col">Data</th>
                   <th scope="col">Cliente</th>
+                  <th scope="col">Descrição</th>
+                  <th scope="col">Tipo</th>
                   <th scope="col">Valor</th>
-                  <th scope="col">Status</th>
                   <th scope="col">Saldo</th>
                   <th scope="col">Ações</th>
                 </tr>
@@ -167,7 +174,7 @@
     </article>
   </template>
 
-  <script src="/js/auth.js?v=12"></script>
+  <script src="/js/auth.js?v=13"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -179,8 +186,8 @@
             "Cada serviço define seu modo de cobrança. Alterações valem para novas assinaturas — quem já assinou mantém o preço congelado até renovar.",
         },
         transacoes: {
-          title: "Todas as transações",
-          lede: "Filtre por cliente e data. Estorne pagamentos confirmados ou cancele pendentes.",
+          title: "Extrato do saldo",
+          lede: "Entradas e saídas de todas as carteiras. Estorne recargas confirmadas quando couber.",
         },
       };
 
@@ -337,18 +344,6 @@
         });
       }
 
-      function statusMeta(status) {
-        const map = {
-          paid: { label: "Pago", tone: "ok" },
-          pending: { label: "Pendente", tone: "wait" },
-          failed: { label: "Falhou", tone: "err" },
-          cancelled: { label: "Cancelado", tone: "err" },
-          expired: { label: "Expirado", tone: "err" },
-          refunded: { label: "Estornado", tone: "err" },
-        };
-        return map[status] || { label: status || "—", tone: "wait" };
-      }
-
       function showTxError(msg) {
         txOk.hidden = true;
         txError.hidden = false;
@@ -363,42 +358,51 @@
 
       function filtersPayload() {
         const search = document.getElementById("f-search").value.trim();
-        const status = document.getElementById("f-status").value;
+        const direction = document.getElementById("f-direction").value;
+        const entryType = document.getElementById("f-entry-type").value;
         const from = document.getElementById("f-from").value;
         const to = document.getElementById("f-to").value;
         const payload = { page, page_size: pageSize };
         if (search) payload.search = search;
-        if (status) payload.status = status;
+        if (direction) payload.direction = direction;
+        if (entryType) payload.entry_type = entryType;
         if (from) payload.created_from = `${from}T00:00:00`;
         if (to) payload.created_to = `${to}T23:59:59`;
         return payload;
       }
 
       function renderRows(items) {
+        const TYPE_LABELS = {
+          topup: "Recarga",
+          usage: "Uso",
+          refund: "Estorno",
+          adjustment: "Ajuste",
+        };
         txBody.innerHTML = "";
         items.forEach((tx) => {
-          const meta = statusMeta(tx.status);
-          const when = tx.paid_at || tx.created_at;
+          const isIn = tx.direction === "in";
           const tr = document.createElement("tr");
-          tr.dataset.id = tx.id;
+          tr.dataset.topupId = tx.topup_id || "";
 
           let actions = '<span class="tx-detail">—</span>';
-          if (tx.can_refund) {
+          if (tx.can_refund && tx.topup_id) {
             actions =
               '<button type="button" class="btn btn-ghost btn-compact" data-action="refund">Estornar</button>';
-          } else if (tx.can_cancel) {
-            actions =
-              '<button type="button" class="btn btn-ghost btn-compact" data-action="cancel">Cancelar</button>';
           }
 
           tr.innerHTML = `
-            <td><span class="tx-date">${formatDate(when)}</span></td>
+            <td><span class="tx-date">${formatDate(tx.created_at)}</span></td>
             <td>
               <span class="tx-client">${tx.user_full_name || "—"}</span>
               <span class="tx-detail">${tx.user_email || ""}</span>
             </td>
-            <td><span class="tx-amount">${brl(tx.amount_cents)}</span></td>
-            <td><span class="tx-status tx-status--${meta.tone}">${meta.label}</span></td>
+            <td><span class="tx-detail">${tx.description || "—"}</span></td>
+            <td><span class="tx-status tx-status--${isIn ? "ok" : "err"}">${
+              isIn ? "Entrada" : "Saída"
+            } · ${TYPE_LABELS[tx.entry_type] || tx.entry_type}</span></td>
+            <td><span class="tx-amount">${isIn ? "+" : "−"}${brl(
+              Math.abs(tx.amount_cents)
+            )}</span></td>
             <td><span class="tx-detail">${brl(tx.wallet_balance_cents)}</span></td>
             <td class="tx-actions">${actions}</td>
           `;
@@ -409,7 +413,7 @@
       async function loadTransactions() {
         txError.hidden = true;
         try {
-          const data = await MuhAuth.adminListTopups(filtersPayload());
+          const data = await MuhAuth.adminListLedger(filtersPayload());
           const items = data.items || [];
           pages = data.pages || 1;
           page = data.page || 1;
@@ -438,7 +442,8 @@
 
       document.getElementById("btn-clear").addEventListener("click", () => {
         document.getElementById("f-search").value = "";
-        document.getElementById("f-status").value = "";
+        document.getElementById("f-direction").value = "";
+        document.getElementById("f-entry-type").value = "";
         document.getElementById("f-from").value = "";
         document.getElementById("f-to").value = "";
         page = 1;
@@ -462,25 +467,18 @@
         const btn = event.target.closest("[data-action]");
         if (!btn) return;
         const tr = btn.closest("tr");
-        const id = tr && tr.dataset.id;
+        const id = tr && tr.dataset.topupId;
         if (!id) return;
 
-        const action = btn.dataset.action;
-        const label = action === "refund" ? "estornar" : "cancelar";
-        if (!confirm(`Confirma ${label} esta recarga?`)) return;
+        if (!confirm("Confirma estornar esta recarga?")) return;
 
         btn.disabled = true;
         try {
-          if (action === "refund") {
-            await MuhAuth.adminRefundTopup(id);
-            showTxOk("Estorno concluído (saldo debitado e solicitado no Mercado Pago).");
-          } else {
-            await MuhAuth.adminCancelTopup(id);
-            showTxOk("Recarga pendente cancelada.");
-          }
+          await MuhAuth.adminRefundTopup(id);
+          showTxOk("Estorno concluído (saldo debitado e solicitado no Mercado Pago).");
           await loadTransactions();
         } catch (err) {
-          showTxError(err.message || `Falha ao ${label}.`);
+          showTxError(err.message || "Falha ao estornar.");
           btn.disabled = false;
         }
       });

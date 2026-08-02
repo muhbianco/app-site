@@ -310,6 +310,31 @@
     return Array.isArray(data) ? data : [];
   }
 
+  async function listLedger(params = {}) {
+    const qs = new URLSearchParams();
+    if (params.page) qs.set("page", String(params.page));
+    if (params.page_size) qs.set("page_size", String(params.page_size));
+    if (params.direction) qs.set("direction", params.direction);
+    if (params.entry_type) qs.set("entry_type", params.entry_type);
+    if (params.created_from) qs.set("created_from", params.created_from);
+    if (params.created_to) qs.set("created_to", params.created_to);
+    const response = await api(`${API_PREFIX}/billing/ledger?${qs.toString()}`);
+    return jsonOrThrow(response, "Não foi possível carregar o extrato.");
+  }
+
+  async function adminListLedger(params = {}) {
+    const qs = new URLSearchParams();
+    if (params.page) qs.set("page", String(params.page));
+    if (params.page_size) qs.set("page_size", String(params.page_size));
+    if (params.search) qs.set("search", params.search);
+    if (params.direction) qs.set("direction", params.direction);
+    if (params.entry_type) qs.set("entry_type", params.entry_type);
+    if (params.created_from) qs.set("created_from", params.created_from);
+    if (params.created_to) qs.set("created_to", params.created_to);
+    const response = await api(`${API_PREFIX}/billing/admin/ledger?${qs.toString()}`);
+    return jsonOrThrow(response, "Não foi possível carregar o extrato.");
+  }
+
   async function jsonOrThrow(response, fallback) {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -327,12 +352,42 @@
     return Array.isArray(data) ? data : [];
   }
 
-  async function enableService(code, phone) {
+  async function enableService(code, { termsAccepted = false } = {}) {
     const response = await api(`${API_PREFIX}/services/${encodeURIComponent(code)}/enable`, {
       method: "POST",
-      body: JSON.stringify({ phone: phone ? String(phone).trim() : null }),
+      body: JSON.stringify({ terms_accepted: Boolean(termsAccepted) }),
     });
     return jsonOrThrow(response, "Não foi possível habilitar o serviço.");
+  }
+
+  async function addServicePhone(code, phone) {
+    const response = await api(`${API_PREFIX}/services/${encodeURIComponent(code)}/phones`, {
+      method: "POST",
+      body: JSON.stringify({ phone: String(phone).trim() }),
+    });
+    return jsonOrThrow(response, "Não foi possível adicionar o número.");
+  }
+
+  async function confirmServiceExtraPhone(code, phone, verificationCode) {
+    const response = await api(
+      `${API_PREFIX}/services/${encodeURIComponent(code)}/phones/confirm`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          phone: String(phone).trim(),
+          code: String(verificationCode).trim(),
+        }),
+      }
+    );
+    return jsonOrThrow(response, "Código inválido.");
+  }
+
+  async function removeServicePhone(code, bindingId) {
+    const response = await api(
+      `${API_PREFIX}/services/${encodeURIComponent(code)}/phones/${encodeURIComponent(bindingId)}`,
+      { method: "DELETE" }
+    );
+    return jsonOrThrow(response, "Não foi possível remover o número.");
   }
 
   async function resendServiceCode(code) {
@@ -447,8 +502,13 @@
     createTopup,
     getTopup,
     listTopups,
+    listLedger,
+    adminListLedger,
     listServices,
     enableService,
+    addServicePhone,
+    confirmServiceExtraPhone,
+    removeServicePhone,
     resendServiceCode,
     confirmServicePhone,
     pauseService,
