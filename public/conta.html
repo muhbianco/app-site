@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=17" />
+  <link rel="stylesheet" href="/css/styles.css?v=18" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -333,15 +333,20 @@
       <div class="settings-card-body" data-field="body">
         <p class="hint" data-field="status-detail" hidden></p>
 
-        <form class="settings-inline-form" data-field="enable-form" hidden>
+        <div class="balance-actions" data-field="phone-gate" hidden>
+          <a class="btn btn-primary" href="#configuracoes" data-goto="configuracoes">
+            Confirmar WhatsApp
+          </a>
+        </div>
+
+        <div class="balance-actions" data-field="enable-actions" hidden>
           <p class="hint" data-field="enable-phone-hint"></p>
-          <label class="terms-check" data-field="terms-label" hidden>
-            <input type="checkbox" data-field="terms-check" />
-            <span>Li e aceito os <button type="button" class="linkish" data-field="terms-open">termos de uso</button></span>
-          </label>
-          <pre class="terms-box" data-field="terms-box" hidden></pre>
-          <button type="submit" class="btn btn-primary" data-field="enable-btn">Habilitar</button>
-        </form>
+          <button type="button" class="btn btn-primary" data-field="enable-btn">Habilitar</button>
+        </div>
+
+        <div class="balance-actions" data-field="balance-gate" hidden>
+          <a class="btn btn-primary" href="#saldo" data-goto="saldo">Adicionar saldo</a>
+        </div>
 
         <div data-field="phones-block" hidden>
           <h4 class="settings-subhead">WhatsApp vinculados</h4>
@@ -379,7 +384,33 @@
     </article>
   </template>
 
-  <script src="/js/auth.js?v=13"></script>
+  <dialog class="terms-dialog" id="terms-dialog" aria-labelledby="terms-dialog-title">
+    <form class="terms-dialog-card" id="terms-dialog-form">
+      <header class="terms-dialog-head">
+        <h2 id="terms-dialog-title">Termos de uso</h2>
+        <button type="button" class="btn btn-ghost btn-compact" id="terms-dialog-close" aria-label="Fechar">
+          Fechar
+        </button>
+      </header>
+      <p class="hint" id="terms-dialog-lede">
+        Leia e aceite para habilitar o serviço. A cobrança do período sai do seu saldo na confirmação.
+      </p>
+      <pre class="terms-box terms-box--dialog" id="terms-dialog-text"></pre>
+      <label class="terms-check">
+        <input type="checkbox" id="terms-dialog-check" />
+        <span>Li e aceito os termos de uso</span>
+      </label>
+      <p class="auth-alert" id="terms-dialog-error" hidden></p>
+      <div class="balance-actions">
+        <button type="submit" class="btn btn-primary" id="terms-dialog-confirm">
+          Aceitar e habilitar
+        </button>
+        <button type="button" class="btn btn-ghost" id="terms-dialog-cancel">Cancelar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/js/auth.js?v=14"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -639,9 +670,13 @@
         const sub = service.subscription;
         const status = sub ? sub.status : null;
         const statusDetail = q("status-detail");
-        const enableForm = q("enable-form");
+        const phoneGate = q("phone-gate");
+        const enableActions = q("enable-actions");
+        const balanceGate = q("balance-gate");
         const activeActions = q("active-actions");
         const phonesBlock = q("phones-block");
+        const phoneOk = Boolean(service.account_phone_verified && service.account_phone);
+        const needsPhone = Boolean(service.requires_phone);
         let pendingExtraPhone = "";
 
         function showError(message) {
@@ -686,6 +721,19 @@
           });
         }
 
+        function showHireReady() {
+          enableActions.hidden = false;
+          q("enable-phone-hint").textContent = `Será habilitado no WhatsApp ${formatPhone(
+            service.account_phone
+          )}.`;
+          q("enable-btn").addEventListener("click", () => {
+            openTermsDialog(service, {
+              onSuccess: (message) => reloadServicos(message || "Serviço habilitado."),
+              onError: showError,
+            });
+          });
+        }
+
         if (status === "active" || status === "paused") {
           const paused = status === "paused";
           badge.dataset.state = paused ? "pending" : "done";
@@ -710,59 +758,32 @@
         } else if (status === "suspended") {
           badge.dataset.state = "pending";
           badge.textContent = "Suspenso";
-          enableForm.hidden = false;
           statusDetail.textContent =
             "Suspenso por saldo insuficiente. Adicione saldo e habilite de novo.";
           statusDetail.hidden = false;
+          if (!needsPhone || phoneOk) {
+            if (service.can_enable) showHireReady();
+            else balanceGate.hidden = false;
+          } else {
+            phoneGate.hidden = false;
+          }
         } else {
           badge.dataset.state = "info";
           badge.textContent = "Disponível";
-          enableForm.hidden = false;
-          if (!service.can_enable) {
-            statusDetail.textContent = service.blocked_reason || "";
-            statusDetail.hidden = !service.blocked_reason;
-          }
-        }
 
-        if (!enableForm.hidden) {
-          const hint = q("enable-phone-hint");
-          if (service.account_phone_verified && service.account_phone) {
-            hint.textContent = `Será habilitado no WhatsApp principal já confirmado: ${formatPhone(
-              service.account_phone
-            )}.`;
+          if (needsPhone && !phoneOk) {
+            statusDetail.textContent =
+              "Primeiro confirme seu WhatsApp em Configurações. Sem isso não dá para contratar.";
+            statusDetail.hidden = false;
+            phoneGate.hidden = false;
+          } else if (!service.can_enable) {
+            statusDetail.textContent = service.blocked_reason || "Saldo insuficiente para habilitar.";
+            statusDetail.hidden = false;
+            balanceGate.hidden = false;
           } else {
-            hint.textContent =
-              "Confirme seu WhatsApp em Configurações antes de habilitar este serviço.";
-          }
-          if (service.terms) {
-            q("terms-label").hidden = false;
-            q("terms-box").textContent = service.terms.text;
-            q("terms-open").addEventListener("click", () => {
-              q("terms-box").hidden = !q("terms-box").hidden;
-            });
+            showHireReady();
           }
         }
-
-        enableForm.addEventListener("submit", async (event) => {
-          event.preventDefault();
-          if (service.terms && !q("terms-check").checked) {
-            showError("Marque que leu e aceitou os termos de uso.");
-            return;
-          }
-          const btn = q("enable-btn");
-          btn.disabled = true;
-          try {
-            const result = await MuhAuth.enableService(service.code, {
-              termsAccepted: Boolean(q("terms-check") && q("terms-check").checked),
-            });
-            showOk(result.message || "Serviço habilitado.");
-            await reloadServicos();
-          } catch (err) {
-            showError(err.message || "Não foi possível habilitar.");
-          } finally {
-            btn.disabled = false;
-          }
-        });
 
         q("add-phone-form").addEventListener("submit", async (event) => {
           event.preventDefault();
@@ -843,6 +864,61 @@
         });
 
         return node;
+      }
+
+      function openTermsDialog(service, { onSuccess, onError }) {
+        const dialog = document.getElementById("terms-dialog");
+        const form = document.getElementById("terms-dialog-form");
+        const check = document.getElementById("terms-dialog-check");
+        const text = document.getElementById("terms-dialog-text");
+        const title = document.getElementById("terms-dialog-title");
+        const lede = document.getElementById("terms-dialog-lede");
+        const err = document.getElementById("terms-dialog-error");
+        const confirmBtn = document.getElementById("terms-dialog-confirm");
+
+        title.textContent = (service.terms && service.terms.title) || "Termos de uso";
+        text.textContent =
+          (service.terms && service.terms.text) ||
+          "Ao habilitar, você autoriza a cobrança do período no saldo e o uso do agente no WhatsApp principal.";
+        lede.textContent = service.account_phone
+          ? `O serviço será ligado em ${formatPhone(service.account_phone)}. A cobrança do período sai do saldo ao aceitar.`
+          : "A cobrança do período sai do saldo ao aceitar.";
+        check.checked = false;
+        err.hidden = true;
+        err.textContent = "";
+        confirmBtn.disabled = false;
+
+        const close = () => {
+          if (typeof dialog.close === "function") dialog.close();
+          else dialog.removeAttribute("open");
+        };
+
+        document.getElementById("terms-dialog-close").onclick = close;
+        document.getElementById("terms-dialog-cancel").onclick = close;
+
+        form.onsubmit = async (event) => {
+          event.preventDefault();
+          if (!check.checked) {
+            err.hidden = false;
+            err.textContent = "Marque que leu e aceitou os termos para continuar.";
+            return;
+          }
+          confirmBtn.disabled = true;
+          err.hidden = true;
+          try {
+            const result = await MuhAuth.enableService(service.code, { termsAccepted: true });
+            close();
+            await onSuccess(result.message || "Serviço habilitado.");
+          } catch (error) {
+            err.hidden = false;
+            err.textContent = error.message || "Não foi possível habilitar.";
+            confirmBtn.disabled = false;
+            if (onError) onError(error.message || "Não foi possível habilitar.");
+          }
+        };
+
+        if (typeof dialog.showModal === "function") dialog.showModal();
+        else dialog.setAttribute("open", "");
       }
 
       let pendingServiceMessage = "";
