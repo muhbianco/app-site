@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=19" />
+  <link rel="stylesheet" href="/css/styles.css?v=20" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -410,7 +410,7 @@
     </form>
   </dialog>
 
-  <script src="/js/auth.js?v=15"></script>
+  <script src="/js/auth.js?v=16"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -484,7 +484,8 @@
           loaded.conta = true;
           loadConta();
         }
-        if (name === "servicos" && !loaded.servicos) {
+        // Sempre recarrega: saldo e WhatsApp confirmado mudam o gate de contratação.
+        if (name === "servicos") {
           loaded.servicos = true;
           loadServicos();
         }
@@ -1541,9 +1542,19 @@
           try {
             const user = await MuhAuth.confirmPhoneVerification(phoneCodeInput.value);
             currentUser = user;
-            showBox(phoneAlert, phoneOk, "ok", "WhatsApp confirmado.");
+            showBox(
+              phoneAlert,
+              phoneOk,
+              "ok",
+              "WhatsApp confirmado. Em Serviços você já pode habilitar o agente."
+            );
             renderPhoneState(user);
             renderAccess(user);
+            // Libera o gate de contratação mesmo se Serviços já tinha sido aberto.
+            loaded.servicos = false;
+            if (loaded.conta) {
+              renderServicesSummary(await MuhAuth.listServices().catch(() => []));
+            }
           } catch (err) {
             showBox(phoneAlert, phoneOk, "error", err.message || "Código inválido.");
           } finally {
