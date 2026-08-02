@@ -605,6 +605,18 @@ img {
   margin-bottom: 0.25rem;
 }
 
+.account-identity--inline {
+  margin-bottom: 1.25rem;
+}
+
+.account-identity--inline .account-hello h2 {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
 .account-hello .auth-lede {
   margin-bottom: 0;
 }
@@ -800,6 +812,10 @@ img {
   grid-template-columns: 1fr 1.2fr;
   gap: 1.25rem;
   margin-top: 1.5rem;
+}
+
+.account-grid--nested {
+  margin-top: 0;
 }
 
 .account-span {

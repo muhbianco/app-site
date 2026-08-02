@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Sua conta MuhBianco — APIs e saldo." />
+  <meta name="description" content="Sua conta MuhBianco — saldo, serviços e configurações." />
   <title>Minha conta — MuhBianco</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=15" />
+  <link rel="stylesheet" href="/css/styles.css?v=16" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -22,88 +22,351 @@
     </nav>
   </header>
 
-  <main class="account-page">
-    <section class="account-hero">
-      <p class="brand-mark compact">Área logada</p>
-      <div class="account-identity">
-        <div class="avatar" id="avatar" data-editable="false">
-          <img id="avatar-img" alt="" hidden />
-          <span class="avatar-fallback" id="avatar-fallback" aria-hidden="true">?</span>
-          <button type="button" class="avatar-edit" id="avatar-edit" hidden aria-label="Alterar foto">
-            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-              <path fill="currentColor" d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Zm8-4.7V8.2l-1.7-.3a7.3 7.3 0 0 0-.6-1.4l1-1.4-1.8-1.8-1.4 1a7.3 7.3 0 0 0-1.4-.6L13.5 2h-3l-.3 1.7a7.3 7.3 0 0 0-1.4.6l-1.4-1-1.8 1.8 1 1.4c-.3.4-.5.9-.6 1.4L4 8.2v3l1.7.3c.1.5.3 1 .6 1.4l-1 1.4 1.8 1.8 1.4-1c.4.3.9.5 1.4.6l.3 1.7h3l.3-1.7c.5-.1 1-.3 1.4-.6l1.4 1 1.8-1.8-1-1.4c.3-.4.5-.9.6-1.4l1.7-.3ZM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z"/>
-            </svg>
-          </button>
-          <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp,image/gif" hidden />
-        </div>
-        <div class="account-hello">
-          <h1 id="hello">Carregando…</h1>
-          <p class="auth-lede" id="subtitle">Saldo e APIs — coloque crédito e use quando quiser.</p>
-        </div>
+  <main class="settings-page">
+    <section class="settings-head">
+      <p class="brand-mark compact" id="client-mark">Área logada</p>
+      <h1 id="client-title">Minha conta</h1>
+      <p class="auth-lede" id="client-lede">Saldo e serviços — coloque crédito e use quando quiser.</p>
+    </section>
+
+    <div class="settings-layout">
+      <nav class="settings-nav" aria-label="Área da conta" id="client-nav">
+        <a href="#conta" data-panel="conta" class="is-current">Conta</a>
+        <a href="#servicos" data-panel="servicos">Serviços</a>
+        <a href="#transacoes" data-panel="transacoes">Transações</a>
+        <a href="#saldo" data-panel="saldo">Adicionar saldo</a>
+        <a href="#configuracoes" data-panel="configuracoes">Configurações</a>
+      </nav>
+
+      <div class="settings-sections">
+        <!-- Conta (resumo) -->
+        <section class="settings-section client-panel" id="panel-conta" data-panel="conta">
+          <div class="account-identity account-identity--inline">
+            <div class="avatar" id="avatar" data-editable="false">
+              <img id="avatar-img" alt="" hidden />
+              <span class="avatar-fallback" id="avatar-fallback" aria-hidden="true">?</span>
+              <button type="button" class="avatar-edit" id="avatar-edit" hidden aria-label="Alterar foto">
+                <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                  <path fill="currentColor" d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Zm8-4.7V8.2l-1.7-.3a7.3 7.3 0 0 0-.6-1.4l1-1.4-1.8-1.8-1.4 1a7.3 7.3 0 0 0-1.4-.6L13.5 2h-3l-.3 1.7a7.3 7.3 0 0 0-1.4.6l-1.4-1-1.8 1.8 1 1.4c-.3.4-.5.9-.6 1.4L4 8.2v3l1.7.3c.1.5.3 1 .6 1.4l-1 1.4 1.8 1.8 1.4-1c.4.3.9.5 1.4.6l.3 1.7h3l.3-1.7c.5-.1 1-.3 1.4-.6l1.4 1 1.8-1.8-1-1.4c.3-.4.5-.9.6-1.4l1.7-.3ZM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z"/>
+                </svg>
+              </button>
+              <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp,image/gif" hidden />
+            </div>
+            <div class="account-hello">
+              <h2 id="hello">Carregando…</h2>
+              <p class="hint" id="subtitle">Saldo e APIs — coloque crédito e use quando quiser.</p>
+            </div>
+          </div>
+
+          <div class="account-grid account-grid--nested">
+            <article class="account-panel">
+              <h2>Perfil</h2>
+              <dl class="profile-list" id="profile">
+                <div><dt>E-mail</dt><dd id="p-email">—</dd></div>
+                <div><dt>Papel</dt><dd id="p-role">—</dd></div>
+                <div><dt>Login</dt><dd id="p-auth">—</dd></div>
+              </dl>
+              <p class="auth-alert" id="email-pending" hidden>
+                E-mail ainda não confirmado.
+                <a href="#configuracoes" data-goto="configuracoes">Confirmar agora</a>
+              </p>
+              <div class="profile-actions">
+                <a class="btn btn-primary" href="#configuracoes" data-goto="configuracoes">Configurações</a>
+                <button type="button" class="btn btn-ghost" id="btn-logout">Sair</button>
+              </div>
+            </article>
+
+            <article class="account-panel balance-panel">
+              <h2>Saldo</h2>
+              <p class="balance-value" id="balance-value">R$&nbsp;0,00</p>
+              <p class="hint" id="billing-hint">Disponível para consumir nas APIs.</p>
+              <div class="balance-actions">
+                <a class="btn btn-primary" id="btn-add-balance" href="#saldo" data-goto="saldo">Adicionar saldo</a>
+                <a class="btn btn-ghost" href="#transacoes" data-goto="transacoes">Transações</a>
+              </div>
+            </article>
+
+            <article class="account-panel account-span">
+              <h2>Serviços</h2>
+              <ul class="service-teasers" id="services-summary">
+                <li class="hint">Carregando…</li>
+              </ul>
+              <p class="hint">A cobrança de cada serviço desconta do seu saldo.</p>
+              <div class="balance-actions">
+                <a class="btn btn-primary" href="#servicos" data-goto="servicos">Ver serviços</a>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Serviços -->
+        <section class="settings-section client-panel" id="panel-servicos" data-panel="servicos" hidden>
+          <h2>Catálogo</h2>
+          <div id="services-error" class="auth-alert" hidden></div>
+          <div id="services-empty" class="tx-empty" hidden>
+            <p>Nenhum serviço disponível no momento.</p>
+          </div>
+          <div id="services-list"></div>
+        </section>
+
+        <!-- Transações -->
+        <section class="settings-section client-panel" id="panel-transacoes" data-panel="transacoes" hidden>
+          <h2>Histórico</h2>
+          <div id="tx-error" class="auth-alert" hidden></div>
+          <div id="tx-empty" class="tx-empty" hidden>
+            <p>Nenhuma transação ainda.</p>
+            <a class="btn btn-primary" href="#saldo" data-goto="saldo">Adicionar saldo</a>
+          </div>
+          <div class="tx-table-wrap" id="tx-table-wrap" hidden>
+            <table class="tx-table" aria-label="Histórico de transações">
+              <thead>
+                <tr>
+                  <th scope="col">Data</th>
+                  <th scope="col">Valor</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody id="tx-body"></tbody>
+            </table>
+          </div>
+          <div class="balance-actions" style="margin-top: 1.25rem">
+            <a class="btn btn-primary" href="#saldo" data-goto="saldo">Adicionar saldo</a>
+          </div>
+        </section>
+
+        <!-- Adicionar saldo -->
+        <section class="settings-section client-panel" id="panel-saldo" data-panel="saldo" hidden>
+          <div id="select-panel">
+            <h2>Escolha o valor</h2>
+            <p class="hint" style="margin-bottom: 1rem">
+              O pagamento abre numa janela do Mercado Pago; esta página fica aberta e confirma o saldo automaticamente.
+            </p>
+            <div id="checkout-error" class="auth-alert" hidden></div>
+            <div class="checkout-amounts" id="amounts" aria-label="Valores disponíveis"></div>
+            <div class="custom-amount" id="custom-box" hidden>
+              <label for="custom-input">
+                <span>Outro valor (R$)</span>
+                <input
+                  id="custom-input"
+                  type="text"
+                  inputmode="decimal"
+                  autocomplete="off"
+                  placeholder="Ex.: 35,50"
+                />
+              </label>
+              <p class="hint" id="custom-hint"></p>
+              <button type="button" class="btn btn-primary btn-block" id="btn-custom-pay">
+                Continuar com este valor
+              </button>
+            </div>
+            <p class="hint" id="methods-hint">Carregando…</p>
+          </div>
+
+          <div id="wait-panel" hidden>
+            <h2 id="wait-title">Aguardando pagamento…</h2>
+            <p class="auth-lede" id="wait-message">
+              Conclua o pagamento na janela do Mercado Pago. Esta página atualiza sozinha.
+            </p>
+            <div class="checkout-wait-pulse" id="wait-pulse" aria-hidden="true"></div>
+            <div class="checkout-wait-actions">
+              <a class="btn btn-primary" href="#conta" data-goto="conta">Ir para a conta</a>
+              <button type="button" class="btn btn-ghost" id="btn-wait-retry" hidden>Tentar de novo</button>
+              <button type="button" class="btn btn-ghost" id="btn-reopen" hidden>Reabrir Mercado Pago</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Configurações -->
+        <section class="settings-section client-panel" id="panel-configuracoes" data-panel="configuracoes" hidden>
+          <h2>Verificações</h2>
+
+          <article class="settings-card" id="card-email">
+            <header class="settings-card-head">
+              <div>
+                <h3>Confirmar e-mail</h3>
+                <p class="hint" id="email-hint">Carregando…</p>
+              </div>
+              <span class="settings-badge" id="email-badge" data-state="pending">Pendente</span>
+            </header>
+            <div id="email-alert" class="auth-alert" hidden></div>
+            <div id="email-ok" class="auth-ok" hidden></div>
+            <div class="settings-card-body" id="email-actions" hidden>
+              <button type="button" class="btn btn-primary" id="btn-send-code">Enviar código</button>
+              <form class="settings-inline-form" id="code-form" hidden>
+                <label>
+                  <span>Código recebido</span>
+                  <input
+                    type="text"
+                    id="code-input"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    minlength="6"
+                    maxlength="6"
+                    pattern="[0-9]{6}"
+                    placeholder="000000"
+                    required
+                  />
+                </label>
+                <button type="submit" class="btn btn-primary" id="btn-confirm-code">Confirmar</button>
+              </form>
+            </div>
+          </article>
+
+          <article class="settings-card" id="card-phone">
+            <header class="settings-card-head">
+              <div>
+                <h3>Confirmar WhatsApp</h3>
+                <p class="hint" id="phone-hint">Informe seu celular para receber o código no WhatsApp.</p>
+              </div>
+              <span class="settings-badge" id="phone-badge" data-state="pending">Pendente</span>
+            </header>
+            <div id="phone-alert" class="auth-alert" hidden></div>
+            <div id="phone-ok" class="auth-ok" hidden></div>
+            <div class="settings-card-body" id="phone-actions" hidden>
+              <form class="settings-inline-form" id="phone-form">
+                <label>
+                  <span>Celular com DDD</span>
+                  <input
+                    type="tel"
+                    id="phone-input"
+                    inputmode="tel"
+                    autocomplete="tel"
+                    placeholder="(11) 99999-8888"
+                    maxlength="20"
+                    required
+                  />
+                </label>
+                <button type="submit" class="btn btn-primary" id="btn-send-phone">Enviar código</button>
+              </form>
+              <form class="settings-inline-form" id="phone-code-form" hidden>
+                <label>
+                  <span>Código recebido</span>
+                  <input
+                    type="text"
+                    id="phone-code-input"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    minlength="6"
+                    maxlength="6"
+                    pattern="[0-9]{6}"
+                    placeholder="000000"
+                    required
+                  />
+                </label>
+                <button type="submit" class="btn btn-primary" id="btn-confirm-phone">Confirmar</button>
+              </form>
+            </div>
+          </article>
+
+          <h2 style="margin-top: 2rem">Acesso</h2>
+          <article class="settings-card">
+            <header class="settings-card-head">
+              <div>
+                <h3>Formas de entrar</h3>
+                <p class="hint" id="access-hint">—</p>
+              </div>
+              <span class="settings-badge" data-state="info" id="role-badge">—</span>
+            </header>
+          </article>
+          <article class="settings-card is-soon">
+            <header class="settings-card-head">
+              <div>
+                <h3>Trocar senha</h3>
+                <p class="hint">Disponível para contas com e-mail e senha.</p>
+              </div>
+              <span class="settings-badge" data-state="soon">Em breve</span>
+            </header>
+          </article>
+        </section>
       </div>
-    </section>
-
-    <section class="account-grid">
-      <article class="account-panel">
-        <h2>Perfil</h2>
-        <dl class="profile-list" id="profile">
-          <div><dt>E-mail</dt><dd id="p-email">—</dd></div>
-          <div><dt>Papel</dt><dd id="p-role">—</dd></div>
-          <div><dt>Login</dt><dd id="p-auth">—</dd></div>
-        </dl>
-        <p class="auth-alert" id="email-pending" hidden>
-          E-mail ainda não confirmado.
-          <a href="/configuracoes.html">Confirmar agora</a>
-        </p>
-        <div class="profile-actions">
-          <a class="btn btn-primary" href="/configuracoes.html">Configurações da conta</a>
-          <button type="button" class="btn btn-ghost" id="btn-logout">Sair</button>
-        </div>
-      </article>
-
-      <article class="account-panel balance-panel">
-        <h2>Saldo</h2>
-        <p class="balance-value" id="balance-value">R$&nbsp;0,00</p>
-        <p class="hint" id="billing-hint">Disponível para consumir nas APIs.</p>
-        <div class="balance-actions">
-          <a class="btn btn-primary" id="btn-add-balance" href="/checkout.html">Adicionar saldo</a>
-          <a class="btn btn-ghost" href="/transacoes.html">Transações</a>
-          <a class="btn btn-ghost" id="btn-admin-tx" href="/admin.html#transacoes" hidden>Admin · transações</a>
-        </div>
-      </article>
-
-      <article class="account-panel account-span">
-        <h2>Serviços</h2>
-        <ul class="service-teasers" id="services-summary">
-          <li class="hint">Carregando…</li>
-        </ul>
-        <p class="hint">A cobrança de cada serviço desconta do seu saldo.</p>
-        <div class="balance-actions">
-          <a class="btn btn-primary" href="/servicos.html">Ver serviços</a>
-          <a class="btn btn-ghost" id="btn-admin-services" href="/admin.html#servicos" hidden>
-            Admin · serviços
-          </a>
-        </div>
-      </article>
-    </section>
+    </div>
   </main>
 
-  <script src="/js/auth.js?v=11"></script>
+  <template id="tpl-service">
+    <article class="settings-card" data-code="">
+      <header class="settings-card-head">
+        <div>
+          <h3 data-field="name"></h3>
+          <p class="hint" data-field="description"></p>
+          <p class="hint" data-field="price"></p>
+        </div>
+        <span class="settings-badge" data-field="badge" data-state="pending">Disponível</span>
+      </header>
+      <div class="auth-alert" data-field="alert" hidden></div>
+      <div class="auth-ok" data-field="ok" hidden></div>
+      <div class="settings-card-body" data-field="body">
+        <p class="hint" data-field="status-detail" hidden></p>
+        <form class="settings-inline-form" data-field="enable-form" hidden>
+          <label data-field="phone-label">
+            <span>Celular do WhatsApp (com DDD)</span>
+            <input type="tel" data-field="phone" inputmode="tel" autocomplete="tel"
+                   placeholder="(11) 99999-8888" maxlength="20" />
+          </label>
+          <button type="submit" class="btn btn-primary" data-field="enable-btn">Habilitar</button>
+        </form>
+        <form class="settings-inline-form" data-field="code-form" hidden>
+          <label>
+            <span>Código recebido no WhatsApp</span>
+            <input type="text" data-field="code" inputmode="numeric" autocomplete="one-time-code"
+                   minlength="6" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required />
+          </label>
+          <button type="submit" class="btn btn-primary" data-field="confirm-btn">Confirmar</button>
+          <button type="button" class="btn btn-ghost btn-compact" data-field="resend-btn">Reenviar</button>
+        </form>
+        <div class="balance-actions" data-field="active-actions" hidden>
+          <button type="button" class="btn btn-ghost btn-compact" data-field="pause-btn" hidden>
+            Pausar agente
+          </button>
+          <button type="button" class="btn btn-primary btn-compact" data-field="resume-btn" hidden>
+            Retomar agente
+          </button>
+          <button type="button" class="btn btn-ghost btn-compact" data-field="disable-btn">
+            Cancelar serviço
+          </button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script src="/js/auth.js?v=12"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
 
-      const avatar = document.getElementById("avatar");
-      const avatarImg = document.getElementById("avatar-img");
-      const avatarFallback = document.getElementById("avatar-fallback");
-      const avatarEdit = document.getElementById("avatar-edit");
-      const avatarInput = document.getElementById("avatar-input");
-      const balanceEl = document.getElementById("balance-value");
-      const hintEl = document.getElementById("billing-hint");
-      const addBtn = document.getElementById("btn-add-balance");
-      const adminTxBtn = document.getElementById("btn-admin-tx");
-      const adminServicesBtn = document.getElementById("btn-admin-services");
-      const servicesSummary = document.getElementById("services-summary");
+      const PANELS = {
+        conta: {
+          mark: "Área logada",
+          title: "Minha conta",
+          lede: "Saldo e serviços — coloque crédito e use quando quiser.",
+        },
+        servicos: {
+          mark: "Serviços",
+          title: "Serviços disponíveis",
+          lede: "Habilite o que quiser usar. A cobrança sai do seu saldo.",
+        },
+        transacoes: {
+          mark: "Carteira",
+          title: "Transações",
+          lede: "Recargas via Mercado Pago — status, valor e data.",
+        },
+        saldo: {
+          mark: "Checkout",
+          title: "Adicionar saldo",
+          lede: "Escolha um valor. O pagamento abre no Mercado Pago; confirmamos o saldo aqui.",
+        },
+        configuracoes: {
+          mark: "Configurações",
+          title: "Configurações da conta",
+          lede: "Verificações e preferências da sua conta.",
+        },
+      };
+
+      const markEl = document.getElementById("client-mark");
+      const titleEl = document.getElementById("client-title");
+      const ledeEl = document.getElementById("client-lede");
+      const navLinks = document.querySelectorAll("#client-nav a[data-panel]");
+      const panels = document.querySelectorAll(".client-panel");
+      const loaded = {};
 
       function brl(cents) {
         return (Number(cents) / 100).toLocaleString("pt-BR", {
@@ -112,12 +375,90 @@
         });
       }
 
+      function showPanel(name) {
+        if (!PANELS[name]) name = "conta";
+        const meta = PANELS[name];
+        markEl.textContent = meta.mark;
+        titleEl.textContent = meta.title;
+        ledeEl.textContent = meta.lede;
+        if (name === "servicos" && servicesLedeOverride) {
+          ledeEl.textContent = servicesLedeOverride;
+        }
+        if (name === "configuracoes" && configLedeOverride) {
+          ledeEl.textContent = configLedeOverride;
+        }
+
+        panels.forEach((panel) => {
+          panel.hidden = panel.dataset.panel !== name;
+        });
+        navLinks.forEach((link) => {
+          link.classList.toggle("is-current", link.dataset.panel === name);
+        });
+
+        const hash = `#${name}`;
+        if (location.hash !== hash) history.replaceState(null, "", hash);
+
+        if (name === "conta" && !loaded.conta) {
+          loaded.conta = true;
+          loadConta();
+        }
+        if (name === "servicos" && !loaded.servicos) {
+          loaded.servicos = true;
+          loadServicos();
+        }
+        if (name === "transacoes" && !loaded.transacoes) {
+          loaded.transacoes = true;
+          loadTransacoes();
+        }
+        if (name === "saldo" && !loaded.saldo) {
+          loaded.saldo = true;
+          loadSaldo();
+        }
+        if (name === "configuracoes" && !loaded.configuracoes) {
+          loaded.configuracoes = true;
+          loadConfiguracoes();
+        }
+      }
+
+      navLinks.forEach((link) => {
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          showPanel(link.dataset.panel);
+        });
+      });
+
+      document.addEventListener("click", (event) => {
+        const goto = event.target.closest("[data-goto]");
+        if (!goto) return;
+        event.preventDefault();
+        showPanel(goto.dataset.goto);
+      });
+
+      window.addEventListener("hashchange", () => {
+        showPanel((location.hash || "#conta").slice(1));
+      });
+
+      let servicesLedeOverride = "";
+      let configLedeOverride = "";
+      let currentUser = null;
+
+      // ---------- Conta ----------
+      const avatar = document.getElementById("avatar");
+      const avatarImg = document.getElementById("avatar-img");
+      const avatarFallback = document.getElementById("avatar-fallback");
+      const avatarEdit = document.getElementById("avatar-edit");
+      const avatarInput = document.getElementById("avatar-input");
+      const balanceEl = document.getElementById("balance-value");
+      const hintEl = document.getElementById("billing-hint");
+      const addBtn = document.getElementById("btn-add-balance");
+      const servicesSummary = document.getElementById("services-summary");
+
       document.getElementById("btn-logout").addEventListener("click", async () => {
         await MuhAuth.logout();
         location.href = "/login.html";
       });
 
-      function renderServices(services) {
+      function renderServicesSummary(services) {
         servicesSummary.innerHTML = "";
         if (!services.length) {
           servicesSummary.innerHTML = '<li class="hint">Nenhum serviço disponível ainda.</li>';
@@ -127,9 +468,7 @@
         services.forEach((service) => {
           const status = service.subscription ? service.subscription.status : null;
           const item = document.createElement("li");
-          item.innerHTML = `<strong>${service.name}</strong> — ${
-            LABELS[status] || "disponível"
-          }`;
+          item.innerHTML = `<strong>${service.name}</strong> — ${LABELS[status] || "disponível"}`;
           servicesSummary.appendChild(item);
         });
       }
@@ -172,33 +511,845 @@
         }
       });
 
-      try {
-        const user = await MuhAuth.me();
-        document.getElementById("hello").textContent = `Olá, ${user.full_name.split(" ")[0]}.`;
-        document.getElementById("p-email").textContent = user.email;
-        document.getElementById("p-role").textContent = user.role;
-        adminTxBtn.hidden = user.role !== "admin";
-        adminServicesBtn.hidden = user.role !== "admin";
-        const links = [];
-        if (user.has_password) links.push("e-mail/senha");
-        if (user.google_linked) links.push("Google");
-        if (user.discord_linked) links.push("Discord");
-        document.getElementById("p-auth").textContent = links.join(" · ") || "—";
-        document.getElementById("email-pending").hidden = Boolean(user.email_verified);
-        renderAvatar(user);
+      async function loadConta() {
+        try {
+          const user = currentUser || (await MuhAuth.me());
+          currentUser = user;
+          document.getElementById("hello").textContent = `Olá, ${user.full_name.split(" ")[0]}.`;
+          document.getElementById("p-email").textContent = user.email;
+          document.getElementById("p-role").textContent = user.role;
+          const links = [];
+          if (user.has_password) links.push("e-mail/senha");
+          if (user.google_linked) links.push("Google");
+          if (user.discord_linked) links.push("Discord");
+          document.getElementById("p-auth").textContent = links.join(" · ") || "—";
+          document.getElementById("email-pending").hidden = Boolean(user.email_verified);
+          renderAvatar(user);
 
-        const wallet = await MuhAuth.wallet();
-        balanceEl.textContent = brl(wallet.balance_cents);
+          const wallet = await MuhAuth.wallet();
+          balanceEl.textContent = brl(wallet.balance_cents);
+          renderServicesSummary(await MuhAuth.listServices().catch(() => []));
 
-        renderServices(await MuhAuth.listServices().catch(() => []));
-
-        const options = await MuhAuth.billingOptions();
-        if (!options.mercadopago_enabled) {
-          hintEl.textContent = "Recarga em breve — configure o Mercado Pago na API.";
-          addBtn.setAttribute("aria-disabled", "true");
-          addBtn.classList.add("is-disabled");
-          addBtn.addEventListener("click", (e) => e.preventDefault());
+          const options = await MuhAuth.billingOptions();
+          if (!options.mercadopago_enabled) {
+            hintEl.textContent = "Recarga em breve — configure o Mercado Pago na API.";
+            addBtn.setAttribute("aria-disabled", "true");
+            addBtn.classList.add("is-disabled");
+          }
+        } catch (err) {
+          await MuhAuth.logout();
+          location.href = "/login.html?error=authentication_failed";
         }
+      }
+
+      // ---------- Serviços ----------
+      const listEl = document.getElementById("services-list");
+      const emptyEl = document.getElementById("services-empty");
+      const errorEl = document.getElementById("services-error");
+      const tpl = document.getElementById("tpl-service");
+
+      function formatPhone(phone) {
+        const digits = String(phone || "").replace(/\D+/g, "");
+        if (digits.startsWith("55") && digits.length >= 12) {
+          const rest = digits.slice(2);
+          const ddd = rest.slice(0, 2);
+          const num = rest.slice(2);
+          if (num.length === 9) return `+55 (${ddd}) ${num.slice(0, 5)}-${num.slice(5)}`;
+          if (num.length === 8) return `+55 (${ddd}) ${num.slice(0, 4)}-${num.slice(4)}`;
+        }
+        return phone || "";
+      }
+
+      function formatDate(iso) {
+        if (!iso) return "";
+        const d = new Date(iso);
+        return Number.isNaN(d.getTime())
+          ? ""
+          : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+      }
+
+      function priceLabel(service) {
+        if (service.billing_mode === "monthly") {
+          const periodo = service.period_days === 30 ? "mês" : `${service.period_days} dias`;
+          return `${brl(service.price_cents)} por ${periodo}, debitado do saldo.`;
+        }
+        return `${brl(service.price_cents)} por uso, debitado do saldo.`;
+      }
+
+      function buildServiceCard(service) {
+        const node = tpl.content.firstElementChild.cloneNode(true);
+        const q = (name) => node.querySelector(`[data-field="${name}"]`);
+        node.dataset.code = service.code;
+        q("name").textContent = service.name;
+        q("description").textContent = service.description;
+        q("price").textContent = priceLabel(service);
+
+        const badge = q("badge");
+        const sub = service.subscription;
+        const status = sub ? sub.status : null;
+        const statusDetail = q("status-detail");
+        const enableForm = q("enable-form");
+        const codeForm = q("code-form");
+        const activeActions = q("active-actions");
+        const phoneInput = q("phone");
+
+        if (!service.requires_phone) q("phone-label").hidden = true;
+        else phoneInput.required = true;
+
+        if (status === "active" || status === "paused") {
+          const paused = status === "paused";
+          badge.dataset.state = paused ? "pending" : "done";
+          badge.textContent = paused ? "Pausado" : "Ativo";
+          activeActions.hidden = false;
+          q("pause-btn").hidden = paused;
+          q("resume-btn").hidden = !paused;
+          const partes = [];
+          if (sub.phone) partes.push(`Número: ${formatPhone(sub.phone)}`);
+          if (sub.current_period_end) {
+            partes.push(
+              sub.cancel_at_period_end
+                ? `Ativo até ${formatDate(sub.current_period_end)} (não renova)`
+                : `Renova em ${formatDate(sub.current_period_end)}`
+            );
+          }
+          if (paused) partes.push("Agente silenciado — a cobrança do período segue normal");
+          statusDetail.textContent = partes.join(" · ");
+          statusDetail.hidden = partes.length === 0;
+        } else if (status === "pending_phone") {
+          badge.dataset.state = "pending";
+          badge.textContent = "Confirmação pendente";
+          enableForm.hidden = false;
+          codeForm.hidden = false;
+          if (sub.phone) phoneInput.value = formatPhone(sub.phone);
+          statusDetail.textContent = "Confirme o código enviado no WhatsApp para ativar.";
+          statusDetail.hidden = false;
+        } else if (status === "suspended") {
+          badge.dataset.state = "pending";
+          badge.textContent = "Suspenso";
+          enableForm.hidden = false;
+          if (sub.phone) phoneInput.value = formatPhone(sub.phone);
+          statusDetail.textContent =
+            "Suspenso por saldo insuficiente. Adicione saldo e habilite de novo.";
+          statusDetail.hidden = false;
+        } else {
+          badge.dataset.state = "info";
+          badge.textContent = "Disponível";
+          enableForm.hidden = false;
+          if (!service.can_enable) {
+            statusDetail.textContent = service.blocked_reason || "";
+            statusDetail.hidden = !service.blocked_reason;
+          }
+        }
+
+        function showError(message) {
+          q("ok").hidden = true;
+          q("alert").hidden = false;
+          q("alert").textContent = message;
+        }
+
+        function showOk(message) {
+          q("alert").hidden = true;
+          q("ok").hidden = false;
+          q("ok").textContent = message;
+        }
+
+        enableForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const btn = q("enable-btn");
+          btn.disabled = true;
+          try {
+            const result = await MuhAuth.enableService(service.code, phoneInput.value);
+            showOk(result.message || "Serviço habilitado.");
+            if (result.verification_required) {
+              codeForm.hidden = false;
+              q("code").focus();
+            } else {
+              await reloadServicos();
+            }
+          } catch (err) {
+            showError(err.message || "Não foi possível habilitar.");
+          } finally {
+            btn.disabled = false;
+          }
+        });
+
+        codeForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const btn = q("confirm-btn");
+          btn.disabled = true;
+          try {
+            await MuhAuth.confirmServicePhone(service.code, q("code").value);
+            await reloadServicos("Serviço ativado. Já pode mandar mensagem no WhatsApp.");
+          } catch (err) {
+            showError(err.message || "Código inválido.");
+            btn.disabled = false;
+          }
+        });
+
+        q("resend-btn").addEventListener("click", async () => {
+          const btn = q("resend-btn");
+          btn.disabled = true;
+          try {
+            const result = await MuhAuth.resendServiceCode(service.code);
+            showOk(result.message || "Novo código enviado.");
+          } catch (err) {
+            showError(err.message || "Não foi possível reenviar.");
+          } finally {
+            btn.disabled = false;
+          }
+        });
+
+        q("pause-btn").addEventListener("click", async () => {
+          if (
+            !confirm(
+              "Pausar o agente agora? Ele para de responder no WhatsApp na hora. " +
+                "A cobrança do período continua normal — para parar de pagar, cancele o serviço."
+            )
+          )
+            return;
+          const btn = q("pause-btn");
+          btn.disabled = true;
+          try {
+            await MuhAuth.pauseService(service.code);
+            await reloadServicos("Agente pausado.");
+          } catch (err) {
+            showError(err.message || "Não foi possível pausar.");
+            btn.disabled = false;
+          }
+        });
+
+        q("resume-btn").addEventListener("click", async () => {
+          const btn = q("resume-btn");
+          btn.disabled = true;
+          try {
+            await MuhAuth.resumeService(service.code);
+            await reloadServicos("Agente retomado.");
+          } catch (err) {
+            showError(err.message || "Não foi possível retomar.");
+            btn.disabled = false;
+          }
+        });
+
+        q("disable-btn").addEventListener("click", async () => {
+          if (!confirm("Cancelar este serviço no fim do período pago?")) return;
+          const btn = q("disable-btn");
+          btn.disabled = true;
+          try {
+            await MuhAuth.disableService(service.code);
+            await reloadServicos("Serviço cancelado.");
+          } catch (err) {
+            showError(err.message || "Não foi possível cancelar.");
+            btn.disabled = false;
+          }
+        });
+
+        return node;
+      }
+
+      let pendingServiceMessage = "";
+
+      async function reloadServicos(message) {
+        if (message) pendingServiceMessage = message;
+        try {
+          errorEl.hidden = true;
+          const services = await MuhAuth.listServices();
+          listEl.innerHTML = "";
+          if (!services.length) {
+            emptyEl.hidden = false;
+          } else {
+            emptyEl.hidden = true;
+            services.forEach((service) => listEl.appendChild(buildServiceCard(service)));
+          }
+          if (pendingServiceMessage) {
+            const first = listEl.querySelector('[data-field="ok"]');
+            if (first) {
+              first.hidden = false;
+              first.textContent = pendingServiceMessage;
+            }
+            pendingServiceMessage = "";
+          }
+          if (loaded.conta) renderServicesSummary(services);
+        } catch (err) {
+          errorEl.hidden = false;
+          errorEl.textContent = err.message || "Falha ao carregar os serviços.";
+        }
+      }
+
+      async function loadServicos() {
+        try {
+          const wallet = await MuhAuth.wallet();
+          servicesLedeOverride = `Saldo disponível: ${brl(wallet.balance_cents)}. A cobrança dos serviços sai daqui.`;
+          ledeEl.textContent = servicesLedeOverride;
+          await reloadServicos();
+        } catch (err) {
+          errorEl.hidden = false;
+          errorEl.textContent = err.message || "Falha ao carregar os serviços.";
+        }
+      }
+
+      // ---------- Transações ----------
+      async function loadTransacoes() {
+        const errorBox = document.getElementById("tx-error");
+        const emptyBox = document.getElementById("tx-empty");
+        const tableWrap = document.getElementById("tx-table-wrap");
+        const tbody = document.getElementById("tx-body");
+
+        function formatTxDate(iso) {
+          if (!iso) return "—";
+          const d = new Date(iso);
+          if (Number.isNaN(d.getTime())) return "—";
+          return d.toLocaleString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        }
+
+        function statusMeta(status) {
+          const map = {
+            paid: { label: "Sucesso", tone: "ok", detail: "Saldo creditado" },
+            pending: { label: "Pendente", tone: "wait", detail: "Aguardando pagamento" },
+            failed: { label: "Erro", tone: "err", detail: "Pagamento recusado" },
+            cancelled: { label: "Cancelada", tone: "err", detail: "Pagamento cancelado" },
+            expired: { label: "Expirada", tone: "err", detail: "Prazo esgotado" },
+            refunded: { label: "Estornada", tone: "err", detail: "Valor devolvido" },
+          };
+          return map[status] || { label: status || "—", tone: "wait", detail: "" };
+        }
+
+        try {
+          const items = await MuhAuth.listTopups();
+          if (!items.length) {
+            emptyBox.hidden = false;
+            return;
+          }
+          tableWrap.hidden = false;
+          tbody.innerHTML = "";
+          items.forEach((tx) => {
+            const meta = statusMeta(tx.status);
+            const when = tx.paid_at || tx.created_at;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td><span class="tx-date">${formatTxDate(when)}</span></td>
+              <td><span class="tx-amount">${brl(tx.amount_cents)}</span></td>
+              <td>
+                <span class="tx-status tx-status--${meta.tone}">${meta.label}</span>
+                <span class="tx-detail">${meta.detail}</span>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } catch (err) {
+          errorBox.hidden = false;
+          errorBox.textContent = err.message || "Falha ao carregar transações.";
+        }
+      }
+
+      // ---------- Saldo / checkout ----------
+      function loadSaldo() {
+        const selectPanel = document.getElementById("select-panel");
+        const waitPanel = document.getElementById("wait-panel");
+        const amountsEl = document.getElementById("amounts");
+        const hintElCheckout = document.getElementById("methods-hint");
+        const errorBox = document.getElementById("checkout-error");
+        const customBox = document.getElementById("custom-box");
+        const customInput = document.getElementById("custom-input");
+        const customHint = document.getElementById("custom-hint");
+        const customPayBtn = document.getElementById("btn-custom-pay");
+        const waitTitle = document.getElementById("wait-title");
+        const waitMessage = document.getElementById("wait-message");
+        const waitPulse = document.getElementById("wait-pulse");
+        const retryBtn = document.getElementById("btn-wait-retry");
+        const reopenBtn = document.getElementById("btn-reopen");
+
+        let minCents = 500;
+        let maxCents = 500000;
+        let busy = false;
+        let activeTopupId = null;
+        let checkoutUrl = null;
+        let mpWindow = null;
+        let pollTimer = null;
+        let watchTimer = null;
+
+        function showError(message) {
+          errorBox.hidden = false;
+          errorBox.textContent = message;
+        }
+
+        function clearError() {
+          errorBox.hidden = true;
+        }
+
+        function parseReaisToCents(raw) {
+          const cleaned = String(raw || "")
+            .trim()
+            .replace(/\s/g, "")
+            .replace(/R\$\s?/i, "");
+          if (!cleaned) return null;
+          let normalized = cleaned;
+          if (normalized.includes(",") && normalized.includes(".")) {
+            normalized = normalized.replace(/\./g, "").replace(",", ".");
+          } else if (normalized.includes(",")) {
+            normalized = normalized.replace(",", ".");
+          }
+          const value = Number(normalized);
+          if (!Number.isFinite(value) || value <= 0) return null;
+          return Math.round(value * 100);
+        }
+
+        function popupFeatures() {
+          const width = Math.min(980, Math.max(720, screen.availWidth - 80));
+          const height = Math.min(820, Math.max(640, screen.availHeight - 80));
+          const left = Math.max(0, Math.round((screen.availWidth - width) / 2 + (screen.availLeft || 0)));
+          const top = Math.max(0, Math.round((screen.availHeight - height) / 2 + (screen.availTop || 0)));
+          return [
+            "popup=yes",
+            `width=${width}`,
+            `height=${height}`,
+            `left=${left}`,
+            `top=${top}`,
+            "scrollbars=yes",
+            "resizable=yes",
+          ].join(",");
+        }
+
+        function openCheckoutWindow() {
+          const win = window.open("about:blank", "muhbianco_mp_checkout", popupFeatures());
+          if (win) {
+            try {
+              win.document.write(
+                "<!doctype html><title>Mercado Pago</title><body style=\"font-family:sans-serif;padding:2rem;color:#333\">Abrindo checkout…</body>"
+              );
+              win.document.close();
+            } catch (_) {}
+            try {
+              win.focus();
+            } catch (_) {}
+          }
+          return win;
+        }
+
+        function stopWatchers() {
+          if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+          }
+          if (watchTimer) {
+            clearInterval(watchTimer);
+            watchTimer = null;
+          }
+        }
+
+        function showWaiting(title, message, { waiting = true, showRetry = false, showReopen = false } = {}) {
+          selectPanel.hidden = true;
+          waitPanel.hidden = false;
+          waitTitle.textContent = title;
+          waitMessage.textContent = message;
+          waitPulse.hidden = !waiting;
+          retryBtn.hidden = !showRetry;
+          reopenBtn.hidden = !showReopen;
+        }
+
+        function finishPaid(amountCents) {
+          stopWatchers();
+          try {
+            if (mpWindow && !mpWindow.closed) mpWindow.close();
+          } catch (_) {}
+          const extra = amountCents != null ? ` ${brl(amountCents)}` : "";
+          showWaiting(
+            "Saldo creditado",
+            `Pagamento confirmado${extra}. Seu saldo já está disponível.`,
+            { waiting: false }
+          );
+          loaded.conta = false;
+        }
+
+        function finishFailed(message) {
+          stopWatchers();
+          showWaiting("Pagamento não concluído", message || "Nenhum valor foi creditado.", {
+            waiting: false,
+            showRetry: true,
+          });
+        }
+
+        async function checkTopupOnce() {
+          if (!activeTopupId) return null;
+          const topup = await MuhAuth.getTopup(activeTopupId, true);
+          if (topup.status === "paid") {
+            finishPaid(topup.amount_cents);
+            return topup;
+          }
+          if (topup.status === "failed" || topup.status === "cancelled") {
+            finishFailed("Nenhum valor foi creditado. Você pode tentar de novo.");
+            return topup;
+          }
+          return topup;
+        }
+
+        function startPolling() {
+          stopWatchers();
+          let ticks = 0;
+          const maxTicks = 150;
+
+          pollTimer = setInterval(async () => {
+            ticks += 1;
+            try {
+              const topup = await checkTopupOnce();
+              if (!topup) return;
+              if (topup.status === "paid" || topup.status === "failed" || topup.status === "cancelled") {
+                return;
+              }
+              if (ticks >= maxTicks) {
+                stopWatchers();
+                showWaiting(
+                  "Ainda confirmando…",
+                  "Se você já pagou, o saldo deve aparecer em breve na conta. Pode fechar esta página.",
+                  { waiting: false, showReopen: Boolean(checkoutUrl) }
+                );
+              }
+            } catch (_) {}
+          }, 2000);
+
+          watchTimer = setInterval(() => {
+            if (!mpWindow) return;
+            try {
+              if (mpWindow.closed) {
+                mpWindow = null;
+                if (activeTopupId) {
+                  showWaiting(
+                    "Confirmando pagamento…",
+                    "A janela do Mercado Pago foi fechada. Estamos verificando se o pagamento entrou.",
+                    { waiting: true, showReopen: Boolean(checkoutUrl) }
+                  );
+                  checkTopupOnce().catch(() => {});
+                }
+              }
+            } catch (_) {}
+          }, 800);
+        }
+
+        window.addEventListener("message", (event) => {
+          if (event.origin !== location.origin) return;
+          const data = event.data;
+          if (!data || data.type !== "muhbianco-topup") return;
+          if (data.topupId && activeTopupId && data.topupId !== activeTopupId) return;
+          checkTopupOnce().catch(() => {});
+        });
+
+        retryBtn.addEventListener("click", () => {
+          stopWatchers();
+          activeTopupId = null;
+          checkoutUrl = null;
+          mpWindow = null;
+          busy = false;
+          waitPanel.hidden = true;
+          selectPanel.hidden = false;
+          clearError();
+          history.replaceState(null, "", "#saldo");
+          location.reload();
+        });
+
+        reopenBtn.addEventListener("click", () => {
+          if (!checkoutUrl) return;
+          mpWindow = openCheckoutWindow();
+          if (mpWindow) {
+            mpWindow.location = checkoutUrl;
+            showWaiting(
+              "Aguardando pagamento…",
+              "Conclua o pagamento na janela do Mercado Pago. Esta página atualiza sozinha.",
+              { waiting: true, showReopen: true }
+            );
+          } else {
+            showError("Permita pop-ups neste site para reabrir o Mercado Pago.");
+          }
+        });
+
+        async function startCheckout(cents, button) {
+          if (busy) return;
+          clearError();
+          if (cents < minCents || cents > maxCents) {
+            showError(`Valor deve ser entre ${brl(minCents)} e ${brl(maxCents)}.`);
+            return;
+          }
+
+          const popup = openCheckoutWindow();
+          if (!popup) {
+            showError(
+              "O navegador bloqueou a janela do Mercado Pago. Permita pop-ups para muhbianco.com.br e tente de novo."
+            );
+            return;
+          }
+
+          busy = true;
+          if (button) button.disabled = true;
+          mpWindow = popup;
+
+          try {
+            const topup = await MuhAuth.createTopup(cents);
+            if (!topup.checkout_url) throw new Error("Checkout sem URL do Mercado Pago.");
+            activeTopupId = topup.id;
+            checkoutUrl = topup.checkout_url;
+            mpWindow.location = topup.checkout_url;
+            showWaiting(
+              "Aguardando pagamento…",
+              `Janela aberta para ${brl(cents)}. Conclua o pagamento lá — o saldo aparece aqui assim que confirmar.`,
+              { waiting: true, showReopen: true }
+            );
+            startPolling();
+            checkTopupOnce().catch(() => {});
+          } catch (err) {
+            try {
+              if (mpWindow && !mpWindow.closed) mpWindow.close();
+            } catch (_) {}
+            mpWindow = null;
+            showError(err.message || "Não foi possível iniciar o pagamento.");
+            busy = false;
+            if (button) button.disabled = false;
+          }
+        }
+
+        (async () => {
+          try {
+            const options = await MuhAuth.billingOptions();
+            if (!options.mercadopago_enabled) {
+              hintElCheckout.textContent = "Pagamentos ainda não estão habilitados nesta conta.";
+              return;
+            }
+            minCents = Number(options.min_cents) || minCents;
+            maxCents = Number(options.max_cents) || maxCents;
+            hintElCheckout.textContent =
+              options.methods_note ||
+              "PIX, cartão de crédito/débito e demais meios liberados no Mercado Pago.";
+
+            amountsEl.innerHTML = "";
+            (options.amounts_cents || []).forEach((cents) => {
+              const btn = document.createElement("button");
+              btn.type = "button";
+              btn.className = "btn btn-primary checkout-amount-btn";
+              btn.innerHTML = `<span class="amount-label">${brl(cents)}</span><span class="amount-cta">Continuar</span>`;
+              btn.addEventListener("click", () => startCheckout(cents, btn));
+              amountsEl.appendChild(btn);
+            });
+
+            if (options.allow_custom !== false) {
+              const otherBtn = document.createElement("button");
+              otherBtn.type = "button";
+              otherBtn.className = "btn btn-ghost checkout-amount-btn";
+              otherBtn.innerHTML =
+                '<span class="amount-label">Outro valor</span><span class="amount-cta">Digitar</span>';
+              otherBtn.addEventListener("click", () => {
+                customBox.hidden = false;
+                customHint.textContent = `Mínimo ${brl(minCents)} · máximo ${brl(maxCents)}`;
+                customInput.focus();
+                otherBtn.hidden = true;
+              });
+              amountsEl.appendChild(otherBtn);
+
+              customPayBtn.addEventListener("click", () => {
+                const cents = parseReaisToCents(customInput.value);
+                if (cents == null) {
+                  showError("Digite um valor válido, por exemplo 35,50.");
+                  return;
+                }
+                startCheckout(cents, customPayBtn);
+              });
+
+              customInput.addEventListener("keydown", (event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  customPayBtn.click();
+                }
+              });
+            }
+          } catch (err) {
+            showError(err.message || "Falha ao carregar o checkout.");
+          }
+        })();
+      }
+
+      // ---------- Configurações ----------
+      function loadConfiguracoes() {
+        const emailBadge = document.getElementById("email-badge");
+        const emailHint = document.getElementById("email-hint");
+        const emailActions = document.getElementById("email-actions");
+        const emailAlert = document.getElementById("email-alert");
+        const emailOk = document.getElementById("email-ok");
+        const sendBtn = document.getElementById("btn-send-code");
+        const codeForm = document.getElementById("code-form");
+        const codeInput = document.getElementById("code-input");
+        const confirmBtn = document.getElementById("btn-confirm-code");
+
+        const phoneBadge = document.getElementById("phone-badge");
+        const phoneHint = document.getElementById("phone-hint");
+        const phoneActions = document.getElementById("phone-actions");
+        const phoneAlert = document.getElementById("phone-alert");
+        const phoneOk = document.getElementById("phone-ok");
+        const phoneForm = document.getElementById("phone-form");
+        const phoneInput = document.getElementById("phone-input");
+        const sendPhoneBtn = document.getElementById("btn-send-phone");
+        const phoneCodeForm = document.getElementById("phone-code-form");
+        const phoneCodeInput = document.getElementById("phone-code-input");
+        const confirmPhoneBtn = document.getElementById("btn-confirm-phone");
+
+        const accessHint = document.getElementById("access-hint");
+        const roleBadge = document.getElementById("role-badge");
+
+        function showBox(alertEl, okEl, kind, message) {
+          const isOk = kind === "ok";
+          alertEl.hidden = isOk;
+          okEl.hidden = !isOk;
+          (isOk ? okEl : alertEl).textContent = message;
+        }
+
+        function formatPhoneHint(phone) {
+          if (!phone) return "";
+          const digits = String(phone).replace(/\D+/g, "");
+          if (digits.startsWith("55") && digits.length >= 12) {
+            const rest = digits.slice(2);
+            const ddd = rest.slice(0, 2);
+            const num = rest.slice(2);
+            if (num.length === 9) return `+55 (${ddd}) ${num.slice(0, 5)}-${num.slice(5)}`;
+            if (num.length === 8) return `+55 (${ddd}) ${num.slice(0, 4)}-${num.slice(4)}`;
+          }
+          return phone;
+        }
+
+        function renderEmailState(user) {
+          if (user.email_verified) {
+            emailBadge.dataset.state = "done";
+            emailBadge.textContent = "Concluído";
+            emailHint.textContent = `${user.email} confirmado.`;
+            emailActions.hidden = true;
+            codeForm.hidden = true;
+            return;
+          }
+          emailBadge.dataset.state = "pending";
+          emailBadge.textContent = "Pendente";
+          emailHint.textContent = `Enviaremos um código de 6 dígitos para ${user.email}.`;
+          emailActions.hidden = false;
+        }
+
+        function renderPhoneState(user) {
+          if (user.phone_verified) {
+            phoneBadge.dataset.state = "done";
+            phoneBadge.textContent = "Concluído";
+            phoneHint.textContent = `${formatPhoneHint(user.phone)} confirmado.`;
+            phoneActions.hidden = true;
+            phoneForm.hidden = true;
+            phoneCodeForm.hidden = true;
+            return;
+          }
+          phoneBadge.dataset.state = "pending";
+          phoneBadge.textContent = "Pendente";
+          phoneHint.textContent = user.phone
+            ? `Código será enviado para ${formatPhoneHint(user.phone)}. Você pode alterar o número.`
+            : "Informe seu celular para receber o código no WhatsApp.";
+          phoneActions.hidden = false;
+          phoneForm.hidden = false;
+          if (user.phone) phoneInput.value = formatPhoneHint(user.phone);
+        }
+
+        function renderAccess(user) {
+          const links = [];
+          if (user.has_password) links.push("e-mail e senha");
+          if (user.google_linked) links.push("Google");
+          if (user.discord_linked) links.push("Discord");
+          accessHint.textContent = links.join(" · ") || "—";
+          roleBadge.textContent = user.role;
+        }
+
+        sendBtn.addEventListener("click", async () => {
+          sendBtn.disabled = true;
+          try {
+            const result = await MuhAuth.sendEmailVerification();
+            showBox(emailAlert, emailOk, "ok", result.message || "Código enviado para o seu e-mail.");
+            codeForm.hidden = false;
+            codeInput.focus();
+          } catch (err) {
+            showBox(emailAlert, emailOk, "error", err.message || "Não foi possível enviar o código.");
+          } finally {
+            sendBtn.disabled = false;
+          }
+        });
+
+        codeForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          confirmBtn.disabled = true;
+          try {
+            const user = await MuhAuth.confirmEmailVerification(codeInput.value);
+            currentUser = user;
+            showBox(emailAlert, emailOk, "ok", "E-mail confirmado.");
+            renderEmailState(user);
+            renderAccess(user);
+            document.getElementById("email-pending").hidden = true;
+          } catch (err) {
+            showBox(emailAlert, emailOk, "error", err.message || "Código inválido.");
+          } finally {
+            confirmBtn.disabled = false;
+          }
+        });
+
+        phoneForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          sendPhoneBtn.disabled = true;
+          try {
+            const result = await MuhAuth.sendPhoneVerification(phoneInput.value);
+            showBox(phoneAlert, phoneOk, "ok", result.message || "Código enviado no WhatsApp.");
+            phoneCodeForm.hidden = false;
+            phoneCodeInput.focus();
+          } catch (err) {
+            showBox(phoneAlert, phoneOk, "error", err.message || "Não foi possível enviar o código.");
+          } finally {
+            sendPhoneBtn.disabled = false;
+          }
+        });
+
+        phoneCodeForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          confirmPhoneBtn.disabled = true;
+          try {
+            const user = await MuhAuth.confirmPhoneVerification(phoneCodeInput.value);
+            currentUser = user;
+            showBox(phoneAlert, phoneOk, "ok", "WhatsApp confirmado.");
+            renderPhoneState(user);
+            renderAccess(user);
+          } catch (err) {
+            showBox(phoneAlert, phoneOk, "error", err.message || "Código inválido.");
+          } finally {
+            confirmPhoneBtn.disabled = false;
+          }
+        });
+
+        (async () => {
+          try {
+            const user = currentUser || (await MuhAuth.me());
+            currentUser = user;
+            configLedeOverride = `Conta de ${user.full_name}. Verificações e preferências.`;
+            ledeEl.textContent = configLedeOverride;
+            renderEmailState(user);
+            renderPhoneState(user);
+            renderAccess(user);
+          } catch (err) {
+            await MuhAuth.logout();
+            location.href = "/login.html?error=authentication_failed";
+          }
+        })();
+      }
+
+      // ---------- boot ----------
+      try {
+        currentUser = await MuhAuth.me();
+        if (currentUser.role === "admin") {
+          const nav = document.getElementById("client-nav");
+          const link = document.createElement("a");
+          link.href = "/admin.html";
+          link.textContent = "Admin";
+          nav.appendChild(link);
+        }
+        const initial = (location.hash || "#conta").slice(1);
+        showPanel(initial);
       } catch (err) {
         await MuhAuth.logout();
         location.href = "/login.html?error=authentication_failed";
