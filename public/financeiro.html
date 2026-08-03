@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=26" />
+  <link rel="stylesheet" href="/css/styles.css?v=27" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
@@ -79,9 +79,16 @@
 
       <section class="finance-charts" aria-label="Gráficos">
         <article class="finance-panel finance-panel--wide">
-          <header class="finance-panel-head">
-            <h2>Fluxo diário</h2>
-            <p class="hint">Gastos e entradas dia a dia neste mês</p>
+          <header class="finance-panel-head finance-panel-head--row">
+            <div>
+              <h2>Fluxo diário</h2>
+              <p class="hint" id="daily-hint">Gastos e entradas dia a dia neste mês</p>
+            </div>
+            <div class="finance-zoom" role="group" aria-label="Zoom do gráfico">
+              <button type="button" class="btn btn-ghost btn-sm finance-zoom-btn" data-zoom="7">7 dias</button>
+              <button type="button" class="btn btn-ghost btn-sm finance-zoom-btn" data-zoom="15">15 dias</button>
+              <button type="button" class="btn btn-ghost btn-sm finance-zoom-btn is-active" data-zoom="month">Mês</button>
+            </div>
           </header>
           <div class="finance-chart-wrap">
             <canvas id="chart-daily" aria-label="Gráfico de fluxo diário"></canvas>
@@ -208,7 +215,7 @@
     </div>
   </main>
 
-  <script src="/js/auth.js?v=21"></script>
+  <script src="/js/auth.js?v=22"></script>
   <script>
     (function () {
       if (!MuhAuth.requireAuth()) return;
@@ -265,6 +272,8 @@
 
       let charts = { daily: null, category: null, payment: null };
       let allEntries = [];
+      let dailySerieFull = [];
+      let dailyZoom = "month";
 
       function destroyCharts() {
         Object.keys(charts).forEach((key) => {
@@ -351,9 +360,29 @@
       }
 
       function renderDaily(serie) {
-        const labels = (serie || []).map((p) => fmtDay(p.data));
-        const gastos = (serie || []).map((p) => Number(p.gastos || 0));
-        const entradas = (serie || []).map((p) => Number(p.entradas || 0));
+        if (serie !== undefined) {
+          dailySerieFull = Array.isArray(serie) ? serie.slice() : [];
+        }
+        if (charts.daily) {
+          charts.daily.destroy();
+          charts.daily = null;
+        }
+
+        const view = (() => {
+          const points = dailySerieFull.slice();
+          if (!points.length) return [];
+          if (dailyZoom === "month") return points;
+          const days = dailyZoom === "15" ? 15 : 7;
+          const todayIso = toIsoDate(new Date());
+          const upToToday = points.filter((p) => String(p.data) <= todayIso);
+          if (upToToday.length <= days) return upToToday;
+          return upToToday.slice(-days);
+        })();
+
+        const labels = view.map((p) => fmtDay(p.data));
+        const gastos = view.map((p) => Number(p.gastos || 0));
+        const entradas = view.map((p) => Number(p.entradas || 0));
+        const peak = Math.max(0, ...gastos, ...entradas);
         const ctx = document.getElementById("chart-daily");
         charts.daily = new Chart(ctx, {
           type: "line",
@@ -367,7 +396,7 @@
                 backgroundColor: "rgba(226, 78, 59, 0.12)",
                 fill: true,
                 tension: 0.35,
-                pointRadius: 0,
+                pointRadius: view.length <= 15 ? 3 : 0,
                 pointHoverRadius: 4,
                 borderWidth: 2,
               },
@@ -378,7 +407,7 @@
                 backgroundColor: "rgba(26, 107, 107, 0.12)",
                 fill: true,
                 tension: 0.35,
-                pointRadius: 0,
+                pointRadius: view.length <= 15 ? 3 : 0,
                 pointHoverRadius: 4,
                 borderWidth: 2,
               },
@@ -403,24 +432,42 @@
             scales: {
               x: {
                 grid: { display: false },
-                ticks: { maxTicksLimit: 8, color: "#5c6b73" },
+                ticks: {
+                  maxTicksLimit: dailyZoom === "month" ? 10 : 8,
+                  color: "#5c6b73",
+                  autoSkip: true,
+                },
               },
               y: {
                 beginAtZero: true,
+                suggestedMax: peak > 0 ? undefined : 10,
                 grid: { color: "rgba(12, 26, 34, 0.08)" },
                 ticks: {
                   color: "#5c6b73",
-                  callback: (v) =>
-                    Number(v).toLocaleString("pt-BR", {
+                  maxTicksLimit: 6,
+                  callback: (v) => {
+                    if (typeof v !== "number" || !Number.isInteger(v)) return "";
+                    return Number(v).toLocaleString("pt-BR", {
                       style: "currency",
                       currency: "BRL",
                       maximumFractionDigits: 0,
-                    }),
+                    });
+                  },
                 },
               },
             },
           },
         });
+
+        document.querySelectorAll(".finance-zoom-btn").forEach((btn) => {
+          btn.classList.toggle("is-active", btn.getAttribute("data-zoom") === dailyZoom);
+        });
+        const zoomHint = {
+          7: "últimos 7 dias do mês",
+          15: "últimos 15 dias do mês",
+          month: "todos os dias do mês",
+        };
+        setText("daily-hint", `Gastos e entradas · ${zoomHint[dailyZoom] || "mês vigente"}`);
       }
 
       function renderCategory(summary) {
@@ -800,6 +847,13 @@
         const el = document.getElementById(id);
         el.addEventListener("input", applyEntryFilters);
         el.addEventListener("change", applyEntryFilters);
+      });
+
+      document.querySelectorAll(".finance-zoom-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          dailyZoom = btn.getAttribute("data-zoom") || "month";
+          renderDaily();
+        });
       });
 
       function waitChart() {

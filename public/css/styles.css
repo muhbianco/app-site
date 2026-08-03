@@ -2142,6 +2142,20 @@ button.linkish {
   }
 }
 
+.finance-zoom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.finance-zoom-btn.is-active {
+  border-color: rgba(26, 107, 107, 0.45);
+  background: rgba(26, 107, 107, 0.1);
+  color: #0f4a4a;
+  font-weight: 700;
+}
+
 .finance-chart-wrap {
   position: relative;
   height: 240px;
