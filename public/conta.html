@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=22" />
+  <link rel="stylesheet" href="/css/styles.css?v=23" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -373,14 +373,24 @@
           </form>
         </div>
 
-        <div class="balance-actions" data-field="active-actions" hidden>
-          <label class="pref-toggle" data-field="tts-toggle-wrap" hidden>
-            <input type="checkbox" data-field="tts-toggle" />
-            <span>
+        <div class="service-prefs" data-field="tts-prefs" hidden>
+          <button
+            type="button"
+            class="pref-switch"
+            data-field="tts-toggle"
+            role="switch"
+            aria-checked="false"
+            aria-label="Resposta em áudio TTS"
+          >
+            <span class="pref-switch-track" aria-hidden="true"><span class="pref-switch-knob"></span></span>
+            <span class="pref-switch-copy">
               <strong>Resposta em áudio (TTS)</strong>
-              <small class="hint">Se você mandar áudio, o agente responde em áudio. Texto continua em texto.</small>
+              <small>Se você mandar áudio, o agente responde em áudio. Texto continua em texto.</small>
             </span>
-          </label>
+          </button>
+        </div>
+
+        <div class="balance-actions" data-field="active-actions" hidden>
           <button type="button" class="btn btn-ghost btn-compact" data-field="pause-btn" hidden>
             Pausar agente
           </button>
@@ -421,7 +431,7 @@
     </form>
   </dialog>
 
-  <script src="/js/auth.js?v=18"></script>
+  <script src="/js/auth.js?v=19"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -754,27 +764,36 @@
           phonesBlock.hidden = false;
           q("pause-btn").hidden = paused;
           q("resume-btn").hidden = !paused;
-          const ttsWrap = q("tts-toggle-wrap");
+          const ttsPrefs = q("tts-prefs");
           const ttsToggle = q("tts-toggle");
-          ttsWrap.hidden = false;
-          ttsToggle.checked = Boolean(sub.tts_enabled);
-          ttsToggle.disabled = paused;
-          ttsToggle.addEventListener("change", async () => {
+          ttsPrefs.hidden = false;
+          const ttsOn = Boolean(sub.tts_enabled);
+          ttsToggle.setAttribute("aria-checked", ttsOn ? "true" : "false");
+          ttsToggle.classList.toggle("is-on", ttsOn);
+          ttsToggle.disabled = false;
+          ttsToggle.addEventListener("click", async () => {
+            if (ttsToggle.dataset.busy === "1") return;
+            const next = ttsToggle.getAttribute("aria-checked") !== "true";
+            ttsToggle.dataset.busy = "1";
             ttsToggle.disabled = true;
+            ttsToggle.setAttribute("aria-checked", next ? "true" : "false");
+            ttsToggle.classList.toggle("is-on", next);
             try {
               await MuhAuth.updateServicePreferences(service.code, {
-                tts_enabled: ttsToggle.checked,
+                tts_enabled: next,
               });
               showOk(
-                ttsToggle.checked
+                next
                   ? "TTS ligado: áudio → áudio, texto → texto."
                   : "TTS desligado: respostas sempre em texto."
               );
             } catch (err) {
-              ttsToggle.checked = !ttsToggle.checked;
+              ttsToggle.setAttribute("aria-checked", next ? "false" : "true");
+              ttsToggle.classList.toggle("is-on", !next);
               showError(err.message || "Não foi possível salvar a preferência.");
             } finally {
-              ttsToggle.disabled = paused;
+              ttsToggle.disabled = false;
+              delete ttsToggle.dataset.busy;
             }
           });
           renderPhones();
@@ -788,7 +807,7 @@
             );
           }
           if (paused) partes.push("Agente silenciado — a cobrança do período segue normal");
-          if (sub.tts_enabled) partes.push("TTS ligado");
+          if (ttsOn) partes.push("TTS ligado");
           statusDetail.textContent = partes.join(" · ");
           statusDetail.hidden = partes.length === 0;
         } else if (status === "suspended") {

@@ -1631,6 +1631,86 @@ img {
   line-height: 1.35;
 }
 
+.service-prefs {
+  margin: 0.85rem 0 0.35rem;
+  position: relative;
+  z-index: 2;
+}
+
+.pref-switch {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  pointer-events: auto;
+  position: relative;
+  z-index: 2;
+}
+
+.pref-switch:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.pref-switch-track {
+  position: relative;
+  flex: 0 0 2.75rem;
+  width: 2.75rem;
+  height: 1.55rem;
+  margin-top: 0.1rem;
+  border-radius: 999px;
+  background: #c5d0d6;
+  transition: background 0.15s ease;
+}
+
+.pref-switch-knob {
+  position: absolute;
+  top: 0.18rem;
+  left: 0.18rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s ease;
+}
+
+.pref-switch.is-on .pref-switch-track {
+  background: var(--teal-deep, #1a6b6b);
+}
+
+.pref-switch.is-on .pref-switch-knob {
+  transform: translateX(1.2rem);
+}
+
+.pref-switch-copy {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.pref-switch-copy strong {
+  font-size: 0.95rem;
+}
+
+.pref-switch-copy small {
+  display: block;
+  line-height: 1.35;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
 .terms-check input {
   margin-top: 0.2rem;
 }
