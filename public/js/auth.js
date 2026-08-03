@@ -83,7 +83,7 @@
   async function register(email, password, fullName) {
     const response = await fetch(`${API_BASE}${API_PREFIX}/auth/register`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify({
         email,
         password,
@@ -92,8 +92,14 @@
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const err = new Error(data.message || "Não foi possível criar a conta.");
+      const fieldErrors = data.details && Array.isArray(data.details.campos)
+        ? data.details.campos.map((item) => item.erro).filter(Boolean)
+        : [];
+      const message =
+        fieldErrors[0] || data.message || "Não foi possível criar a conta.";
+      const err = new Error(message);
       err.code = data.error || null;
+      err.details = data.details || null;
       throw err;
     }
     return data;

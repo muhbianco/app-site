@@ -45,7 +45,16 @@
         </label>
         <label>
           <span>Senha</span>
-          <input type="password" name="password" autocomplete="new-password" required minlength="12" placeholder="Mínimo 12 caracteres" />
+          <input
+            type="password"
+            name="password"
+            autocomplete="new-password"
+            required
+            minlength="12"
+            maxlength="128"
+            placeholder="Mínimo 12 caracteres"
+          />
+          <small class="hint">Use no mínimo 12 caracteres.</small>
         </label>
         <button type="submit" class="btn btn-primary btn-block" id="btn-submit">Continuar</button>
       </form>
@@ -101,7 +110,7 @@
     </section>
   </main>
 
-  <script src="/js/auth.js?v=15"></script>
+  <script src="/js/auth.js?v=20"></script>
   <script>
     (async function () {
       if (MuhAuth.isLoggedIn()) {
@@ -141,10 +150,23 @@
         errorBox.hidden = true;
         const form = event.currentTarget;
         const submit = document.getElementById("btn-submit");
-        submit.disabled = true;
         const email = form.email.value.trim();
+        const fullName = form.full_name.value.trim();
+        const password = form.password.value;
+        if (fullName.length < 2) {
+          errorBox.hidden = false;
+          errorBox.textContent = "O nome precisa ter no mínimo 2 caracteres.";
+          return;
+        }
+        if (password.length < 12) {
+          errorBox.hidden = false;
+          errorBox.textContent = "A senha precisa ter no mínimo 12 caracteres.";
+          form.password.focus();
+          return;
+        }
+        submit.disabled = true;
         try {
-          await MuhAuth.register(email, form.password.value, form.full_name.value.trim());
+          await MuhAuth.register(email, password, fullName);
           showVerify(email);
         } catch (err) {
           errorBox.hidden = false;
