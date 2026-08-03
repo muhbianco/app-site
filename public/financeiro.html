@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=27" />
+  <link rel="stylesheet" href="/css/styles.css?v=28" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
@@ -158,8 +158,11 @@
       <section class="finance-panel finance-panel--wide" aria-label="Lançamentos">
         <header class="finance-panel-head finance-panel-head--row">
           <div>
-            <h2>Lançamentos</h2>
-            <p class="hint" id="entries-hint">Janela de até 1 ano · o que entrou pelo WhatsApp</p>
+            <div class="finance-tabs" role="tablist" aria-label="Tipo de lançamento">
+              <button type="button" class="finance-tab is-active" role="tab" aria-selected="true" id="tab-lancamentos" data-tab="lancamentos">Lançamentos</button>
+              <button type="button" class="finance-tab" role="tab" aria-selected="false" id="tab-futuros" data-tab="futuros">Futuros</button>
+            </div>
+            <p class="hint" id="entries-hint">Realizados nos últimos 12 meses</p>
           </div>
           <div class="finance-period" role="group" aria-label="Período">
             <label class="finance-period-field">
@@ -215,7 +218,7 @@
     </div>
   </main>
 
-  <script src="/js/auth.js?v=22"></script>
+  <script src="/js/auth.js?v=23"></script>
   <script>
     (function () {
       if (!MuhAuth.requireAuth()) return;
@@ -274,6 +277,7 @@
       let allEntries = [];
       let dailySerieFull = [];
       let dailyZoom = "month";
+      let entriesTab = "lancamentos";
 
       function destroyCharts() {
         Object.keys(charts).forEach((key) => {
@@ -292,6 +296,12 @@
       function defaultPeriod() {
         const today = new Date();
         today.setHours(12, 0, 0, 0);
+        if (entriesTab === "futuros") {
+          return {
+            from: toIsoDate(today),
+            to: toIsoDate(addDays(today, 365)),
+          };
+        }
         return {
           from: toIsoDate(addDays(today, -365)),
           to: toIsoDate(today),
@@ -299,10 +309,11 @@
       }
 
       function clampPeriodToOneYear(fromIso, toIso) {
+        const fallback = defaultPeriod();
         const from = new Date(`${fromIso}T12:00:00`);
         const to = new Date(`${toIso}T12:00:00`);
         if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
-          return defaultPeriod();
+          return fallback;
         }
         let start = from <= to ? from : to;
         let end = from <= to ? to : from;
@@ -316,6 +327,25 @@
         document.getElementById("filter-date-to").value = period.to;
         const maxSpan = addDays(new Date(`${period.from}T12:00:00`), 365);
         document.getElementById("filter-date-to").max = toIsoDate(maxSpan);
+      }
+
+      function syncEntriesTabUi() {
+        document.querySelectorAll(".finance-tab").forEach((btn) => {
+          const active = btn.getAttribute("data-tab") === entriesTab;
+          btn.classList.toggle("is-active", active);
+          btn.setAttribute("aria-selected", active ? "true" : "false");
+        });
+        const resetBtn = document.getElementById("filter-period-reset");
+        resetBtn.textContent =
+          entriesTab === "futuros" ? "Próximos 12 meses" : "Últimos 12 meses";
+      }
+
+      function clearColumnFilters() {
+        document.getElementById("col-filter-data").value = "";
+        document.getElementById("col-filter-desc").value = "";
+        document.getElementById("col-filter-cat").value = "";
+        document.getElementById("col-filter-pay").value = "";
+        document.getElementById("col-filter-valor").value = "";
       }
 
       function renderKpis(data) {
@@ -719,11 +749,16 @@
       function renderRecent(entries) {
         const body = document.getElementById("recent-body");
         const meta = document.getElementById("entries-meta");
+        const noun = entriesTab === "futuros" ? "futuros" : "lançamentos";
         body.innerHTML = "";
         if (!entries || !entries.length) {
-          body.innerHTML = `<tr><td colspan="5" class="hint">Nenhum lançamento neste filtro</td></tr>`;
+          body.innerHTML = `<tr><td colspan="5" class="hint">${
+            entriesTab === "futuros"
+              ? "Nenhum lançamento futuro neste filtro"
+              : "Nenhum lançamento neste filtro"
+          }</td></tr>`;
           meta.hidden = false;
-          meta.textContent = `0 de ${allEntries.length} lançamentos`;
+          meta.textContent = `0 de ${allEntries.length} ${noun}`;
           return;
         }
         entries.forEach((e) => {
@@ -746,8 +781,8 @@
         meta.hidden = false;
         meta.textContent =
           entries.length === allEntries.length
-            ? `${entries.length} lançamentos`
-            : `${entries.length} de ${allEntries.length} lançamentos`;
+            ? `${entries.length} ${noun}`
+            : `${entries.length} de ${allEntries.length} ${noun}`;
       }
 
       function applyEntryFilters() {
@@ -759,18 +794,32 @@
         const rawTo = document.getElementById("filter-date-to").value;
         const period = clampPeriodToOneYear(rawFrom, rawTo);
         syncPeriodInputs(period);
+        syncEntriesTabUi();
         setText(
           "entries-hint",
-          `De ${fmtDate(period.from)} a ${fmtDate(period.to)} · máximo 1 ano`
+          entriesTab === "futuros"
+            ? `Previstos de ${fmtDate(period.from)} a ${fmtDate(period.to)} · máximo 1 ano`
+            : `Realizados de ${fmtDate(period.from)} a ${fmtDate(period.to)} · máximo 1 ano`
         );
         const rows = await MuhAuth.financeEntries({
           inicio: period.from,
           fim: period.to,
+          status: entriesTab === "futuros" ? "previsto" : "realizado",
           limite: 500,
         });
         allEntries = Array.isArray(rows) ? rows : [];
         refreshColumnOptions(allEntries);
         applyEntryFilters();
+      }
+
+      async function switchEntriesTab(tab) {
+        if (tab !== "lancamentos" && tab !== "futuros") return;
+        if (entriesTab === tab) return;
+        entriesTab = tab;
+        clearColumnFilters();
+        syncPeriodInputs(defaultPeriod());
+        syncEntriesTabUi();
+        await loadEntriesForPeriod();
       }
 
       async function loadDashboard() {
@@ -786,6 +835,7 @@
         refreshBtn.disabled = true;
 
         try {
+          syncEntriesTabUi();
           if (!document.getElementById("filter-date-from").value) {
             syncPeriodInputs(defaultPeriod());
           }
@@ -853,6 +903,18 @@
         btn.addEventListener("click", () => {
           dailyZoom = btn.getAttribute("data-zoom") || "month";
           renderDaily();
+        });
+      });
+
+      document.querySelectorAll(".finance-tab").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          try {
+            await switchEntriesTab(btn.getAttribute("data-tab") || "lancamentos");
+          } catch (err) {
+            const errorEl = document.getElementById("finance-error");
+            errorEl.hidden = false;
+            errorEl.textContent = err.message || "Não foi possível trocar a aba.";
+          }
         });
       });
 

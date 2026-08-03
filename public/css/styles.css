@@ -2142,6 +2142,37 @@ button.linkish {
   }
 }
 
+.finance-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.finance-tab {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.finance-tab.is-active {
+  border-color: rgba(26, 107, 107, 0.45);
+  background: rgba(26, 107, 107, 0.12);
+  color: #0f4a4a;
+}
+
+.finance-tab:focus-visible {
+  outline: 2px solid rgba(26, 107, 107, 0.35);
+  outline-offset: 2px;
+}
+
 .finance-zoom {
   display: flex;
   flex-wrap: wrap;
