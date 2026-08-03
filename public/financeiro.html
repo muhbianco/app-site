@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=28" />
+  <link rel="stylesheet" href="/css/styles.css?v=29" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
@@ -214,11 +214,17 @@
           </table>
         </div>
         <p class="finance-table-meta hint" id="entries-meta" hidden></p>
+        <div class="finance-pager" id="entries-pager" hidden>
+          <button type="button" class="btn btn-ghost btn-sm" id="entries-prev">Anterior</button>
+          <span class="finance-pager-label" id="entries-page-label">Página 1</span>
+          <button type="button" class="btn btn-ghost btn-sm" id="entries-next">Próxima</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="entries-more" hidden>Carregar mais</button>
+        </div>
       </section>
     </div>
   </main>
 
-  <script src="/js/auth.js?v=23"></script>
+  <script src="/js/auth.js?v=24"></script>
   <script>
     (function () {
       if (!MuhAuth.requireAuth()) return;
@@ -278,6 +284,10 @@
       let dailySerieFull = [];
       let dailyZoom = "month";
       let entriesTab = "lancamentos";
+      let entriesPage = 1;
+      let entriesPages = 1;
+      let entriesTotal = 0;
+      const ENTRIES_PAGE_SIZE = 40;
 
       function destroyCharts() {
         Object.keys(charts).forEach((key) => {
@@ -308,25 +318,21 @@
         };
       }
 
-      function clampPeriodToOneYear(fromIso, toIso) {
+      function normalizePeriod(fromIso, toIso) {
         const fallback = defaultPeriod();
         const from = new Date(`${fromIso}T12:00:00`);
         const to = new Date(`${toIso}T12:00:00`);
         if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
           return fallback;
         }
-        let start = from <= to ? from : to;
-        let end = from <= to ? to : from;
-        const maxEnd = addDays(start, 365);
-        if (end > maxEnd) end = maxEnd;
-        return { from: toIsoDate(start), to: toIsoDate(end) };
+        if (from <= to) return { from: toIsoDate(from), to: toIsoDate(to) };
+        return { from: toIsoDate(to), to: toIsoDate(from) };
       }
 
       function syncPeriodInputs(period) {
         document.getElementById("filter-date-from").value = period.from;
         document.getElementById("filter-date-to").value = period.to;
-        const maxSpan = addDays(new Date(`${period.from}T12:00:00`), 365);
-        document.getElementById("filter-date-to").max = toIsoDate(maxSpan);
+        document.getElementById("filter-date-to").removeAttribute("max");
       }
 
       function syncEntriesTabUi() {
@@ -346,6 +352,23 @@
         document.getElementById("col-filter-cat").value = "";
         document.getElementById("col-filter-pay").value = "";
         document.getElementById("col-filter-valor").value = "";
+      }
+
+      function syncEntriesPager() {
+        const pager = document.getElementById("entries-pager");
+        const prev = document.getElementById("entries-prev");
+        const next = document.getElementById("entries-next");
+        const more = document.getElementById("entries-more");
+        const label = document.getElementById("entries-page-label");
+        const hasPages = entriesTotal > 0;
+        pager.hidden = !hasPages;
+        prev.disabled = entriesPage <= 1;
+        next.disabled = entriesPage >= entriesPages;
+        more.hidden = entriesPage >= entriesPages;
+        label.textContent =
+          entriesPages > 0
+            ? `Página ${entriesPage} de ${entriesPages}`
+            : "Página 1";
       }
 
       function renderKpis(data) {
@@ -758,7 +781,8 @@
               : "Nenhum lançamento neste filtro"
           }</td></tr>`;
           meta.hidden = false;
-          meta.textContent = `0 de ${allEntries.length} ${noun}`;
+          meta.textContent = `0 de ${entriesTotal} ${noun}`;
+          syncEntriesPager();
           return;
         }
         entries.forEach((e) => {
@@ -779,35 +803,51 @@
           body.appendChild(tr);
         });
         meta.hidden = false;
+        const filtered = entries.length;
         meta.textContent =
-          entries.length === allEntries.length
-            ? `${entries.length} ${noun}`
-            : `${entries.length} de ${allEntries.length} ${noun}`;
+          filtered === allEntries.length
+            ? `${filtered} nesta página · ${entriesTotal} ${noun} no total`
+            : `${filtered} filtrados nesta página · ${allEntries.length} carregados · ${entriesTotal} no total`;
+        syncEntriesPager();
       }
 
       function applyEntryFilters() {
         renderRecent(filterEntries(allEntries));
       }
 
-      async function loadEntriesForPeriod() {
+      async function loadEntriesForPeriod({ append = false } = {}) {
         const rawFrom = document.getElementById("filter-date-from").value;
         const rawTo = document.getElementById("filter-date-to").value;
-        const period = clampPeriodToOneYear(rawFrom, rawTo);
+        const period = normalizePeriod(rawFrom, rawTo);
         syncPeriodInputs(period);
         syncEntriesTabUi();
+        if (!append) entriesPage = Math.max(1, entriesPage);
         setText(
           "entries-hint",
           entriesTab === "futuros"
-            ? `Previstos de ${fmtDate(period.from)} a ${fmtDate(period.to)} · máximo 1 ano`
-            : `Realizados de ${fmtDate(period.from)} a ${fmtDate(period.to)} · máximo 1 ano`
+            ? `Previstos de ${fmtDate(period.from)} a ${fmtDate(period.to)}`
+            : `Realizados de ${fmtDate(period.from)} a ${fmtDate(period.to)}`
         );
-        const rows = await MuhAuth.financeEntries({
+        const payload = await MuhAuth.financeEntries({
           inicio: period.from,
           fim: period.to,
           status: entriesTab === "futuros" ? "previsto" : "realizado",
-          limite: 500,
+          page: entriesPage,
+          page_size: ENTRIES_PAGE_SIZE,
         });
-        allEntries = Array.isArray(rows) ? rows : [];
+        const rows = Array.isArray(payload) ? payload : payload.items || [];
+        entriesTotal = Array.isArray(payload) ? rows.length : Number(payload.total || 0);
+        entriesPages = Array.isArray(payload)
+          ? 1
+          : Math.max(1, Number(payload.pages || Math.ceil(entriesTotal / ENTRIES_PAGE_SIZE) || 1));
+        if (append) {
+          const seen = new Set(allEntries.map((e) => e.id));
+          rows.forEach((row) => {
+            if (!seen.has(row.id)) allEntries.push(row);
+          });
+        } else {
+          allEntries = rows;
+        }
         refreshColumnOptions(allEntries);
         applyEntryFilters();
       }
@@ -816,6 +856,7 @@
         if (tab !== "lancamentos" && tab !== "futuros") return;
         if (entriesTab === tab) return;
         entriesTab = tab;
+        entriesPage = 1;
         clearColumnFilters();
         syncPeriodInputs(defaultPeriod());
         syncEntriesTabUi();
@@ -865,6 +906,7 @@
 
       document.getElementById("finance-refresh").addEventListener("click", loadDashboard);
       document.getElementById("filter-period-reset").addEventListener("click", async () => {
+        entriesPage = 1;
         syncPeriodInputs(defaultPeriod());
         try {
           await loadEntriesForPeriod();
@@ -877,6 +919,7 @@
 
       ["filter-date-from", "filter-date-to"].forEach((id) => {
         document.getElementById(id).addEventListener("change", async () => {
+          entriesPage = 1;
           try {
             await loadEntriesForPeriod();
           } catch (err) {
@@ -885,6 +928,42 @@
             errorEl.textContent = err.message || "Não foi possível filtrar o período.";
           }
         });
+      });
+
+      document.getElementById("entries-prev").addEventListener("click", async () => {
+        if (entriesPage <= 1) return;
+        entriesPage -= 1;
+        try {
+          await loadEntriesForPeriod();
+        } catch (err) {
+          document.getElementById("finance-error").hidden = false;
+          document.getElementById("finance-error").textContent =
+            err.message || "Não foi possível mudar de página.";
+        }
+      });
+
+      document.getElementById("entries-next").addEventListener("click", async () => {
+        if (entriesPage >= entriesPages) return;
+        entriesPage += 1;
+        try {
+          await loadEntriesForPeriod();
+        } catch (err) {
+          document.getElementById("finance-error").hidden = false;
+          document.getElementById("finance-error").textContent =
+            err.message || "Não foi possível mudar de página.";
+        }
+      });
+
+      document.getElementById("entries-more").addEventListener("click", async () => {
+        if (entriesPage >= entriesPages) return;
+        entriesPage += 1;
+        try {
+          await loadEntriesForPeriod({ append: true });
+        } catch (err) {
+          document.getElementById("finance-error").hidden = false;
+          document.getElementById("finance-error").textContent =
+            err.message || "Não foi possível carregar mais.";
+        }
       });
 
       [

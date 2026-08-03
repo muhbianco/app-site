@@ -586,7 +586,10 @@
     if (params.tipo) query.set("tipo", params.tipo);
     if (params.status) query.set("status", params.status);
     if (params.item) query.set("item", params.item);
-    if (params.limite) query.set("limite", String(params.limite));
+    if (params.page) query.set("page", String(params.page));
+    if (params.page_size) query.set("page_size", String(params.page_size));
+    // Compat: callers antigos ainda podem passar limite.
+    if (params.limite && !params.page_size) query.set("page_size", String(params.limite));
     const qs = query.toString();
     const response = await api(
       `${API_PREFIX}/finance/entries${qs ? `?${qs}` : ""}`

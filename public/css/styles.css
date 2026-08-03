@@ -2123,6 +2123,20 @@ button.linkish {
   outline-offset: 1px;
 }
 
+.finance-pager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.85rem;
+}
+
+.finance-pager-label {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin-inline: 0.25rem;
+}
+
 .finance-table-meta {
   margin: 0.65rem 0 0;
 }
