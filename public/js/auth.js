@@ -419,6 +419,14 @@
     return jsonOrThrow(response, "Não foi possível retomar o agente.");
   }
 
+  async function updateServicePreferences(code, preferences) {
+    const response = await api(
+      `${API_PREFIX}/services/${encodeURIComponent(code)}/preferences`,
+      { method: "PATCH", body: JSON.stringify(preferences) }
+    );
+    return jsonOrThrow(response, "Não foi possível salvar as preferências.");
+  }
+
   async function disableService(code) {
     const response = await api(`${API_PREFIX}/services/${encodeURIComponent(code)}/disable`, {
       method: "POST",
@@ -571,6 +579,7 @@
     confirmServicePhone,
     pauseService,
     resumeService,
+    updateServicePreferences,
     disableService,
     adminListServices,
     adminUpdateService,

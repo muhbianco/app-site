@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=21" />
+  <link rel="stylesheet" href="/css/styles.css?v=22" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -374,6 +374,13 @@
         </div>
 
         <div class="balance-actions" data-field="active-actions" hidden>
+          <label class="pref-toggle" data-field="tts-toggle-wrap" hidden>
+            <input type="checkbox" data-field="tts-toggle" />
+            <span>
+              <strong>Resposta em áudio (TTS)</strong>
+              <small class="hint">Se você mandar áudio, o agente responde em áudio. Texto continua em texto.</small>
+            </span>
+          </label>
           <button type="button" class="btn btn-ghost btn-compact" data-field="pause-btn" hidden>
             Pausar agente
           </button>
@@ -414,7 +421,7 @@
     </form>
   </dialog>
 
-  <script src="/js/auth.js?v=17"></script>
+  <script src="/js/auth.js?v=18"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -747,6 +754,29 @@
           phonesBlock.hidden = false;
           q("pause-btn").hidden = paused;
           q("resume-btn").hidden = !paused;
+          const ttsWrap = q("tts-toggle-wrap");
+          const ttsToggle = q("tts-toggle");
+          ttsWrap.hidden = false;
+          ttsToggle.checked = Boolean(sub.tts_enabled);
+          ttsToggle.disabled = paused;
+          ttsToggle.addEventListener("change", async () => {
+            ttsToggle.disabled = true;
+            try {
+              await MuhAuth.updateServicePreferences(service.code, {
+                tts_enabled: ttsToggle.checked,
+              });
+              showOk(
+                ttsToggle.checked
+                  ? "TTS ligado: áudio → áudio, texto → texto."
+                  : "TTS desligado: respostas sempre em texto."
+              );
+            } catch (err) {
+              ttsToggle.checked = !ttsToggle.checked;
+              showError(err.message || "Não foi possível salvar a preferência.");
+            } finally {
+              ttsToggle.disabled = paused;
+            }
+          });
           renderPhones();
           const partes = [];
           if (sub.phone) partes.push(`Principal: ${formatPhone(sub.phone)}`);
@@ -758,6 +788,7 @@
             );
           }
           if (paused) partes.push("Agente silenciado — a cobrança do período segue normal");
+          if (sub.tts_enabled) partes.push("TTS ligado");
           statusDetail.textContent = partes.join(" · ");
           statusDetail.hidden = partes.length === 0;
         } else if (status === "suspended") {

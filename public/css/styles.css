@@ -1599,6 +1599,38 @@ img {
   margin: 0.5rem 0 0.75rem;
 }
 
+.pref-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  width: 100%;
+  margin: 0 0 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+}
+
+.pref-toggle input {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+.pref-toggle span {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.pref-toggle strong {
+  font-size: 0.95rem;
+}
+
+.pref-toggle small {
+  display: block;
+  line-height: 1.35;
+}
+
 .terms-check input {
   margin-top: 0.2rem;
 }
