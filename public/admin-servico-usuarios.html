@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Gestão de assinantes do serviço — MuhBianco Admin." />
+  <title>Usuários do serviço — MuhBianco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css?v=24" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="logo" href="/">MuhBianco</a>
+    <nav class="nav" aria-label="Principal">
+      <a href="/conta.html">Conta</a>
+      <a href="/admin.html#servicos" class="nav-cta" aria-current="page">Admin</a>
+    </nav>
+  </header>
+
+  <main class="settings-page">
+    <section class="settings-head">
+      <p class="brand-mark compact">Administração</p>
+      <h1 id="page-title">Usuários do serviço</h1>
+      <p class="auth-lede" id="page-lede">
+        Ações de gestão desta assinatura. Novos serviços ganham opções próprias aqui.
+      </p>
+    </section>
+
+    <div class="settings-layout">
+      <nav class="settings-nav" aria-label="Seções do admin">
+        <a href="/admin.html#servicos">← Catálogo</a>
+        <a href="/admin.html#usuarios">Usuários</a>
+        <a href="/admin.html#llm">LLM</a>
+        <a href="/admin.html#transacoes">Transações</a>
+        <a href="/conta.html">Conta</a>
+      </nav>
+
+      <div class="settings-sections">
+        <section class="settings-section">
+          <h2 id="svc-heading">Assinantes</h2>
+          <p class="tx-detail" id="svc-code" hidden></p>
+
+          <form class="admin-filters" id="filters" autocomplete="off">
+            <label>
+              <span>Busca</span>
+              <input type="search" id="search" placeholder="E-mail, nome, telefone ou id" />
+            </label>
+            <label>
+              <span>Status</span>
+              <select id="status">
+                <option value="">Ativos / pausados / suspensos</option>
+                <option value="active">Ativo</option>
+                <option value="paused">Pausado</option>
+                <option value="suspended">Suspenso</option>
+              </select>
+            </label>
+            <div class="admin-filters-actions">
+              <button type="submit" class="btn btn-primary">Filtrar</button>
+              <button type="button" class="btn btn-ghost" id="clear">Limpar</button>
+            </div>
+          </form>
+
+          <div id="error" class="auth-alert" hidden></div>
+          <div id="ok" class="auth-ok" hidden></div>
+          <div id="empty" class="tx-empty" hidden>
+            <p>Nenhum assinante encontrado neste serviço.</p>
+          </div>
+          <div class="tx-table-wrap" id="table-wrap" hidden>
+            <table class="tx-table admin-tx-table" aria-label="Assinantes do serviço">
+              <thead>
+                <tr>
+                  <th scope="col">Cliente</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Renovação</th>
+                  <th scope="col">Gestão</th>
+                </tr>
+              </thead>
+              <tbody id="body"></tbody>
+            </table>
+          </div>
+          <div class="admin-pager" id="pager" hidden>
+            <button type="button" class="btn btn-ghost" id="prev">Anterior</button>
+            <span id="pager-label">—</span>
+            <button type="button" class="btn btn-ghost" id="next">Próxima</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/auth.js?v=19"></script>
+  <script>
+    (async function () {
+      if (!MuhAuth.requireAuth()) return;
+
+      const params = new URLSearchParams(location.search);
+      const serviceId = (params.get("service_id") || "").trim();
+      if (!serviceId) {
+        location.replace("/admin.html#servicos");
+        return;
+      }
+
+      const user = await MuhAuth.me();
+      if (user.role !== "admin") {
+        location.replace("/conta.html");
+        return;
+      }
+
+      const errorEl = document.getElementById("error");
+      const okEl = document.getElementById("ok");
+      const emptyEl = document.getElementById("empty");
+      const tableWrap = document.getElementById("table-wrap");
+      const bodyEl = document.getElementById("body");
+      const pager = document.getElementById("pager");
+      const pagerLabel = document.getElementById("pager-label");
+      let page = 1;
+      let pages = 1;
+
+      const ACTION_RUNNERS = {
+        pause: (id) => MuhAuth.adminPauseSubscription(id),
+        resume: (id) => MuhAuth.adminResumeSubscription(id),
+        ping_contact: (id) => MuhAuth.adminPingSubscription(id),
+      };
+
+      function showError(message) {
+        okEl.hidden = true;
+        errorEl.hidden = false;
+        errorEl.textContent = message;
+      }
+      function showOk(message) {
+        errorEl.hidden = true;
+        okEl.hidden = false;
+        okEl.textContent = message;
+      }
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+      function formatDate(iso) {
+        if (!iso) return "—";
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return "—";
+        return d.toLocaleString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+      function statusLabel(status) {
+        if (status === "paused") return "pausado (mudo)";
+        if (status === "active") return "ativo";
+        if (status === "suspended") return "suspenso";
+        return status || "—";
+      }
+      function verifiedMark(verified, title) {
+        if (!verified) return "";
+        return (
+          `<span class="verified-mark" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">` +
+          `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">` +
+          `<path fill="currentColor" d="M12 2.5c.5 0 1 .2 1.3.6l1.1 1.4c.2.3.6.4 1 .4h1.7c.9 0 1.6.7 1.6 1.6v1.7c0 .4.2.8.4 1l1.4 1.1c.7.6.7 1.7 0 2.3l-1.4 1.1c-.3.2-.4.6-.4 1v1.7c0 .9-.7 1.6-1.6 1.6h-1.7c-.4 0-.8.2-1 .4l-1.1 1.4c-.6.7-1.7.7-2.3 0l-1.1-1.4c-.2-.3-.6-.4-1-.4H5.9c-.9 0-1.6-.7-1.6-1.6v-1.7c0-.4-.2-.8-.4-1L2.5 12.8c-.7-.6-.7-1.7 0-2.3l1.4-1.1c.3-.2.4-.6.4-1V6.7c0-.9.7-1.6 1.6-1.6h1.7c.4 0 .8-.2 1-.4l1.1-1.4c.3-.4.8-.6 1.3-.6zm-1.1 12.2 5.3-5.3-1.2-1.2-4.1 4.1-1.9-1.9-1.2 1.2 3.1 3.1z"/>` +
+          `</svg></span>`
+        );
+      }
+
+      function filtersPayload() {
+        const search = document.getElementById("search").value.trim();
+        const status = document.getElementById("status").value;
+        const payload = { page, page_size: 20 };
+        if (search) payload.search = search;
+        if (status) payload.status = status;
+        return payload;
+      }
+
+      function renderRows(items) {
+        bodyEl.innerHTML = "";
+        items.forEach((row) => {
+          const tr = document.createElement("tr");
+          tr.dataset.subId = row.user_service_id;
+          const emailLine = row.email
+            ? `<span class="tx-detail tx-email">${escapeHtml(row.email)}${verifiedMark(
+                row.email_verified,
+                "E-mail confirmado"
+              )}</span>`
+            : "";
+          const phoneLine = row.service_phone || row.phone
+            ? `<span class="tx-detail tx-phone">${escapeHtml(
+                row.service_phone || row.phone
+              )}${verifiedMark(row.phone_verified, "WhatsApp confirmado")}</span>`
+            : "";
+          const actions = (row.actions || [])
+            .map(
+              (action) =>
+                `<button type="button" class="btn btn-ghost btn-compact" data-action="${escapeHtml(
+                  action.id
+                )}" data-confirm="${escapeHtml(action.confirm || "")}">${escapeHtml(
+                  action.label
+                )}</button>`
+            )
+            .join("");
+          tr.innerHTML = `
+            <td>
+              <span class="tx-client">${escapeHtml(row.full_name || "—")}</span>
+              ${emailLine}
+              ${phoneLine}
+            </td>
+            <td><span class="tx-detail">${escapeHtml(statusLabel(row.status))}</span></td>
+            <td><span class="tx-date">${formatDate(row.current_period_end)}</span></td>
+            <td class="tx-actions">${actions || '<span class="tx-detail">—</span>'}</td>
+          `;
+          bodyEl.appendChild(tr);
+        });
+      }
+
+      async function load() {
+        errorEl.hidden = true;
+        try {
+          const data = await MuhAuth.adminListServiceSubscriptions(serviceId, filtersPayload());
+          document.getElementById("page-title").textContent = data.service_name || "Usuários do serviço";
+          document.getElementById("svc-heading").textContent = data.service_name || "Assinantes";
+          const codeEl = document.getElementById("svc-code");
+          codeEl.hidden = !data.service_code;
+          codeEl.textContent = data.service_code ? `Código: ${data.service_code}` : "";
+
+          const items = data.items || [];
+          pages = data.pages || 1;
+          page = data.page || 1;
+          emptyEl.hidden = items.length > 0;
+          tableWrap.hidden = items.length === 0;
+          pager.hidden = items.length === 0;
+          pagerLabel.textContent = `Página ${page} de ${pages} · ${data.total || 0} assinantes`;
+          document.getElementById("prev").disabled = page <= 1;
+          document.getElementById("next").disabled = page >= pages;
+          if (items.length) renderRows(items);
+        } catch (err) {
+          tableWrap.hidden = true;
+          emptyEl.hidden = true;
+          pager.hidden = true;
+          showError(err.message || "Falha ao carregar assinantes.");
+        }
+      }
+
+      document.getElementById("filters").addEventListener("submit", (event) => {
+        event.preventDefault();
+        page = 1;
+        load();
+      });
+      document.getElementById("clear").addEventListener("click", () => {
+        document.getElementById("search").value = "";
+        document.getElementById("status").value = "";
+        page = 1;
+        load();
+      });
+      document.getElementById("prev").addEventListener("click", () => {
+        if (page > 1) {
+          page -= 1;
+          load();
+        }
+      });
+      document.getElementById("next").addEventListener("click", () => {
+        if (page < pages) {
+          page += 1;
+          load();
+        }
+      });
+
+      bodyEl.addEventListener("click", async (event) => {
+        const btn = event.target.closest("[data-action]");
+        if (!btn) return;
+        const actionId = btn.getAttribute("data-action");
+        const runner = ACTION_RUNNERS[actionId];
+        if (!runner) {
+          showError(`Ação "${actionId}" ainda não está disponível neste painel.`);
+          return;
+        }
+        const tr = btn.closest("tr");
+        const subId = tr && tr.dataset.subId;
+        if (!subId) return;
+        const confirmMsg = btn.getAttribute("data-confirm");
+        if (confirmMsg && !confirm(confirmMsg)) return;
+        btn.disabled = true;
+        try {
+          const result = await runner(subId);
+          const msg =
+            (result && result.message) ||
+            (actionId === "pause"
+              ? "Agente pausado (mudo)."
+              : actionId === "resume"
+                ? "Agente retomado."
+                : "Ação concluída.");
+          showOk(msg);
+          await load();
+        } catch (err) {
+          showError(err.message || "Falha ao executar a ação.");
+          btn.disabled = false;
+        }
+      });
+
+      await load();
+    })();
+  </script>
+</body>
+</html>

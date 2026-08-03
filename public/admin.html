@@ -285,13 +285,14 @@
           </label>
         </div>
         <div class="admin-filters-actions">
+          <a class="btn btn-ghost" data-field="users-link" href="#">Ver usuários</a>
           <button type="submit" class="btn btn-primary" data-field="save">Salvar</button>
         </div>
       </form>
     </article>
   </template>
 
-  <script src="/js/auth.js?v=18"></script>
+  <script src="/js/auth.js?v=19"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -448,6 +449,10 @@
         q("is_active").value = String(service.is_active);
         q("requires_phone").value = String(service.requires_phone);
 
+        q("users-link").href = `/admin-servico-usuarios.html?service_id=${encodeURIComponent(
+          service.id
+        )}`;
+
         q("form").addEventListener("submit", async (event) => {
           event.preventDefault();
           const btn = q("save");
@@ -533,16 +538,7 @@
                   : s.status === "active"
                     ? "ativo"
                     : s.status;
-              let action = "";
-              if (s.can_pause) {
-                action = `<button type="button" class="btn btn-ghost btn-compact" data-action="pause" data-sub="${s.id}">Pausar agente</button>`;
-              } else if (s.can_resume) {
-                action = `<button type="button" class="btn btn-ghost btn-compact" data-action="resume" data-sub="${s.id}">Retomar agente</button>`;
-              }
-              if (s.status === "active" || s.status === "paused") {
-                action += `<button type="button" class="btn btn-ghost btn-compact" data-action="ping" data-sub="${s.id}">Reenviar contato</button>`;
-              }
-              return `<span class="tx-detail">${s.name}: ${label}</span>${action}`;
+              return `<span class="tx-detail">${escapeHtml(s.name)}: ${escapeHtml(label)}</span>`;
             })
             .join("");
           const emailLine = u.email
@@ -622,57 +618,6 @@
       });
 
       usrBody.addEventListener("click", async (event) => {
-        const pauseBtn = event.target.closest("[data-action=pause]");
-        const resumeBtn = event.target.closest("[data-action=resume]");
-        const pingBtn = event.target.closest("[data-action=ping]");
-        if (pauseBtn || resumeBtn) {
-          const btn = pauseBtn || resumeBtn;
-          const subId = btn.getAttribute("data-sub");
-          if (!subId) return;
-          const pausing = Boolean(pauseBtn);
-          if (
-            !confirm(
-              pausing
-                ? "Pausar o agente deste usuário? Ele fica mudo no WhatsApp."
-                : "Retomar o agente deste usuário?"
-            )
-          )
-            return;
-          btn.disabled = true;
-          try {
-            if (pausing) await MuhAuth.adminPauseSubscription(subId);
-            else await MuhAuth.adminResumeSubscription(subId);
-            showUsrOk(pausing ? "Agente pausado (mudo)." : "Agente retomado.");
-            await loadUsers();
-          } catch (err) {
-            showUsrError(err.message || "Falha ao alterar o agente.");
-            btn.disabled = false;
-          }
-          return;
-        }
-
-        if (pingBtn) {
-          const subId = pingBtn.getAttribute("data-sub");
-          if (!subId) return;
-          if (
-            !confirm(
-              "Enviar mensagem do agente no WhatsApp deste usuário? " +
-                "Serve para ele salvar o contato de novo."
-            )
-          )
-            return;
-          pingBtn.disabled = true;
-          try {
-            const result = await MuhAuth.adminPingSubscription(subId);
-            showUsrOk(result.message || "Mensagem enviada no WhatsApp.");
-          } catch (err) {
-            showUsrError(err.message || "Falha ao enviar a mensagem.");
-          } finally {
-            pingBtn.disabled = false;
-          }
-          return;
-        }
-
         const btn = event.target.closest("[data-action=credit]");
         if (!btn) return;
         const tr = btn.closest("tr");

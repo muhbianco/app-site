@@ -482,6 +482,18 @@
     return Array.isArray(data) ? data : [];
   }
 
+  async function adminListServiceSubscriptions(serviceId, params = {}) {
+    const qs = new URLSearchParams();
+    if (params.page) qs.set("page", String(params.page));
+    if (params.page_size) qs.set("page_size", String(params.page_size));
+    if (params.search) qs.set("search", params.search);
+    if (params.status) qs.set("status", params.status);
+    const response = await api(
+      `${API_PREFIX}/services/admin/catalog/${encodeURIComponent(serviceId)}/subscriptions?${qs.toString()}`
+    );
+    return jsonOrThrow(response, "Não foi possível carregar os assinantes do serviço.");
+  }
+
   async function adminUpdateService(serviceId, payload) {
     const response = await api(
       `${API_PREFIX}/services/admin/catalog/${encodeURIComponent(serviceId)}`,
@@ -660,6 +672,7 @@
     financeDashboard,
     financeEntries,
     adminListServices,
+    adminListServiceSubscriptions,
     adminUpdateService,
     adminListTopups,
     adminListWallets,
