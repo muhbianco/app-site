@@ -453,6 +453,14 @@
     return jsonOrThrow(response, "Não foi possível retomar o agente.");
   }
 
+  async function pingServiceContact(code) {
+    const response = await api(
+      `${API_PREFIX}/services/${encodeURIComponent(code)}/ping-contact`,
+      { method: "POST" }
+    );
+    return jsonOrThrow(response, "Não foi possível enviar a mensagem do agente.");
+  }
+
   async function updateServicePreferences(code, preferences) {
     const response = await api(
       `${API_PREFIX}/services/${encodeURIComponent(code)}/preferences`,
@@ -574,6 +582,14 @@
     return jsonOrThrow(response, "Não foi possível retomar o agente.");
   }
 
+  async function adminPingSubscription(userServiceId) {
+    const response = await api(
+      `${API_PREFIX}/services/admin/subscriptions/${encodeURIComponent(userServiceId)}/ping-contact`,
+      { method: "POST" }
+    );
+    return jsonOrThrow(response, "Não foi possível enviar a mensagem do agente.");
+  }
+
   async function financeDashboard() {
     const response = await api(`${API_PREFIX}/finance/dashboard`);
     return jsonOrThrow(response, "Não foi possível carregar o dashboard financeiro.");
@@ -638,6 +654,7 @@
     confirmServicePhone,
     pauseService,
     resumeService,
+    pingServiceContact,
     updateServicePreferences,
     disableService,
     financeDashboard,
@@ -653,6 +670,7 @@
     cancelTopup,
     adminPauseSubscription,
     adminResumeSubscription,
+    adminPingSubscription,
     api,
   };
 })(window);

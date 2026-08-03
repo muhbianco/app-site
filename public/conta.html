@@ -411,6 +411,9 @@
           <button type="button" class="btn btn-primary btn-compact" data-field="resume-btn" hidden>
             Retomar agente
           </button>
+          <button type="button" class="btn btn-ghost btn-compact" data-field="ping-btn">
+            Receber contato no WhatsApp
+          </button>
           <button type="button" class="btn btn-ghost btn-compact" data-field="disable-btn">
             Cancelar serviço
           </button>
@@ -918,6 +921,26 @@
             await reloadServicos("Agente retomado.");
           } catch (err) {
             showError(err.message || "Não foi possível retomar.");
+            btn.disabled = false;
+          }
+        });
+
+        q("ping-btn").addEventListener("click", async () => {
+          if (
+            !confirm(
+              "Enviar uma mensagem do agente no seu WhatsApp agora? " +
+                "Use isso se perdeu o contato — salve o número quando a mensagem chegar."
+            )
+          )
+            return;
+          const btn = q("ping-btn");
+          btn.disabled = true;
+          try {
+            const result = await MuhAuth.pingServiceContact(service.code);
+            showOk(result.message || "Mensagem enviada no WhatsApp.");
+          } catch (err) {
+            showError(err.message || "Não foi possível enviar a mensagem.");
+          } finally {
             btn.disabled = false;
           }
         });

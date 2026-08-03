@@ -539,6 +539,9 @@
               } else if (s.can_resume) {
                 action = `<button type="button" class="btn btn-ghost btn-compact" data-action="resume" data-sub="${s.id}">Retomar agente</button>`;
               }
+              if (s.status === "active" || s.status === "paused") {
+                action += `<button type="button" class="btn btn-ghost btn-compact" data-action="ping" data-sub="${s.id}">Reenviar contato</button>`;
+              }
               return `<span class="tx-detail">${s.name}: ${label}</span>${action}`;
             })
             .join("");
@@ -621,6 +624,7 @@
       usrBody.addEventListener("click", async (event) => {
         const pauseBtn = event.target.closest("[data-action=pause]");
         const resumeBtn = event.target.closest("[data-action=resume]");
+        const pingBtn = event.target.closest("[data-action=ping]");
         if (pauseBtn || resumeBtn) {
           const btn = pauseBtn || resumeBtn;
           const subId = btn.getAttribute("data-sub");
@@ -643,6 +647,28 @@
           } catch (err) {
             showUsrError(err.message || "Falha ao alterar o agente.");
             btn.disabled = false;
+          }
+          return;
+        }
+
+        if (pingBtn) {
+          const subId = pingBtn.getAttribute("data-sub");
+          if (!subId) return;
+          if (
+            !confirm(
+              "Enviar mensagem do agente no WhatsApp deste usuário? " +
+                "Serve para ele salvar o contato de novo."
+            )
+          )
+            return;
+          pingBtn.disabled = true;
+          try {
+            const result = await MuhAuth.adminPingSubscription(subId);
+            showUsrOk(result.message || "Mensagem enviada no WhatsApp.");
+          } catch (err) {
+            showUsrError(err.message || "Falha ao enviar a mensagem.");
+          } finally {
+            pingBtn.disabled = false;
           }
           return;
         }
