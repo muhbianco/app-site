@@ -2042,6 +2042,14 @@ button.linkish {
   margin-bottom: 0.85rem;
 }
 
+.finance-panel-head--row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem 1.25rem;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
 .finance-panel-head h2 {
   margin: 0;
   font-family: var(--font-display);
@@ -2051,6 +2059,87 @@ button.linkish {
 
 .finance-panel-head .hint {
   margin: 0.2rem 0 0;
+}
+
+.finance-period {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.7rem;
+  align-items: flex-end;
+}
+
+.finance-period-field {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.finance-period-field input[type="date"] {
+  min-width: 9.5rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: #0c1a22;
+  font: inherit;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+
+.btn-sm {
+  padding: 0.45rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.finance-table .finance-filters th {
+  padding-top: 0.15rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--line);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.finance-col-filter {
+  width: 100%;
+  min-width: 0;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: #0c1a22;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.finance-col-filter:focus {
+  outline: 2px solid rgba(26, 107, 107, 0.35);
+  outline-offset: 1px;
+}
+
+.finance-table-meta {
+  margin: 0.65rem 0 0;
+}
+
+@media (max-width: 720px) {
+  .finance-panel-head--row {
+    align-items: stretch;
+  }
+
+  .finance-period {
+    width: 100%;
+  }
+
+  .finance-period-field input[type="date"] {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 .finance-chart-wrap {

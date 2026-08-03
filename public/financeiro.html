@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=25" />
+  <link rel="stylesheet" href="/css/styles.css?v=26" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
@@ -148,10 +148,23 @@
         </article>
       </section>
 
-      <section class="finance-panel finance-panel--wide" aria-label="Lançamentos recentes">
-        <header class="finance-panel-head">
-          <h2>Últimos lançamentos</h2>
-          <p class="hint">O que entrou pelo WhatsApp</p>
+      <section class="finance-panel finance-panel--wide" aria-label="Lançamentos">
+        <header class="finance-panel-head finance-panel-head--row">
+          <div>
+            <h2>Lançamentos</h2>
+            <p class="hint" id="entries-hint">Janela de até 1 ano · o que entrou pelo WhatsApp</p>
+          </div>
+          <div class="finance-period" role="group" aria-label="Período">
+            <label class="finance-period-field">
+              <span>De</span>
+              <input type="date" id="filter-date-from" />
+            </label>
+            <label class="finance-period-field">
+              <span>Até</span>
+              <input type="date" id="filter-date-to" />
+            </label>
+            <button type="button" class="btn btn-ghost btn-sm" id="filter-period-reset">Últimos 12 meses</button>
+          </div>
         </header>
         <div class="finance-table-wrap">
           <table class="finance-table" id="recent-table">
@@ -163,17 +176,39 @@
                 <th scope="col">Pagamento</th>
                 <th scope="col">Valor</th>
               </tr>
+              <tr class="finance-filters">
+                <th>
+                  <input type="search" id="col-filter-data" class="finance-col-filter" placeholder="Buscar data" autocomplete="off" />
+                </th>
+                <th>
+                  <input type="search" id="col-filter-desc" class="finance-col-filter" placeholder="Buscar descrição" autocomplete="off" />
+                </th>
+                <th>
+                  <select id="col-filter-cat" class="finance-col-filter" aria-label="Filtrar categoria">
+                    <option value="">Todas</option>
+                  </select>
+                </th>
+                <th>
+                  <select id="col-filter-pay" class="finance-col-filter" aria-label="Filtrar pagamento">
+                    <option value="">Todos</option>
+                  </select>
+                </th>
+                <th>
+                  <input type="search" id="col-filter-valor" class="finance-col-filter" placeholder="Ex: 50 ou 100-200" autocomplete="off" />
+                </th>
+              </tr>
             </thead>
             <tbody id="recent-body">
               <tr><td colspan="5" class="hint">Sem lançamentos</td></tr>
             </tbody>
           </table>
         </div>
+        <p class="finance-table-meta hint" id="entries-meta" hidden></p>
       </section>
     </div>
   </main>
 
-  <script src="/js/auth.js?v=20"></script>
+  <script src="/js/auth.js?v=21"></script>
   <script>
     (function () {
       if (!MuhAuth.requireAuth()) return;
@@ -202,6 +237,19 @@
             });
       };
 
+      const toIsoDate = (d) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      };
+
+      const addDays = (base, days) => {
+        const d = new Date(base.getTime());
+        d.setDate(d.getDate() + days);
+        return d;
+      };
+
       const PALETTE = [
         "#1a6b6b",
         "#e24e3b",
@@ -216,6 +264,7 @@
       ];
 
       let charts = { daily: null, category: null, payment: null };
+      let allEntries = [];
 
       function destroyCharts() {
         Object.keys(charts).forEach((key) => {
@@ -229,6 +278,35 @@
       function setText(id, text) {
         const el = document.getElementById(id);
         if (el) el.textContent = text;
+      }
+
+      function defaultPeriod() {
+        const today = new Date();
+        today.setHours(12, 0, 0, 0);
+        return {
+          from: toIsoDate(addDays(today, -365)),
+          to: toIsoDate(today),
+        };
+      }
+
+      function clampPeriodToOneYear(fromIso, toIso) {
+        const from = new Date(`${fromIso}T12:00:00`);
+        const to = new Date(`${toIso}T12:00:00`);
+        if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+          return defaultPeriod();
+        }
+        let start = from <= to ? from : to;
+        let end = from <= to ? to : from;
+        const maxEnd = addDays(start, 365);
+        if (end > maxEnd) end = maxEnd;
+        return { from: toIsoDate(start), to: toIsoDate(end) };
+      }
+
+      function syncPeriodInputs(period) {
+        document.getElementById("filter-date-from").value = period.from;
+        document.getElementById("filter-date-to").value = period.to;
+        const maxSpan = addDays(new Date(`${period.from}T12:00:00`), 365);
+        document.getElementById("filter-date-to").max = toIsoDate(maxSpan);
       }
 
       function renderKpis(data) {
@@ -495,18 +573,117 @@
         });
       }
 
+      function entryTitle(e) {
+        const isOut = e.tipo === "gasto";
+        return e.item || e.descricao || (isOut ? "Gasto" : "Entrada");
+      }
+
+      function entryPay(e) {
+        return [e.forma_pagamento, e.cartao].filter(Boolean).join(" · ") || "—";
+      }
+
+      function fillSelect(id, values, allLabel) {
+        const el = document.getElementById(id);
+        const current = el.value;
+        el.innerHTML = "";
+        const all = document.createElement("option");
+        all.value = "";
+        all.textContent = allLabel;
+        el.appendChild(all);
+        values.forEach((value) => {
+          const opt = document.createElement("option");
+          opt.value = value;
+          opt.textContent = value;
+          el.appendChild(opt);
+        });
+        if ([...el.options].some((o) => o.value === current)) el.value = current;
+      }
+
+      function refreshColumnOptions(entries) {
+        const cats = [...new Set(entries.map((e) => e.categoria || "—"))].sort((a, b) =>
+          a.localeCompare(b, "pt-BR")
+        );
+        const pays = [...new Set(entries.map((e) => entryPay(e)))].sort((a, b) =>
+          a.localeCompare(b, "pt-BR")
+        );
+        fillSelect("col-filter-cat", cats, "Todas");
+        fillSelect("col-filter-pay", pays, "Todos");
+      }
+
+      function parseValorFilter(raw) {
+        const text = String(raw || "").trim().toLowerCase().replace(/\s/g, "");
+        if (!text) return null;
+        const norm = text.replace(/\./g, "").replace(",", ".");
+        const range = norm.match(/^(-?\d+(?:\.\d+)?)\s*[-–]\s*(-?\d+(?:\.\d+)?)$/);
+        if (range) {
+          return { min: Number(range[1]), max: Number(range[2]) };
+        }
+        const single = Number(norm.replace(/[^\d.-]/g, ""));
+        if (Number.isFinite(single)) return { contains: String(Math.abs(single)) };
+        return { contains: text };
+      }
+
+      function matchesValor(value, filter) {
+        if (!filter) return true;
+        const amount = Number(value || 0);
+        if (filter.min != null && filter.max != null) {
+          const lo = Math.min(filter.min, filter.max);
+          const hi = Math.max(filter.min, filter.max);
+          return amount >= lo && amount <= hi;
+        }
+        if (filter.contains) {
+          return String(amount).includes(filter.contains) || brl(amount).toLowerCase().includes(filter.contains);
+        }
+        return true;
+      }
+
+      function getColumnFilters() {
+        return {
+          data: document.getElementById("col-filter-data").value.trim().toLowerCase(),
+          desc: document.getElementById("col-filter-desc").value.trim().toLowerCase(),
+          cat: document.getElementById("col-filter-cat").value,
+          pay: document.getElementById("col-filter-pay").value,
+          valor: parseValorFilter(document.getElementById("col-filter-valor").value),
+        };
+      }
+
+      function filterEntries(entries) {
+        const f = getColumnFilters();
+        return entries.filter((e) => {
+          const dateLabel = fmtDate(e.data).toLowerCase();
+          const iso = String(e.data || "").toLowerCase();
+          if (f.data && !dateLabel.includes(f.data) && !iso.includes(f.data)) return false;
+
+          const title = entryTitle(e).toLowerCase();
+          const status = String(e.status || "").toLowerCase();
+          if (f.desc && !title.includes(f.desc) && !status.includes(f.desc)) return false;
+
+          const cat = e.categoria || "—";
+          if (f.cat && cat !== f.cat) return false;
+
+          const pay = entryPay(e);
+          if (f.pay && pay !== f.pay) return false;
+
+          if (!matchesValor(e.valor, f.valor)) return false;
+          return true;
+        });
+      }
+
       function renderRecent(entries) {
         const body = document.getElementById("recent-body");
+        const meta = document.getElementById("entries-meta");
         body.innerHTML = "";
         if (!entries || !entries.length) {
-          body.innerHTML = `<tr><td colspan="5" class="hint">Sem lançamentos ainda</td></tr>`;
+          body.innerHTML = `<tr><td colspan="5" class="hint">Nenhum lançamento neste filtro</td></tr>`;
+          meta.hidden = false;
+          meta.textContent = `0 de ${allEntries.length} lançamentos`;
           return;
         }
         entries.forEach((e) => {
           const tr = document.createElement("tr");
           const isOut = e.tipo === "gasto";
-          const title = e.item || e.descricao || (isOut ? "Gasto" : "Entrada");
-          const pay = [e.forma_pagamento, e.cartao].filter(Boolean).join(" · ") || "—";
+          const title = entryTitle(e);
+          const pay = entryPay(e);
           tr.innerHTML = `
             <td>${fmtDate(e.data)}</td>
             <td>
@@ -519,6 +696,34 @@
           `;
           body.appendChild(tr);
         });
+        meta.hidden = false;
+        meta.textContent =
+          entries.length === allEntries.length
+            ? `${entries.length} lançamentos`
+            : `${entries.length} de ${allEntries.length} lançamentos`;
+      }
+
+      function applyEntryFilters() {
+        renderRecent(filterEntries(allEntries));
+      }
+
+      async function loadEntriesForPeriod() {
+        const rawFrom = document.getElementById("filter-date-from").value;
+        const rawTo = document.getElementById("filter-date-to").value;
+        const period = clampPeriodToOneYear(rawFrom, rawTo);
+        syncPeriodInputs(period);
+        setText(
+          "entries-hint",
+          `De ${fmtDate(period.from)} a ${fmtDate(period.to)} · máximo 1 ano`
+        );
+        const rows = await MuhAuth.financeEntries({
+          inicio: period.from,
+          fim: period.to,
+          limite: 500,
+        });
+        allEntries = Array.isArray(rows) ? rows : [];
+        refreshColumnOptions(allEntries);
+        applyEntryFilters();
       }
 
       async function loadDashboard() {
@@ -534,6 +739,9 @@
         refreshBtn.disabled = true;
 
         try {
+          if (!document.getElementById("filter-date-from").value) {
+            syncPeriodInputs(defaultPeriod());
+          }
           const data = await MuhAuth.financeDashboard();
           destroyCharts();
           renderInsight(data.insight);
@@ -544,7 +752,7 @@
           renderTopItems(data.top_itens || []);
           renderPlanned(data.previsoes);
           renderCards(data.cartoes || []);
-          renderRecent(data.recentes || []);
+          await loadEntriesForPeriod();
           skeleton.hidden = true;
           content.hidden = false;
           refreshBtn.hidden = false;
@@ -559,6 +767,40 @@
       }
 
       document.getElementById("finance-refresh").addEventListener("click", loadDashboard);
+      document.getElementById("filter-period-reset").addEventListener("click", async () => {
+        syncPeriodInputs(defaultPeriod());
+        try {
+          await loadEntriesForPeriod();
+        } catch (err) {
+          const errorEl = document.getElementById("finance-error");
+          errorEl.hidden = false;
+          errorEl.textContent = err.message || "Não foi possível filtrar o período.";
+        }
+      });
+
+      ["filter-date-from", "filter-date-to"].forEach((id) => {
+        document.getElementById(id).addEventListener("change", async () => {
+          try {
+            await loadEntriesForPeriod();
+          } catch (err) {
+            const errorEl = document.getElementById("finance-error");
+            errorEl.hidden = false;
+            errorEl.textContent = err.message || "Não foi possível filtrar o período.";
+          }
+        });
+      });
+
+      [
+        "col-filter-data",
+        "col-filter-desc",
+        "col-filter-cat",
+        "col-filter-pay",
+        "col-filter-valor",
+      ].forEach((id) => {
+        const el = document.getElementById(id);
+        el.addEventListener("input", applyEntryFilters);
+        el.addEventListener("change", applyEntryFilters);
+      });
 
       function waitChart() {
         if (window.Chart) {

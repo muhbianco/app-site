@@ -579,6 +579,21 @@
     return jsonOrThrow(response, "Não foi possível carregar o dashboard financeiro.");
   }
 
+  async function financeEntries(params = {}) {
+    const query = new URLSearchParams();
+    if (params.inicio) query.set("inicio", params.inicio);
+    if (params.fim) query.set("fim", params.fim);
+    if (params.tipo) query.set("tipo", params.tipo);
+    if (params.status) query.set("status", params.status);
+    if (params.item) query.set("item", params.item);
+    if (params.limite) query.set("limite", String(params.limite));
+    const qs = query.toString();
+    const response = await api(
+      `${API_PREFIX}/finance/entries${qs ? `?${qs}` : ""}`
+    );
+    return jsonOrThrow(response, "Não foi possível carregar os lançamentos.");
+  }
+
   global.MuhAuth = {
     API_BASE,
     API_PREFIX,
@@ -623,6 +638,7 @@
     updateServicePreferences,
     disableService,
     financeDashboard,
+    financeEntries,
     adminListServices,
     adminUpdateService,
     adminListTopups,
