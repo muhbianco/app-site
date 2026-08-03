@@ -130,6 +130,40 @@
     return data;
   }
 
+  async function requestPasswordReset(email) {
+    const response = await fetch(`${API_BASE}${API_PREFIX}/auth/password-reset/request`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const err = new Error(data.message || "Não foi possível pedir a redefinição.");
+      err.code = data.error || null;
+      throw err;
+    }
+    return data;
+  }
+
+  async function confirmPasswordReset(token, newPassword, confirmPassword) {
+    const response = await fetch(`${API_BASE}${API_PREFIX}/auth/password-reset/confirm`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        token,
+        new_password: newPassword,
+        confirm_password: confirmPassword,
+      }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const err = new Error(data.message || "Não foi possível redefinir a senha.");
+      err.code = data.error || null;
+      throw err;
+    }
+    return data;
+  }
+
   async function refresh() {
     const session = readSession();
     if (!session?.refresh_token) return false;
@@ -555,6 +589,8 @@
     register,
     verifyEmail,
     resendVerification,
+    requestPasswordReset,
+    confirmPasswordReset,
     refresh,
     logout,
     me,

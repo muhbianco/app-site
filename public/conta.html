@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=25" />
+  <link rel="stylesheet" href="/css/styles.css?v=26" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -308,14 +308,20 @@
               <span class="settings-badge" data-state="info" id="role-badge">—</span>
             </header>
           </article>
-          <article class="settings-card is-soon">
+          <article class="settings-card">
             <header class="settings-card-head">
               <div>
                 <h3>Trocar senha</h3>
-                <p class="hint">Disponível para contas com e-mail e senha.</p>
+                <p class="hint">
+                  Por segurança, a troca só acontece pelo link enviado ao seu e-mail
+                  (válido por 5 minutos).
+                </p>
               </div>
-              <span class="settings-badge" data-state="soon">Em breve</span>
+              <span class="settings-badge" data-state="info">Via e-mail</span>
             </header>
+            <div class="settings-card-body">
+              <a class="btn btn-ghost" href="/esqueci-senha.html">Pedir link de redefinição</a>
+            </div>
           </article>
         </section>
       </div>
@@ -439,7 +445,7 @@
     </form>
   </dialog>
 
-  <script src="/js/auth.js?v=20"></script>
+  <script src="/js/auth.js?v=21"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;

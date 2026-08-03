@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Redefinir senha da conta MuhBianco." />
+  <title>Esqueci minha senha — MuhBianco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css?v=26" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="logo" href="/">MuhBianco</a>
+    <nav class="nav" aria-label="Principal">
+      <a href="/contato.html">Contato</a>
+      <a href="/login.html" class="nav-cta">Entrar</a>
+    </nav>
+  </header>
+
+  <main class="auth-page">
+    <section class="auth-card">
+      <p class="brand-mark compact">MuhBianco</p>
+      <h1>Esqueci minha senha</h1>
+      <p class="auth-lede">
+        Digite o e-mail da conta. Se ela existir com senha, enviamos um link
+        válido por <strong>5 minutos</strong>. O link só funciona uma vez.
+      </p>
+
+      <div id="auth-error" class="auth-alert" hidden></div>
+      <div id="auth-ok" class="auth-ok" hidden></div>
+
+      <form id="reset-request-form" class="auth-form" method="post" action="#" novalidate>
+        <label>
+          <span>E-mail</span>
+          <input type="email" name="email" autocomplete="username" required placeholder="voce@email.com" />
+        </label>
+        <button type="submit" class="btn btn-primary btn-block" id="btn-submit">Enviar link</button>
+      </form>
+
+      <p class="auth-switch">
+        Lembrou a senha?
+        <a href="/login.html">Voltar ao login</a>
+      </p>
+    </section>
+  </main>
+
+  <script src="/js/auth.js?v=21"></script>
+  <script>
+    (function () {
+      const form = document.getElementById("reset-request-form");
+      const errorBox = document.getElementById("auth-error");
+      const okBox = document.getElementById("auth-ok");
+      const submit = document.getElementById("btn-submit");
+      const params = new URLSearchParams(location.search);
+      if (params.get("email")) form.email.value = params.get("email");
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        errorBox.hidden = true;
+        okBox.hidden = true;
+        submit.disabled = true;
+        try {
+          const data = await MuhAuth.requestPasswordReset(form.email.value.trim());
+          okBox.hidden = false;
+          okBox.textContent = data.message || "Se a conta existir, o e-mail já foi enviado.";
+          form.reset();
+        } catch (err) {
+          errorBox.hidden = false;
+          errorBox.textContent = err.message || "Não foi possível enviar o link.";
+        } finally {
+          submit.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

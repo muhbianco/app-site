@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Definir nova senha da conta MuhBianco." />
+  <title>Redefinir senha — MuhBianco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css?v=26" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="logo" href="/">MuhBianco</a>
+    <nav class="nav" aria-label="Principal">
+      <a href="/contato.html">Contato</a>
+      <a href="/login.html" class="nav-cta">Entrar</a>
+    </nav>
+  </header>
+
+  <main class="auth-page">
+    <section class="auth-card">
+      <p class="brand-mark compact">MuhBianco</p>
+      <h1>Nova senha</h1>
+      <p class="auth-lede" id="lede">
+        Escolha uma senha forte (mínimo 12 caracteres) e confirme. Este link
+        vale por 5 minutos e só pode ser usado uma vez.
+      </p>
+
+      <div id="auth-error" class="auth-alert" hidden></div>
+      <div id="auth-ok" class="auth-ok" hidden></div>
+
+      <form id="reset-confirm-form" class="auth-form" method="post" action="#" novalidate>
+        <label>
+          <span>Nova senha</span>
+          <input
+            type="password"
+            name="password"
+            autocomplete="new-password"
+            required
+            minlength="12"
+            maxlength="128"
+            placeholder="Mínimo 12 caracteres"
+          />
+        </label>
+        <label>
+          <span>Confirmar senha</span>
+          <input
+            type="password"
+            name="confirm"
+            autocomplete="new-password"
+            required
+            minlength="12"
+            maxlength="128"
+            placeholder="Repita a senha"
+          />
+        </label>
+        <button type="submit" class="btn btn-primary btn-block" id="btn-submit">Salvar nova senha</button>
+      </form>
+
+      <p class="auth-switch">
+        Link expirou?
+        <a href="/esqueci-senha.html">Pedir outro</a>
+        ·
+        <a href="/login.html">Entrar</a>
+      </p>
+    </section>
+  </main>
+
+  <script src="/js/auth.js?v=21"></script>
+  <script>
+    (function () {
+      const params = new URLSearchParams(location.search);
+      const token = (params.get("token") || "").trim();
+      const form = document.getElementById("reset-confirm-form");
+      const errorBox = document.getElementById("auth-error");
+      const okBox = document.getElementById("auth-ok");
+      const submit = document.getElementById("btn-submit");
+      const lede = document.getElementById("lede");
+
+      if (!token || token.length < 20) {
+        form.hidden = true;
+        errorBox.hidden = false;
+        errorBox.textContent =
+          "Link incompleto ou inválido. Peça um novo em Esqueci minha senha.";
+        lede.textContent = "Não encontramos um token válido nesta URL.";
+        return;
+      }
+
+      // Limpa o token da barra de endereço após carregar (evita leak em histórico/Referer).
+      if (window.history && history.replaceState) {
+        history.replaceState({}, "", "/redefinir-senha.html");
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        errorBox.hidden = true;
+        okBox.hidden = true;
+        const password = form.password.value;
+        const confirm = form.confirm.value;
+        if (password !== confirm) {
+          errorBox.hidden = false;
+          errorBox.textContent = "A confirmação da senha não confere.";
+          return;
+        }
+        submit.disabled = true;
+        try {
+          const data = await MuhAuth.confirmPasswordReset(token, password, confirm);
+          MuhAuth.clearSession();
+          form.hidden = true;
+          okBox.hidden = false;
+          okBox.textContent = data.message || "Senha atualizada. Você já pode entrar.";
+          lede.textContent = "Pronto — use a nova senha no login.";
+          setTimeout(() => location.replace("/login.html"), 1800);
+        } catch (err) {
+          errorBox.hidden = false;
+          errorBox.textContent = err.message || "Não foi possível redefinir a senha.";
+          submit.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

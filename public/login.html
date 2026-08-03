@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=19" />
+  <link rel="stylesheet" href="/css/styles.css?v=26" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -49,6 +49,9 @@
           <span>Senha</span>
           <input type="password" name="password" autocomplete="current-password" required minlength="12" placeholder="Sua senha" />
         </label>
+        <p class="auth-switch auth-forgot">
+          <a href="/esqueci-senha.html" id="forgot-link">Esqueci minha senha</a>
+        </p>
         <button type="submit" class="btn btn-primary btn-block" id="btn-submit">Entrar</button>
       </form>
 
@@ -59,7 +62,7 @@
     </section>
   </main>
 
-  <script src="/js/auth.js?v=15"></script>
+  <script src="/js/auth.js?v=21"></script>
   <script>
     (async function () {
       if (MuhAuth.isLoggedIn()) {
@@ -90,6 +93,15 @@
         discordBtn.addEventListener("click", () => MuhAuth.oauthStart("discord"));
       }
       if (anyOauth) divider.hidden = false;
+
+      const forgot = document.getElementById("forgot-link");
+      forgot.addEventListener("click", (event) => {
+        const email = document.querySelector('#login-form input[name="email"]')?.value?.trim();
+        if (email) {
+          event.preventDefault();
+          location.href = `/esqueci-senha.html?email=${encodeURIComponent(email)}`;
+        }
+      });
 
       document.getElementById("login-form").addEventListener("submit", async (event) => {
         event.preventDefault();

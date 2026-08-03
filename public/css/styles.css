@@ -905,6 +905,12 @@ img {
   font-size: 0.95rem;
 }
 
+.auth-forgot {
+  margin: -0.35rem 0 0.85rem;
+  text-align: right;
+  font-size: 0.9rem;
+}
+
 .auth-switch a,
 .auth-switch .linkish {
   color: var(--ink);
