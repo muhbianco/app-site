@@ -540,6 +540,11 @@
     return jsonOrThrow(response, "Não foi possível retomar o agente.");
   }
 
+  async function financeDashboard() {
+    const response = await api(`${API_PREFIX}/finance/dashboard`);
+    return jsonOrThrow(response, "Não foi possível carregar o dashboard financeiro.");
+  }
+
   global.MuhAuth = {
     API_BASE,
     API_PREFIX,
@@ -581,6 +586,7 @@
     resumeService,
     updateServicePreferences,
     disableService,
+    financeDashboard,
     adminListServices,
     adminUpdateService,
     adminListTopups,

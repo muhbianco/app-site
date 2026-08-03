@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=23" />
+  <link rel="stylesheet" href="/css/styles.css?v=25" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -391,6 +391,14 @@
         </div>
 
         <div class="balance-actions" data-field="active-actions" hidden>
+          <a
+            class="btn btn-primary btn-compact"
+            href="/financeiro.html"
+            data-field="dashboard-btn"
+            hidden
+          >
+            Abrir dashboard
+          </a>
           <button type="button" class="btn btn-ghost btn-compact" data-field="pause-btn" hidden>
             Pausar agente
           </button>
@@ -431,7 +439,7 @@
     </form>
   </dialog>
 
-  <script src="/js/auth.js?v=19"></script>
+  <script src="/js/auth.js?v=20"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -762,6 +770,9 @@
           badge.textContent = paused ? "Pausado" : "Ativo";
           activeActions.hidden = false;
           phonesBlock.hidden = false;
+          if (service.code === "finance_whatsapp") {
+            q("dashboard-btn").hidden = false;
+          }
           q("pause-btn").hidden = paused;
           q("resume-btn").hidden = !paused;
           const ttsPrefs = q("tts-prefs");

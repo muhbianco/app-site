@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Seu panorama financeiro pessoal — gastos, entradas e tendências do mês." />
+  <title>Financeiro — MuhBianco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css?v=25" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js" defer></script>
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="logo" href="/">MuhBianco</a>
+    <nav class="nav" aria-label="Principal">
+      <a href="/conta.html#servicos">Serviços</a>
+      <a href="/contato.html">Contato</a>
+      <a href="/conta.html" class="nav-cta" aria-current="page">Conta</a>
+    </nav>
+  </header>
+
+  <main class="finance-page">
+    <section class="finance-head">
+      <div class="finance-head-copy">
+        <p class="brand-mark compact">Gestão financeira</p>
+        <h1>Seu panorama</h1>
+        <p class="auth-lede" id="finance-lede">Carregando o mês…</p>
+      </div>
+      <div class="finance-head-actions">
+        <a class="btn btn-ghost" href="/conta.html#servicos">Voltar aos serviços</a>
+        <button type="button" class="btn btn-primary" id="finance-refresh" hidden>Atualizar</button>
+      </div>
+    </section>
+
+    <p class="auth-alert" id="finance-error" hidden></p>
+
+    <div class="finance-skeleton" id="finance-skeleton" aria-hidden="true">
+      <div class="finance-skel-row"></div>
+      <div class="finance-skel-grid">
+        <div class="finance-skel-block"></div>
+        <div class="finance-skel-block"></div>
+        <div class="finance-skel-block"></div>
+        <div class="finance-skel-block"></div>
+      </div>
+    </div>
+
+    <div id="finance-content" hidden>
+      <aside class="finance-insight" id="finance-insight" hidden>
+        <strong>Destaque do mês</strong>
+        <p id="finance-insight-text"></p>
+      </aside>
+
+      <section class="finance-kpis" aria-label="Indicadores do mês">
+        <article class="finance-kpi">
+          <span class="finance-kpi-label">Gastos</span>
+          <strong class="finance-kpi-value is-out" id="kpi-gastos">R$ 0,00</strong>
+          <span class="finance-kpi-hint" id="kpi-gastos-hint">realizados no mês</span>
+        </article>
+        <article class="finance-kpi">
+          <span class="finance-kpi-label">Entradas</span>
+          <strong class="finance-kpi-value is-in" id="kpi-entradas">R$ 0,00</strong>
+          <span class="finance-kpi-hint" id="kpi-entradas-hint">realizadas no mês</span>
+        </article>
+        <article class="finance-kpi">
+          <span class="finance-kpi-label">Resultado do mês</span>
+          <strong class="finance-kpi-value" id="kpi-resultado">R$ 0,00</strong>
+          <span class="finance-kpi-hint">entradas − gastos</span>
+        </article>
+        <article class="finance-kpi">
+          <span class="finance-kpi-label">Saldo na caixa</span>
+          <strong class="finance-kpi-value" id="kpi-caixa">—</strong>
+          <span class="finance-kpi-hint" id="kpi-caixa-hint">informe o saldo inicial no WhatsApp</span>
+        </article>
+      </section>
+
+      <section class="finance-charts" aria-label="Gráficos">
+        <article class="finance-panel finance-panel--wide">
+          <header class="finance-panel-head">
+            <h2>Fluxo diário</h2>
+            <p class="hint">Gastos e entradas dia a dia neste mês</p>
+          </header>
+          <div class="finance-chart-wrap">
+            <canvas id="chart-daily" aria-label="Gráfico de fluxo diário"></canvas>
+          </div>
+        </article>
+        <article class="finance-panel">
+          <header class="finance-panel-head">
+            <h2>Por categoria</h2>
+            <p class="hint">Onde o dinheiro saiu</p>
+          </header>
+          <div class="finance-chart-wrap finance-chart-wrap--donut">
+            <canvas id="chart-category" aria-label="Gráfico por categoria"></canvas>
+          </div>
+          <ul class="finance-legend" id="legend-category"></ul>
+        </article>
+        <article class="finance-panel">
+          <header class="finance-panel-head">
+            <h2>Forma de pagamento</h2>
+            <p class="hint">Como você pagou</p>
+          </header>
+          <div class="finance-chart-wrap">
+            <canvas id="chart-payment" aria-label="Gráfico por forma de pagamento"></canvas>
+          </div>
+        </article>
+      </section>
+
+      <section class="finance-split" aria-label="Detalhes">
+        <article class="finance-panel">
+          <header class="finance-panel-head">
+            <h2>Maiores itens</h2>
+            <p class="hint">O que mais pesou no mês</p>
+          </header>
+          <ol class="finance-rank" id="top-itens">
+            <li class="hint">Sem itens ainda</li>
+          </ol>
+        </article>
+        <article class="finance-panel">
+          <header class="finance-panel-head">
+            <h2>No radar</h2>
+            <p class="hint">Previstos à frente</p>
+          </header>
+          <dl class="finance-planned" id="planned-block">
+            <div>
+              <dt>Gastos previstos</dt>
+              <dd id="planned-gastos">R$ 0,00</dd>
+            </div>
+            <div>
+              <dt>Entradas previstas</dt>
+              <dd id="planned-entradas">R$ 0,00</dd>
+            </div>
+          </dl>
+          <ul class="finance-rank finance-rank--plain" id="planned-groups">
+            <li class="hint">Nada previsto por enquanto</li>
+          </ul>
+        </article>
+        <article class="finance-panel">
+          <header class="finance-panel-head">
+            <h2>Cartões</h2>
+            <p class="hint">Cadastrados no agente</p>
+          </header>
+          <ul class="finance-cards" id="cards-list">
+            <li class="hint">Nenhum cartão cadastrado</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="finance-panel finance-panel--wide" aria-label="Lançamentos recentes">
+        <header class="finance-panel-head">
+          <h2>Últimos lançamentos</h2>
+          <p class="hint">O que entrou pelo WhatsApp</p>
+        </header>
+        <div class="finance-table-wrap">
+          <table class="finance-table" id="recent-table">
+            <thead>
+              <tr>
+                <th scope="col">Data</th>
+                <th scope="col">Descrição</th>
+                <th scope="col">Categoria</th>
+                <th scope="col">Pagamento</th>
+                <th scope="col">Valor</th>
+              </tr>
+            </thead>
+            <tbody id="recent-body">
+              <tr><td colspan="5" class="hint">Sem lançamentos</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="/js/auth.js?v=20"></script>
+  <script>
+    (function () {
+      if (!MuhAuth.requireAuth()) return;
+
+      const brl = (value) =>
+        Number(value || 0).toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        });
+
+      const fmtDay = (iso) => {
+        const d = new Date(`${iso}T12:00:00`);
+        return Number.isNaN(d.getTime())
+          ? iso
+          : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+      };
+
+      const fmtDate = (iso) => {
+        const d = new Date(`${iso}T12:00:00`);
+        return Number.isNaN(d.getTime())
+          ? iso
+          : d.toLocaleDateString("pt-BR", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            });
+      };
+
+      const PALETTE = [
+        "#1a6b6b",
+        "#e24e3b",
+        "#2f8f7a",
+        "#c43b2a",
+        "#0f4a4a",
+        "#d97757",
+        "#3d7ea6",
+        "#8b5e3c",
+        "#5c6b73",
+        "#b08968",
+      ];
+
+      let charts = { daily: null, category: null, payment: null };
+
+      function destroyCharts() {
+        Object.keys(charts).forEach((key) => {
+          if (charts[key]) {
+            charts[key].destroy();
+            charts[key] = null;
+          }
+        });
+      }
+
+      function setText(id, text) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+      }
+
+      function renderKpis(data) {
+        const snap = data.snapshot || {};
+        const gastos = Number(snap.gastos_realizados || 0);
+        const entradas = Number(snap.entradas_realizadas || 0);
+        const resultado = entradas - gastos;
+
+        setText("finance-lede", `Referência ${data.mes_referencia} · de ${fmtDate(data.inicio)} a ${fmtDate(data.fim)}`);
+        setText("kpi-gastos", brl(gastos));
+        setText("kpi-entradas", brl(entradas));
+
+        const resultadoEl = document.getElementById("kpi-resultado");
+        resultadoEl.textContent = brl(resultado);
+        resultadoEl.classList.toggle("is-in", resultado >= 0);
+        resultadoEl.classList.toggle("is-out", resultado < 0);
+
+        const caixaEl = document.getElementById("kpi-caixa");
+        if (snap.saldo_inicial_informado && snap.saldo_caixa != null) {
+          caixaEl.textContent = brl(snap.saldo_caixa);
+          caixaEl.classList.toggle("is-in", Number(snap.saldo_caixa) >= 0);
+          caixaEl.classList.toggle("is-out", Number(snap.saldo_caixa) < 0);
+          setText("kpi-caixa-hint", `saldo inicial ${brl(snap.saldo_inicial)}`);
+        } else {
+          caixaEl.textContent = "—";
+          caixaEl.classList.remove("is-in", "is-out");
+          setText("kpi-caixa-hint", "informe o saldo inicial no WhatsApp");
+        }
+
+        setText("planned-gastos", brl(snap.gastos_previstos));
+        setText("planned-entradas", brl(snap.entradas_previstas));
+      }
+
+      function renderInsight(text) {
+        const box = document.getElementById("finance-insight");
+        if (!text) {
+          box.hidden = true;
+          return;
+        }
+        setText("finance-insight-text", text);
+        box.hidden = false;
+      }
+
+      function renderDaily(serie) {
+        const labels = (serie || []).map((p) => fmtDay(p.data));
+        const gastos = (serie || []).map((p) => Number(p.gastos || 0));
+        const entradas = (serie || []).map((p) => Number(p.entradas || 0));
+        const ctx = document.getElementById("chart-daily");
+        charts.daily = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Gastos",
+                data: gastos,
+                borderColor: "#e24e3b",
+                backgroundColor: "rgba(226, 78, 59, 0.12)",
+                fill: true,
+                tension: 0.35,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                borderWidth: 2,
+              },
+              {
+                label: "Entradas",
+                data: entradas,
+                borderColor: "#1a6b6b",
+                backgroundColor: "rgba(26, 107, 107, 0.12)",
+                fill: true,
+                tension: 0.35,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                borderWidth: 2,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+              legend: {
+                position: "top",
+                align: "end",
+                labels: { boxWidth: 12, usePointStyle: true, pointStyle: "circle" },
+              },
+              tooltip: {
+                callbacks: {
+                  label: (item) => `${item.dataset.label}: ${brl(item.parsed.y)}`,
+                },
+              },
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { maxTicksLimit: 8, color: "#5c6b73" },
+              },
+              y: {
+                beginAtZero: true,
+                grid: { color: "rgba(12, 26, 34, 0.08)" },
+                ticks: {
+                  color: "#5c6b73",
+                  callback: (v) =>
+                    Number(v).toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                      maximumFractionDigits: 0,
+                    }),
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function renderCategory(summary) {
+        const groups = (summary && summary.grupos) || [];
+        const labels = groups.map((g) => g.nome || "Outros");
+        const values = groups.map((g) => Number(g.total || 0));
+        const colors = labels.map((_, i) => PALETTE[i % PALETTE.length]);
+        const legend = document.getElementById("legend-category");
+        legend.innerHTML = "";
+
+        if (!values.length || values.every((v) => v <= 0)) {
+          legend.innerHTML = `<li class="hint">Sem gastos por categoria neste mês</li>`;
+        } else {
+          groups.forEach((g, i) => {
+            const li = document.createElement("li");
+            li.innerHTML = `<span class="swatch" style="background:${colors[i]}"></span><span>${g.nome}</span><strong>${brl(g.total)}</strong>`;
+            legend.appendChild(li);
+          });
+        }
+
+        charts.category = new Chart(document.getElementById("chart-category"), {
+          type: "doughnut",
+          data: {
+            labels: labels.length ? labels : ["Sem dados"],
+            datasets: [
+              {
+                data: values.length ? values : [1],
+                backgroundColor: values.length ? colors : ["rgba(12,26,34,0.08)"],
+                borderWidth: 0,
+                hoverOffset: 4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: "62%",
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                enabled: Boolean(values.length),
+                callbacks: {
+                  label: (item) => `${item.label}: ${brl(item.parsed)}`,
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function renderPayment(summary) {
+        const groups = (summary && summary.grupos) || [];
+        const labels = groups.map((g) => g.nome || "Outros");
+        const values = groups.map((g) => Number(g.total || 0));
+        charts.payment = new Chart(document.getElementById("chart-payment"), {
+          type: "bar",
+          data: {
+            labels: labels.length ? labels : ["Sem dados"],
+            datasets: [
+              {
+                label: "Total",
+                data: values.length ? values : [0],
+                backgroundColor: "#1a6b6b",
+                borderRadius: 6,
+                maxBarThickness: 42,
+              },
+            ],
+          },
+          options: {
+            indexAxis: "y",
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (item) => brl(item.parsed.x),
+                },
+              },
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                grid: { color: "rgba(12, 26, 34, 0.08)" },
+                ticks: {
+                  color: "#5c6b73",
+                  callback: (v) =>
+                    Number(v).toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                      maximumFractionDigits: 0,
+                    }),
+                },
+              },
+              y: {
+                grid: { display: false },
+                ticks: { color: "#243540" },
+              },
+            },
+          },
+        });
+      }
+
+      function renderTopItems(items) {
+        const list = document.getElementById("top-itens");
+        list.innerHTML = "";
+        if (!items || !items.length) {
+          list.innerHTML = `<li class="hint">Sem itens ainda — descreva o que comprou no WhatsApp</li>`;
+          return;
+        }
+        items.forEach((item, index) => {
+          const li = document.createElement("li");
+          li.innerHTML = `<span class="rank">${index + 1}</span><span class="name">${item.nome}</span><strong>${brl(item.total)}</strong>`;
+          list.appendChild(li);
+        });
+      }
+
+      function renderPlanned(summary) {
+        const list = document.getElementById("planned-groups");
+        list.innerHTML = "";
+        const groups = (summary && summary.grupos) || [];
+        if (!groups.length) {
+          list.innerHTML = `<li class="hint">Nada previsto por enquanto</li>`;
+          return;
+        }
+        groups.slice(0, 6).forEach((g) => {
+          const li = document.createElement("li");
+          li.innerHTML = `<span class="name">${g.nome}</span><strong>${brl(g.total)}</strong>`;
+          list.appendChild(li);
+        });
+      }
+
+      function renderCards(cards) {
+        const list = document.getElementById("cards-list");
+        list.innerHTML = "";
+        if (!cards || !cards.length) {
+          list.innerHTML = `<li class="hint">Nenhum cartão cadastrado</li>`;
+          return;
+        }
+        cards.forEach((card) => {
+          const li = document.createElement("li");
+          const final = card.final ? ` · final ${card.final}` : "";
+          const limite = card.limite != null ? `<em>Limite ${brl(card.limite)}</em>` : "";
+          const ciclo =
+            card.fecha_dia && card.vence_dia
+              ? `<em>Fecha dia ${card.fecha_dia} · vence dia ${card.vence_dia}</em>`
+              : "";
+          li.innerHTML = `<strong>${card.nome}${card.padrao ? " ★" : ""}</strong><span>${card.tipo || "Cartão"}${final}</span>${limite}${ciclo}`;
+          list.appendChild(li);
+        });
+      }
+
+      function renderRecent(entries) {
+        const body = document.getElementById("recent-body");
+        body.innerHTML = "";
+        if (!entries || !entries.length) {
+          body.innerHTML = `<tr><td colspan="5" class="hint">Sem lançamentos ainda</td></tr>`;
+          return;
+        }
+        entries.forEach((e) => {
+          const tr = document.createElement("tr");
+          const isOut = e.tipo === "gasto";
+          const title = e.item || e.descricao || (isOut ? "Gasto" : "Entrada");
+          const pay = [e.forma_pagamento, e.cartao].filter(Boolean).join(" · ") || "—";
+          tr.innerHTML = `
+            <td>${fmtDate(e.data)}</td>
+            <td>
+              <strong>${title}</strong>
+              ${e.status && e.status !== "realizado" ? `<span class="pill">${e.status}</span>` : ""}
+            </td>
+            <td>${e.categoria || "—"}</td>
+            <td>${pay}</td>
+            <td class="${isOut ? "is-out" : "is-in"}">${isOut ? "−" : "+"}${brl(e.valor)}</td>
+          `;
+          body.appendChild(tr);
+        });
+      }
+
+      async function loadDashboard() {
+        const skeleton = document.getElementById("finance-skeleton");
+        const content = document.getElementById("finance-content");
+        const errorEl = document.getElementById("finance-error");
+        const refreshBtn = document.getElementById("finance-refresh");
+
+        errorEl.hidden = true;
+        skeleton.hidden = false;
+        content.hidden = true;
+        refreshBtn.hidden = true;
+        refreshBtn.disabled = true;
+
+        try {
+          const data = await MuhAuth.financeDashboard();
+          destroyCharts();
+          renderInsight(data.insight);
+          renderKpis(data);
+          renderDaily(data.serie_diaria || []);
+          renderCategory(data.por_categoria);
+          renderPayment(data.por_forma_pagamento);
+          renderTopItems(data.top_itens || []);
+          renderPlanned(data.previsoes);
+          renderCards(data.cartoes || []);
+          renderRecent(data.recentes || []);
+          skeleton.hidden = true;
+          content.hidden = false;
+          refreshBtn.hidden = false;
+        } catch (err) {
+          skeleton.hidden = true;
+          errorEl.hidden = false;
+          errorEl.textContent = err.message || "Não foi possível carregar o dashboard.";
+          refreshBtn.hidden = false;
+        } finally {
+          refreshBtn.disabled = false;
+        }
+      }
+
+      document.getElementById("finance-refresh").addEventListener("click", loadDashboard);
+
+      function waitChart() {
+        if (window.Chart) {
+          loadDashboard();
+          return;
+        }
+        setTimeout(waitChart, 40);
+      }
+      waitChart();
+    })();
+  </script>
+</body>
+</html>
