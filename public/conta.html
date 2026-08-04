@@ -955,9 +955,13 @@
             return "Configure como o agente usa o WhatsApp (usar ou expor).";
           }
           if (aw.wa_mode === "owned") {
-            return aw.bot_phone
-              ? `Modo expor · bot em ${formatPhone(String(aw.bot_phone))}`
-              : "Modo expor · pareie seu número nas configurações";
+            if (aw.bot_phone) {
+              return `Modo expor · bot em ${formatPhone(String(aw.bot_phone))}`;
+            }
+            if (aw.wa_logged_in) {
+              return "Modo expor · sessão conectada";
+            }
+            return "Modo expor · pareie seu número nas configurações";
           }
           const n = phones.length;
           return `Modo usar · ${n} WhatsApp vinculado${n === 1 ? "" : "s"}`;
@@ -1145,12 +1149,42 @@
           });
           const aw = sub.agent_wa || sub.kb || {};
           if (aw.wa_mode === "owned") {
+            let modoValue = "Expor no próprio (aguardando pareamento)";
+            if (aw.bot_phone) {
+              modoValue = `Expor no próprio · ${formatPhone(String(aw.bot_phone))}`;
+            } else if (aw.wa_logged_in) {
+              modoValue = "Expor no próprio · conectado";
+            }
             rows.push({
               label: "Modo WhatsApp",
-              value: aw.bot_phone
-                ? `Expor no próprio · ${formatPhone(String(aw.bot_phone))}`
-                : "Expor no próprio (aguardando pareamento)",
+              value: modoValue,
             });
+            // Sync silencioso: WuzAPI pode estar logado sem bot_phone no banco.
+            if (!aw.bot_phone || !aw.wa_logged_in) {
+              MuhAuth.agentWaStatus(service.code)
+                .then((st) => {
+                  if (!st || (!st.logged_in && !st.bot_phone)) return;
+                  const next =
+                    st.bot_phone
+                      ? `Expor no próprio · ${formatPhone(String(st.bot_phone))}`
+                      : "Expor no próprio · conectado";
+                  const lis = q("status-detail")?.querySelectorAll("li") || [];
+                  for (const li of lis) {
+                    const label = li.querySelector(".service-status-label");
+                    const value = li.querySelector(".service-status-value");
+                    if (label && value && label.textContent === "Modo WhatsApp") {
+                      value.textContent = next;
+                    }
+                  }
+                  const summary = q("wa-summary");
+                  if (summary) {
+                    summary.textContent = st.bot_phone
+                      ? `Modo expor · bot em ${formatPhone(String(st.bot_phone))}`
+                      : "Modo expor · sessão conectada";
+                  }
+                })
+                .catch(() => {});
+            }
           } else if (aw.wa_mode === "shared") {
             rows.push({ label: "Modo WhatsApp", value: "Usar agente (número MuhBianco)" });
           } else {
