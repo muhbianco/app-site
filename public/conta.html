@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=34" />
+  <link rel="stylesheet" href="/css/styles.css?v=35" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -496,10 +496,10 @@
       </div>
 
       <div id="wa-panel-shared" class="wa-panel" hidden>
-        <p class="hint">
+        <p class="hint" id="wa-shared-hint">
           Números autorizados a falar com o agente no WhatsApp MuhBianco.
         </p>
-        <ul class="phone-list" id="wa-phone-list"></ul>
+        <ul class="phone-list" id="wa-phone-list" aria-label="WhatsApps autorizados"></ul>
         <form class="settings-inline-form" id="wa-add-phone-form">
           <label>
             <span>Adicionar outro WhatsApp</span>
@@ -1434,10 +1434,37 @@
         function renderPhones() {
           phoneList.innerHTML = "";
           const phones = (liveService.subscription && liveService.subscription.phones) || [];
+          const aw = agentWa();
+          const botLabel = aw.bot_phone
+            ? formatPhone(String(aw.bot_phone))
+            : "MuhBianco";
+          const hint = document.getElementById("wa-shared-hint");
+          if (hint) {
+            hint.textContent =
+              `Números autorizados a falar com o agente no WhatsApp ${botLabel}.`;
+          }
+          if (!phones.length) {
+            const empty = document.createElement("li");
+            empty.className = "phone-list-empty";
+            empty.textContent = "Nenhum WhatsApp vinculado ainda.";
+            phoneList.appendChild(empty);
+            return;
+          }
           phones.forEach((item) => {
             const li = document.createElement("li");
-            const label = item.is_primary ? "principal" : "extra";
-            li.innerHTML = `<span>${formatPhone(item.phone)} <em>(${label})</em></span>`;
+            li.className = "phone-list-item";
+            const main = document.createElement("div");
+            main.className = "phone-list-main";
+            const number = document.createElement("span");
+            number.className = "phone-list-number";
+            number.textContent = formatPhone(item.phone) || String(item.phone || "—");
+            const badge = document.createElement("span");
+            badge.className =
+              "phone-list-badge" + (item.is_primary ? " is-primary" : "");
+            badge.textContent = item.is_primary ? "Principal" : "Extra";
+            main.appendChild(number);
+            main.appendChild(badge);
+            li.appendChild(main);
             if (!item.is_primary && item.verified) {
               const btn = document.createElement("button");
               btn.type = "button";
@@ -1460,10 +1487,6 @@
             }
             phoneList.appendChild(li);
           });
-          if (!phones.length) {
-            phoneList.innerHTML =
-              "<li><span>Nenhum WhatsApp vinculado ainda.</span></li>";
-          }
         }
 
         function setOwnedUi({ loggedIn, botPhone, connected }) {
