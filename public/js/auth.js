@@ -508,9 +508,10 @@
     return jsonOrThrow(response, "Não foi possível pedir o código de pareamento.");
   }
 
-  async function disableService(code) {
+  async function disableService(code, { immediateRefund = false } = {}) {
     const response = await api(`${API_PREFIX}/services/${encodeURIComponent(code)}/disable`, {
       method: "POST",
+      body: JSON.stringify({ immediate_refund: Boolean(immediateRefund) }),
     });
     return jsonOrThrow(response, "Não foi possível cancelar o serviço.");
   }

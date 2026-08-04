@@ -568,7 +568,33 @@
     </form>
   </dialog>
 
-  <script src="/js/auth.js?v=34"></script>
+  <dialog class="terms-dialog" id="cancel-service-dialog" aria-labelledby="cancel-service-title">
+    <form class="terms-dialog-card" id="cancel-service-form" method="dialog">
+      <header class="terms-dialog-head">
+        <h2 id="cancel-service-title">Cancelar serviço</h2>
+        <button type="button" class="btn btn-ghost btn-compact" id="cancel-service-close" aria-label="Fechar">
+          Fechar
+        </button>
+      </header>
+      <p class="hint" id="cancel-service-lede">
+        Você ainda não usou este serviço neste período. Escolha como prefere cancelar.
+      </p>
+      <p class="auth-alert" id="cancel-service-error" hidden></p>
+      <div class="balance-actions" style="flex-direction:column;align-items:stretch;gap:0.6rem">
+        <button type="button" class="btn btn-primary" id="cancel-service-refund">
+          Cancelar agora e reembolsar no saldo
+        </button>
+        <button type="button" class="btn btn-ghost" id="cancel-service-end">
+          Só cancelar no fim do período pago
+        </button>
+        <button type="button" class="btn btn-ghost" id="cancel-service-abort">
+          Voltar
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/js/auth.js?v=35"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -1220,16 +1246,79 @@
         });
 
         q("disable-btn").addEventListener("click", async () => {
-          if (!confirm("Cancelar este serviço no fim do período pago?")) return;
           const btn = q("disable-btn");
-          btn.disabled = true;
-          try {
-            await MuhAuth.disableService(service.code);
-            await reloadServicos("Serviço cancelado.");
-          } catch (err) {
-            showError(err.message || "Não foi possível cancelar.");
-            btn.disabled = false;
+          const refundEligible = Boolean(sub.cancel_refund_eligible);
+          const refundCents = Number(sub.cancel_refund_cents || 0);
+
+          async function runCancel({ immediateRefund }) {
+            btn.disabled = true;
+            try {
+              await MuhAuth.disableService(service.code, {
+                immediateRefund,
+              });
+              await reloadServicos(
+                immediateRefund
+                  ? "Serviço cancelado. O valor voltou para o seu saldo."
+                  : "Serviço cancelado no fim do período."
+              );
+            } catch (err) {
+              showError(err.message || "Não foi possível cancelar.");
+              btn.disabled = false;
+            }
           }
+
+          if (!refundEligible || refundCents <= 0) {
+            if (!confirm("Cancelar este serviço no fim do período pago?")) return;
+            await runCancel({ immediateRefund: false });
+            return;
+          }
+
+          const dialog = document.getElementById("cancel-service-dialog");
+          const errEl = document.getElementById("cancel-service-error");
+          const lede = document.getElementById("cancel-service-lede");
+          const refundBtn = document.getElementById("cancel-service-refund");
+          const endBtn = document.getElementById("cancel-service-end");
+          const abortBtn = document.getElementById("cancel-service-abort");
+          const closeBtn = document.getElementById("cancel-service-close");
+          errEl.hidden = true;
+          lede.textContent =
+            `Você ainda não usou este serviço neste período. ` +
+            `Pode cancelar agora e receber ${brl(refundCents)} de volta no saldo, ` +
+            `ou só marcar para não renovar e usar até o fim do período pago.`;
+          refundBtn.textContent = `Cancelar agora e reembolsar ${brl(refundCents)}`;
+
+          function closeDialog() {
+            if (dialog.open) dialog.close();
+          }
+
+          const onRefund = async () => {
+            refundBtn.disabled = true;
+            endBtn.disabled = true;
+            try {
+              closeDialog();
+              await runCancel({ immediateRefund: true });
+            } finally {
+              refundBtn.disabled = false;
+              endBtn.disabled = false;
+            }
+          };
+          const onEnd = async () => {
+            refundBtn.disabled = true;
+            endBtn.disabled = true;
+            try {
+              closeDialog();
+              await runCancel({ immediateRefund: false });
+            } finally {
+              refundBtn.disabled = false;
+              endBtn.disabled = false;
+            }
+          };
+
+          refundBtn.onclick = onRefund;
+          endBtn.onclick = onEnd;
+          abortBtn.onclick = closeDialog;
+          closeBtn.onclick = closeDialog;
+          dialog.showModal();
         });
 
         return node;
