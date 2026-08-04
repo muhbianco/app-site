@@ -1388,10 +1388,25 @@
                   wa_setup_done: sub.kb.wa_setup_done || Boolean(sub.kb.wa_mode),
                   bot_phone: sub.kb.bot_phone,
                   has_owned_session: sub.kb.has_owned_session,
+                  wa_logged_in: sub.kb.wa_logged_in,
                 }
               : {}) ||
             {}
           );
+        }
+
+        function ownedAllowed() {
+          return liveService.allow_owned_whatsapp !== false;
+        }
+
+        function applyOwnedVisibility() {
+          const allow = ownedAllowed();
+          chooser.querySelectorAll('[data-wa-choose="owned"]').forEach((el) => {
+            el.hidden = !allow;
+          });
+          tabs.querySelectorAll('[data-wa-tab="owned"]').forEach((el) => {
+            el.hidden = !allow;
+          });
         }
 
         function showModalErr(msg) {
@@ -1548,6 +1563,12 @@
 
         async function showMode(mode, { persist } = { persist: false }) {
           clearModalMsg();
+          if (mode === "owned" && !ownedAllowed()) {
+            showModalErr(
+              "Este serviço não permite expor o agente no seu próprio WhatsApp."
+            );
+            mode = "shared";
+          }
           if (setupEnable && persist) {
             const ok = await ensureEnabled(mode);
             if (!ok) return;
@@ -1555,7 +1576,8 @@
             persist = false;
           }
           chooser.hidden = true;
-          tabs.hidden = false;
+          tabs.hidden = !ownedAllowed();
+          applyOwnedVisibility();
           setTabActive(mode);
           panelShared.hidden = mode !== "shared";
           panelOwned.hidden = mode !== "owned";
@@ -1578,6 +1600,12 @@
 
         function showChooser() {
           clearModalMsg();
+          applyOwnedVisibility();
+          if (!ownedAllowed()) {
+            // Só modo Usar: aplica na hora (reconfig após admin desligar Expor).
+            showMode("shared", { persist: true });
+            return;
+          }
           tabs.hidden = true;
           panelShared.hidden = true;
           panelOwned.hidden = true;
@@ -1741,7 +1769,9 @@
         };
 
         const aw = agentWa();
+        applyOwnedVisibility();
         if (setupEnable || !aw.wa_setup_done || !aw.wa_mode) showChooser();
+        else if (aw.wa_mode === "owned" && !ownedAllowed()) showChooser();
         else showMode(aw.wa_mode, { persist: false });
 
         if (typeof dialog.showModal === "function") dialog.showModal();

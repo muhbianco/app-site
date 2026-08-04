@@ -292,6 +292,13 @@
               <option value="false">Não</option>
             </select>
           </label>
+          <label>
+            <span>Expor número próprio</span>
+            <select data-field="allow_owned_whatsapp">
+              <option value="true">Sim — cliente pode Expor agente</option>
+              <option value="false">Não — só Usar agente (número MuhBianco)</option>
+            </select>
+          </label>
         </div>
         <div class="admin-filters-actions">
           <a class="btn btn-ghost" data-field="users-link" href="#">Ver usuários</a>
@@ -457,6 +464,9 @@
         q("min_balance").value = (service.min_balance_cents / 100).toFixed(2);
         q("is_active").value = String(service.is_active);
         q("requires_phone").value = String(service.requires_phone);
+        q("allow_owned_whatsapp").value = String(
+          service.allow_owned_whatsapp !== false
+        );
         q("included_messages").value =
           service.included_messages != null ? service.included_messages : "";
         q("on_demand_markup_pct").value =
@@ -500,6 +510,7 @@
               min_balance_cents: Math.round(Number(q("min_balance").value) * 100),
               is_active: q("is_active").value === "true",
               requires_phone: q("requires_phone").value === "true",
+              allow_owned_whatsapp: q("allow_owned_whatsapp").value === "true",
             };
             if (mode === "per_use") {
               payload.price_cents = 0;
