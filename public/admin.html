@@ -255,6 +255,7 @@
             <select data-field="billing_mode">
               <option value="monthly">Assinatura por período</option>
               <option value="per_use">Por uso</option>
+              <option value="pack">Pacote (cota + On-Demand)</option>
             </select>
           </label>
           <label>
@@ -313,7 +314,7 @@
         servicos: {
           title: "Cobrança dos serviços",
           lede:
-            "Cada serviço define seu modo de cobrança. Alterações valem para novas assinaturas — quem já assinou mantém o preço congelado até renovar.",
+            "Cada serviço define seu modo de cobrança (período, por uso ou pacote com cota/On-Demand). Alterações valem para novas assinaturas — quem já assinou mantém o preço congelado até renovar.",
         },
         usuarios: {
           title: "Usuários e saldo",
@@ -461,27 +462,30 @@
         q("is_active").value = String(service.is_active);
         q("requires_phone").value = String(service.requires_phone);
 
-        const isPack =
-          service.code === "kb_whatsapp" ||
-          service.included_messages != null ||
-          service.on_demand_markup_pct != null;
-        node.querySelectorAll('[data-field="pack-block"]').forEach((el) => {
-          el.hidden = !isPack && service.code !== "kb_whatsapp";
-        });
-        const packHint = q("pack-hint");
-        packHint.hidden = !isPack && service.code !== "kb_whatsapp";
+        function syncPackFields() {
+          const isPack = q("billing_mode").value === "pack";
+          node.querySelectorAll('[data-field="pack-block"]').forEach((el) => {
+            el.hidden = !isPack;
+          });
+          q("pack-hint").hidden = !isPack;
+          if (isPack) {
+            if (q("included_messages").value === "") {
+              q("included_messages").value =
+                service.included_messages != null ? service.included_messages : "300";
+            }
+            if (q("on_demand_markup_pct").value === "") {
+              q("on_demand_markup_pct").value =
+                service.on_demand_markup_pct != null ? service.on_demand_markup_pct : "20";
+            }
+          }
+        }
+
         q("included_messages").value =
           service.included_messages != null ? service.included_messages : "";
         q("on_demand_markup_pct").value =
           service.on_demand_markup_pct != null ? service.on_demand_markup_pct : "";
-        if (service.code === "kb_whatsapp") {
-          node.querySelectorAll('[data-field="pack-block"]').forEach((el) => {
-            el.hidden = false;
-          });
-          packHint.hidden = false;
-          if (q("included_messages").value === "") q("included_messages").value = "300";
-          if (q("on_demand_markup_pct").value === "") q("on_demand_markup_pct").value = "20";
-        }
+        syncPackFields();
+        q("billing_mode").addEventListener("change", syncPackFields);
 
         q("users-link").href = `/admin-servico-usuarios.html?service_id=${encodeURIComponent(
           service.id
@@ -492,19 +496,23 @@
           const btn = q("save");
           btn.disabled = true;
           try {
+            const mode = q("billing_mode").value;
             const payload = {
-              billing_mode: q("billing_mode").value,
+              billing_mode: mode,
               price_cents: Math.round(Number(q("price").value) * 100),
               period_days: Number(q("period_days").value),
               min_balance_cents: Math.round(Number(q("min_balance").value) * 100),
               is_active: q("is_active").value === "true",
               requires_phone: q("requires_phone").value === "true",
             };
-            const msgsRaw = q("included_messages").value.trim();
-            const markupRaw = q("on_demand_markup_pct").value.trim();
-            if (service.code === "kb_whatsapp" || msgsRaw !== "" || markupRaw !== "") {
-              payload.included_messages = msgsRaw === "" ? null : Number(msgsRaw);
-              payload.on_demand_markup_pct = markupRaw === "" ? null : Number(markupRaw);
+            if (mode === "pack") {
+              const msgsRaw = q("included_messages").value.trim();
+              const markupRaw = q("on_demand_markup_pct").value.trim();
+              payload.included_messages = Number(msgsRaw || "0");
+              payload.on_demand_markup_pct = Number(markupRaw || "20");
+            } else {
+              payload.included_messages = null;
+              payload.on_demand_markup_pct = null;
             }
             await MuhAuth.adminUpdateService(service.id, payload);
             showSvcOk(`"${service.name}" atualizado.`);

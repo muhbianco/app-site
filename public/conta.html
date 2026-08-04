@@ -691,11 +691,8 @@
 
       function priceLabel(service) {
         const periodo = service.period_days === 30 ? "mês" : `${service.period_days} dias`;
-        if (
-          service.code === "kb_whatsapp" ||
-          (service.included_messages != null && service.included_messages > 0)
-        ) {
-          const msgs = service.included_messages || 300;
+        if (service.billing_mode === "pack") {
+          const msgs = service.included_messages || 0;
           const markup =
             service.on_demand_markup_pct != null ? service.on_demand_markup_pct : 20;
           return (
