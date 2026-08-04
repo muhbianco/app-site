@@ -1233,13 +1233,26 @@ img {
   color: var(--ink-soft);
 }
 
-.admin-credit-dialog input {
+.admin-credit-dialog input,
+.admin-credit-dialog select {
   border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
   border-radius: 10px;
   padding: 0.65rem 0.75rem;
   font: inherit;
   color: var(--ink);
   background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-credit-dialog select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%),
+    linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%);
+  background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 2rem;
 }
 
 .tx-actions {
