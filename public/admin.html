@@ -1113,7 +1113,9 @@
         const active = row.is_active ? "Ativo no pool" : "Inativo (não aloca)";
         const live =
           row.logged_in === true
-            ? "Conectado"
+            ? row.has_jid === false
+              ? "Conectado sem JID (re-parear)"
+              : "Conectado"
             : row.logged_in === false
               ? "Desconectado"
               : "Status não consultado";
