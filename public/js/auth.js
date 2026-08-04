@@ -475,6 +475,37 @@
     return jsonOrThrow(response, "Não foi possível salvar as preferências.");
   }
 
+  async function setAgentWaMode(code, waMode) {
+    const response = await api(
+      `${API_PREFIX}/services/${encodeURIComponent(code)}/agent-whatsapp/mode`,
+      { method: "POST", body: JSON.stringify({ wa_mode: waMode }) }
+    );
+    return jsonOrThrow(response, "Não foi possível alterar o modo WhatsApp.");
+  }
+
+  async function agentWaStatus(code) {
+    const response = await api(
+      `${API_PREFIX}/services/${encodeURIComponent(code)}/agent-whatsapp/status`
+    );
+    return jsonOrThrow(response, "Não foi possível consultar o status WhatsApp.");
+  }
+
+  async function agentWaQr(code) {
+    const response = await api(
+      `${API_PREFIX}/services/${encodeURIComponent(code)}/agent-whatsapp/qr`,
+      { method: "POST" }
+    );
+    return jsonOrThrow(response, "Não foi possível gerar o QR.");
+  }
+
+  async function agentWaPair(code, phone) {
+    const response = await api(
+      `${API_PREFIX}/services/${encodeURIComponent(code)}/agent-whatsapp/pair`,
+      { method: "POST", body: JSON.stringify({ phone }) }
+    );
+    return jsonOrThrow(response, "Não foi possível pedir o código de pareamento.");
+  }
+
   async function disableService(code) {
     const response = await api(`${API_PREFIX}/services/${encodeURIComponent(code)}/disable`, {
       method: "POST",
@@ -750,6 +781,10 @@
     resumeService,
     pingServiceContact,
     updateServicePreferences,
+    setAgentWaMode,
+    agentWaStatus,
+    agentWaQr,
+    agentWaPair,
     disableService,
     kbSettings,
     kbPatchSettings,

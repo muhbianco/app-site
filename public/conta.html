@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=26" />
+  <link rel="stylesheet" href="/css/styles.css?v=32" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -359,24 +359,13 @@
         </div>
 
         <div data-field="phones-block" hidden>
-          <h4 class="settings-subhead">WhatsApp vinculados</h4>
-          <ul class="phone-list" data-field="phone-list"></ul>
-          <form class="settings-inline-form" data-field="add-phone-form">
-            <label>
-              <span>Adicionar outro WhatsApp</span>
-              <input type="tel" data-field="extra-phone" inputmode="tel" autocomplete="tel"
-                     placeholder="(11) 99999-8888" maxlength="20" required />
-            </label>
-            <button type="submit" class="btn btn-ghost" data-field="add-phone-btn">Enviar código</button>
-          </form>
-          <form class="settings-inline-form" data-field="extra-code-form" hidden>
-            <label>
-              <span>Código recebido</span>
-              <input type="text" data-field="extra-code" inputmode="numeric" autocomplete="one-time-code"
-                     minlength="6" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required />
-            </label>
-            <button type="submit" class="btn btn-primary" data-field="extra-confirm-btn">Confirmar número</button>
-          </form>
+          <div class="phones-block-head">
+            <h4 class="settings-subhead">WhatsApp vinculados</h4>
+            <button type="button" class="btn btn-ghost btn-compact" data-field="wa-settings-btn">
+              Configurações do serviço
+            </button>
+          </div>
+          <p class="hint" data-field="wa-summary"></p>
         </div>
 
         <div class="service-prefs" data-field="tts-prefs" hidden>
@@ -422,6 +411,88 @@
     </article>
   </template>
 
+  <dialog class="terms-dialog wa-config-dialog" id="wa-config-dialog" aria-labelledby="wa-config-title">
+    <div class="terms-dialog-card wa-config-card">
+      <header class="terms-dialog-head">
+        <h2 id="wa-config-title">Configurações do serviço</h2>
+        <button type="button" class="btn btn-ghost btn-compact" id="wa-config-close" aria-label="Fechar">
+          Fechar
+        </button>
+      </header>
+      <p class="hint" id="wa-config-service-name"></p>
+      <p class="auth-alert" id="wa-config-error" hidden></p>
+      <p class="auth-ok" id="wa-config-ok" hidden></p>
+
+      <div class="wa-mode-tabs" id="wa-mode-tabs" hidden>
+        <button type="button" class="wa-mode-tab" data-wa-tab="shared">Usar agente</button>
+        <button type="button" class="wa-mode-tab" data-wa-tab="owned">Expor agente</button>
+      </div>
+
+      <div id="wa-chooser" class="wa-chooser" hidden>
+        <button type="button" class="wa-choice-box" data-wa-choose="shared">
+          <strong>Usar agente</strong>
+          <span>
+            Você conversa com o número MuhBianco. Cadastre os WhatsApps da sua equipe
+            (ou só o seu) e cada um fala com o agente nesse número compartilhado.
+          </span>
+        </button>
+        <button type="button" class="wa-choice-box" data-wa-choose="owned">
+          <strong>Expor agente</strong>
+          <span>
+            O agente passa a responder no <em>seu</em> WhatsApp. Pareamos uma sessão
+            WuzAPI com o número do cliente (QR ou código). Ideal para atendimento no
+            número da empresa.
+          </span>
+        </button>
+      </div>
+
+      <div id="wa-panel-shared" class="wa-panel" hidden>
+        <p class="hint">
+          Números autorizados a falar com o agente no WhatsApp MuhBianco.
+        </p>
+        <ul class="phone-list" id="wa-phone-list"></ul>
+        <form class="settings-inline-form" id="wa-add-phone-form">
+          <label>
+            <span>Adicionar outro WhatsApp</span>
+            <input type="tel" id="wa-extra-phone" inputmode="tel" autocomplete="tel"
+                   placeholder="(11) 99999-8888" maxlength="20" required />
+          </label>
+          <button type="submit" class="btn btn-ghost" id="wa-add-phone-btn">Enviar código</button>
+        </form>
+        <form class="settings-inline-form" id="wa-extra-code-form" hidden>
+          <label>
+            <span>Código recebido</span>
+            <input type="text" id="wa-extra-code" inputmode="numeric" autocomplete="one-time-code"
+                   minlength="6" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required />
+          </label>
+          <button type="submit" class="btn btn-primary" id="wa-extra-confirm-btn">Confirmar número</button>
+        </form>
+      </div>
+
+      <div id="wa-panel-owned" class="wa-panel" hidden>
+        <p class="hint" id="wa-owned-status">
+          Informe o número que vai receber o agente e avance com QR ou código de pareamento.
+        </p>
+        <form class="settings-inline-form" id="wa-owned-phone-form">
+          <label>
+            <span>Número do WhatsApp (seu / da empresa)</span>
+            <input type="tel" id="wa-owned-phone" inputmode="tel" autocomplete="tel"
+                   placeholder="(11) 99999-8888" maxlength="20" required />
+          </label>
+          <button type="submit" class="btn btn-primary" id="wa-owned-pair-btn">
+            Gerar código de pareamento
+          </button>
+        </form>
+        <div class="balance-actions" style="margin-top:0.75rem">
+          <button type="button" class="btn btn-ghost" id="wa-owned-qr-btn">Gerar QR code</button>
+          <button type="button" class="btn btn-ghost" id="wa-owned-refresh-btn">Atualizar status</button>
+        </div>
+        <pre class="terms-box" id="wa-owned-pair-result" hidden></pre>
+        <div id="wa-owned-qr" class="wa-qr-wrap" hidden></div>
+      </div>
+    </div>
+  </dialog>
+
   <dialog class="terms-dialog" id="terms-dialog" aria-labelledby="terms-dialog-title">
     <form class="terms-dialog-card" id="terms-dialog-form">
       <header class="terms-dialog-head">
@@ -448,7 +519,7 @@
     </form>
   </dialog>
 
-  <script src="/js/auth.js?v=24"></script>
+  <script src="/js/auth.js?v=32"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -735,7 +806,6 @@
         const phonesBlock = q("phones-block");
         const phoneOk = Boolean(service.account_phone_verified && service.account_phone);
         const needsPhone = Boolean(service.requires_phone);
-        let pendingExtraPhone = "";
 
         function showError(message) {
           q("ok").hidden = true;
@@ -749,34 +819,23 @@
           q("ok").textContent = message;
         }
 
-        function renderPhones() {
-          const list = q("phone-list");
-          list.innerHTML = "";
+        function waSummaryText() {
+          const aw = (sub && (sub.agent_wa || (sub.kb && {
+            wa_mode: sub.kb.wa_mode,
+            wa_setup_done: sub.kb.wa_setup_done,
+            bot_phone: sub.kb.bot_phone,
+          }))) || {};
           const phones = (sub && sub.phones) || [];
-          phones.forEach((item) => {
-            const li = document.createElement("li");
-            const label = item.is_primary ? "principal" : "extra";
-            li.innerHTML = `<span>${formatPhone(item.phone)} <em>(${label})</em></span>`;
-            if (!item.is_primary && item.verified) {
-              const btn = document.createElement("button");
-              btn.type = "button";
-              btn.className = "btn btn-ghost btn-compact";
-              btn.textContent = "Remover";
-              btn.addEventListener("click", async () => {
-                if (!confirm("Remover este WhatsApp do agente?")) return;
-                btn.disabled = true;
-                try {
-                  await MuhAuth.removeServicePhone(service.code, item.id);
-                  await reloadServicos("Número removido.");
-                } catch (err) {
-                  showError(err.message || "Falha ao remover.");
-                  btn.disabled = false;
-                }
-              });
-              li.appendChild(btn);
-            }
-            list.appendChild(li);
-          });
+          if (!aw.wa_setup_done || !aw.wa_mode) {
+            return "Configure como o agente usa o WhatsApp (usar ou expor).";
+          }
+          if (aw.wa_mode === "owned") {
+            return aw.bot_phone
+              ? `Modo expor · bot em ${formatPhone(String(aw.bot_phone))}`
+              : "Modo expor · pareie seu número nas configurações";
+          }
+          const n = phones.length;
+          return `Modo usar · ${n} WhatsApp vinculado${n === 1 ? "" : "s"}`;
         }
 
         function showHireReady() {
@@ -798,6 +857,14 @@
           badge.textContent = paused ? "Pausado" : "Ativo";
           activeActions.hidden = false;
           phonesBlock.hidden = false;
+          q("wa-summary").textContent = waSummaryText();
+          q("wa-settings-btn").addEventListener("click", () => {
+            openWaConfigModal(service, {
+              onChanged: () => reloadServicos(),
+              onError: showError,
+              onOk: showOk,
+            });
+          });
           if (service.code === "finance_whatsapp") {
             q("dashboard-btn").hidden = false;
             q("dashboard-btn").textContent = "Abrir painel";
@@ -806,7 +873,7 @@
           if (service.code === "kb_whatsapp") {
             q("dashboard-btn").hidden = false;
             q("dashboard-btn").textContent = "Configurar agente";
-            q("dashboard-btn").href = "/kb-agente.html#whatsapp";
+            q("dashboard-btn").href = "/kb-agente.html";
           }
           q("pause-btn").hidden = paused;
           q("resume-btn").hidden = !paused;
@@ -842,7 +909,6 @@
               delete ttsToggle.dataset.busy;
             }
           });
-          renderPhones();
           const partes = [];
           if (sub.phone) partes.push(`Principal: ${formatPhone(sub.phone)}`);
           if (sub.current_period_end) {
@@ -854,16 +920,15 @@
           }
           if (paused) partes.push("Agente silenciado — a cobrança do período segue normal");
           if (ttsOn) partes.push("TTS ligado");
-          if (service.code === "kb_whatsapp") {
-            const kb = sub.kb || {};
-            const modo =
-              kb.wa_mode === "owned" ? "WhatsApp próprio" : "número MuhBianco";
-            partes.push(`Agente no ${modo}`);
-            partes.push(
-              kb.bot_phone
-                ? `Bot: ${formatPhone(String(kb.bot_phone))}`
-                : "Bot: configure em Configurar agente"
-            );
+          const aw = sub.agent_wa || sub.kb || {};
+          if (aw.wa_mode === "owned") {
+            partes.push("WhatsApp próprio");
+            if (aw.bot_phone) partes.push(`Bot: ${formatPhone(String(aw.bot_phone))}`);
+          } else if (aw.wa_mode === "shared") {
+            partes.push("número MuhBianco");
+          }
+          if (service.code === "kb_whatsapp" && sub.kb) {
+            const kb = sub.kb;
             if (kb.included_messages != null) {
               partes.push(
                 `${kb.messages_used || 0}/${kb.included_messages} msgs` +
@@ -902,40 +967,6 @@
             showHireReady();
           }
         }
-
-        q("add-phone-form").addEventListener("submit", async (event) => {
-          event.preventDefault();
-          const btn = q("add-phone-btn");
-          btn.disabled = true;
-          try {
-            pendingExtraPhone = q("extra-phone").value;
-            const result = await MuhAuth.addServicePhone(service.code, pendingExtraPhone);
-            showOk(result.message || "Código enviado.");
-            q("extra-code-form").hidden = false;
-            q("extra-code").focus();
-          } catch (err) {
-            showError(err.message || "Não foi possível adicionar.");
-          } finally {
-            btn.disabled = false;
-          }
-        });
-
-        q("extra-code-form").addEventListener("submit", async (event) => {
-          event.preventDefault();
-          const btn = q("extra-confirm-btn");
-          btn.disabled = true;
-          try {
-            await MuhAuth.confirmServiceExtraPhone(
-              service.code,
-              pendingExtraPhone || q("extra-phone").value,
-              q("extra-code").value
-            );
-            await reloadServicos("Número extra confirmado.");
-          } catch (err) {
-            showError(err.message || "Código inválido.");
-            btn.disabled = false;
-          }
-        });
 
         q("pause-btn").addEventListener("click", async () => {
           if (
@@ -1002,6 +1033,266 @@
         });
 
         return node;
+      }
+
+      function openWaConfigModal(service, { onChanged, onError, onOk }) {
+        const dialog = document.getElementById("wa-config-dialog");
+        const errEl = document.getElementById("wa-config-error");
+        const okEl = document.getElementById("wa-config-ok");
+        const chooser = document.getElementById("wa-chooser");
+        const tabs = document.getElementById("wa-mode-tabs");
+        const panelShared = document.getElementById("wa-panel-shared");
+        const panelOwned = document.getElementById("wa-panel-owned");
+        const phoneList = document.getElementById("wa-phone-list");
+        let pendingExtraPhone = "";
+        let liveService = service;
+
+        function agentWa() {
+          const sub = liveService.subscription || {};
+          return (
+            sub.agent_wa ||
+            (sub.kb
+              ? {
+                  wa_mode: sub.kb.wa_mode,
+                  wa_setup_done: sub.kb.wa_setup_done || Boolean(sub.kb.wa_mode),
+                  bot_phone: sub.kb.bot_phone,
+                  has_owned_session: sub.kb.has_owned_session,
+                }
+              : {}) ||
+            {}
+          );
+        }
+
+        function showModalErr(msg) {
+          okEl.hidden = true;
+          errEl.hidden = false;
+          errEl.textContent = msg;
+        }
+        function showModalOk(msg) {
+          errEl.hidden = true;
+          okEl.hidden = false;
+          okEl.textContent = msg;
+        }
+        function clearModalMsg() {
+          errEl.hidden = true;
+          okEl.hidden = true;
+        }
+
+        function setTabActive(mode) {
+          tabs.querySelectorAll("[data-wa-tab]").forEach((btn) => {
+            btn.classList.toggle("is-active", btn.dataset.waTab === mode);
+          });
+        }
+
+        function renderPhones() {
+          phoneList.innerHTML = "";
+          const phones = (liveService.subscription && liveService.subscription.phones) || [];
+          phones.forEach((item) => {
+            const li = document.createElement("li");
+            const label = item.is_primary ? "principal" : "extra";
+            li.innerHTML = `<span>${formatPhone(item.phone)} <em>(${label})</em></span>`;
+            if (!item.is_primary && item.verified) {
+              const btn = document.createElement("button");
+              btn.type = "button";
+              btn.className = "btn btn-ghost btn-compact";
+              btn.textContent = "Remover";
+              btn.addEventListener("click", async () => {
+                if (!confirm("Remover este WhatsApp do agente?")) return;
+                btn.disabled = true;
+                try {
+                  await MuhAuth.removeServicePhone(liveService.code, item.id);
+                  showModalOk("Número removido.");
+                  if (onChanged) await onChanged();
+                  await refreshFromCatalog();
+                } catch (e) {
+                  showModalErr(e.message || "Falha ao remover.");
+                  btn.disabled = false;
+                }
+              });
+              li.appendChild(btn);
+            }
+            phoneList.appendChild(li);
+          });
+        }
+
+        async function refreshFromCatalog() {
+          const list = await MuhAuth.listServices();
+          const next = list.find((s) => s.code === liveService.code);
+          if (next) liveService = next;
+          renderPhones();
+          const aw = agentWa();
+          const statusEl = document.getElementById("wa-owned-status");
+          if (aw.wa_mode === "owned") {
+            statusEl.textContent = aw.bot_phone
+              ? `Bot pareado / cadastrado: ${formatPhone(String(aw.bot_phone))}`
+              : "Aguardando pareamento do seu WhatsApp.";
+            if (aw.bot_phone) {
+              document.getElementById("wa-owned-phone").value = String(aw.bot_phone);
+            }
+          }
+        }
+
+        async function showMode(mode, { persist } = { persist: false }) {
+          clearModalMsg();
+          chooser.hidden = true;
+          tabs.hidden = false;
+          setTabActive(mode);
+          panelShared.hidden = mode !== "shared";
+          panelOwned.hidden = mode !== "owned";
+          if (persist) {
+            try {
+              const result = await MuhAuth.setAgentWaMode(liveService.code, mode);
+              showModalOk(result.message || "Modo salvo.");
+              if (onChanged) await onChanged();
+              await refreshFromCatalog();
+            } catch (e) {
+              showModalErr(e.message || "Não foi possível salvar o modo.");
+              return;
+            }
+          } else {
+            await refreshFromCatalog();
+          }
+          if (mode === "shared") renderPhones();
+        }
+
+        function showChooser() {
+          clearModalMsg();
+          tabs.hidden = true;
+          panelShared.hidden = true;
+          panelOwned.hidden = true;
+          chooser.hidden = false;
+        }
+
+        function close() {
+          if (typeof dialog.close === "function") dialog.close();
+          else dialog.removeAttribute("open");
+        }
+
+        document.getElementById("wa-config-service-name").textContent = liveService.name || "";
+        document.getElementById("wa-config-close").onclick = close;
+        document.getElementById("wa-extra-code-form").hidden = true;
+        document.getElementById("wa-owned-pair-result").hidden = true;
+        document.getElementById("wa-owned-qr").hidden = true;
+        document.getElementById("wa-owned-qr").innerHTML = "";
+
+        chooser.querySelectorAll("[data-wa-choose]").forEach((btn) => {
+          btn.onclick = () => showMode(btn.dataset.waChoose, { persist: true });
+        });
+        tabs.querySelectorAll("[data-wa-tab]").forEach((btn) => {
+          btn.onclick = () => showMode(btn.dataset.waTab, { persist: true });
+        });
+
+        document.getElementById("wa-add-phone-form").onsubmit = async (event) => {
+          event.preventDefault();
+          const btn = document.getElementById("wa-add-phone-btn");
+          btn.disabled = true;
+          try {
+            pendingExtraPhone = document.getElementById("wa-extra-phone").value;
+            const result = await MuhAuth.addServicePhone(liveService.code, pendingExtraPhone);
+            showModalOk(result.message || "Código enviado.");
+            document.getElementById("wa-extra-code-form").hidden = false;
+            document.getElementById("wa-extra-code").focus();
+          } catch (e) {
+            showModalErr(e.message || "Não foi possível adicionar.");
+          } finally {
+            btn.disabled = false;
+          }
+        };
+
+        document.getElementById("wa-extra-code-form").onsubmit = async (event) => {
+          event.preventDefault();
+          const btn = document.getElementById("wa-extra-confirm-btn");
+          btn.disabled = true;
+          try {
+            await MuhAuth.confirmServiceExtraPhone(
+              liveService.code,
+              pendingExtraPhone || document.getElementById("wa-extra-phone").value,
+              document.getElementById("wa-extra-code").value
+            );
+            showModalOk("Número confirmado.");
+            document.getElementById("wa-extra-code-form").hidden = true;
+            document.getElementById("wa-add-phone-form").reset();
+            if (onChanged) await onChanged();
+            await refreshFromCatalog();
+            if (onOk) onOk("Número extra confirmado.");
+          } catch (e) {
+            showModalErr(e.message || "Código inválido.");
+          } finally {
+            btn.disabled = false;
+          }
+        };
+
+        document.getElementById("wa-owned-phone-form").onsubmit = async (event) => {
+          event.preventDefault();
+          const btn = document.getElementById("wa-owned-pair-btn");
+          btn.disabled = true;
+          try {
+            const phone = document.getElementById("wa-owned-phone").value;
+            const result = await MuhAuth.agentWaPair(liveService.code, phone);
+            const pre = document.getElementById("wa-owned-pair-result");
+            pre.hidden = false;
+            pre.textContent = JSON.stringify(result.pair || result, null, 2);
+            showModalOk("Código de pareamento solicitado. Abra o WhatsApp no celular e confirme.");
+            if (onChanged) await onChanged();
+            await refreshFromCatalog();
+          } catch (e) {
+            showModalErr(e.message || "Falha no pareamento.");
+          } finally {
+            btn.disabled = false;
+          }
+        };
+
+        document.getElementById("wa-owned-qr-btn").onclick = async () => {
+          const btn = document.getElementById("wa-owned-qr-btn");
+          btn.disabled = true;
+          try {
+            const result = await MuhAuth.agentWaQr(liveService.code);
+            const wrap = document.getElementById("wa-owned-qr");
+            wrap.hidden = false;
+            const qr = result.qr || {};
+            const raw =
+              qr.QRCode ||
+              qr.qrcode ||
+              qr.qr ||
+              qr.base64 ||
+              (typeof qr === "string" ? qr : "");
+            if (typeof raw === "string" && raw.startsWith("data:")) {
+              wrap.innerHTML = `<img alt="QR WhatsApp" src="${raw}" />`;
+            } else if (typeof raw === "string" && raw.length > 40) {
+              wrap.innerHTML = `<img alt="QR WhatsApp" src="data:image/png;base64,${raw}" />`;
+            } else {
+              wrap.innerHTML = `<pre class="terms-box">${JSON.stringify(qr, null, 2)}</pre>`;
+            }
+            showModalOk("QR gerado. Escaneie no WhatsApp → Aparelhos conectados.");
+            if (onChanged) await onChanged();
+          } catch (e) {
+            showModalErr(e.message || "Falha ao gerar QR.");
+          } finally {
+            btn.disabled = false;
+          }
+        };
+
+        document.getElementById("wa-owned-refresh-btn").onclick = async () => {
+          try {
+            const st = await MuhAuth.agentWaStatus(liveService.code);
+            const statusEl = document.getElementById("wa-owned-status");
+            statusEl.textContent = st.bot_phone
+              ? `Sessão ok · bot ${formatPhone(String(st.bot_phone))}`
+              : "Sessão ainda sem JID — complete o pareamento.";
+            showModalOk("Status atualizado.");
+            if (onChanged) await onChanged();
+            await refreshFromCatalog();
+          } catch (e) {
+            showModalErr(e.message || "Falha ao consultar status.");
+          }
+        };
+
+        const aw = agentWa();
+        if (!aw.wa_setup_done || !aw.wa_mode) showChooser();
+        else showMode(aw.wa_mode, { persist: false });
+
+        if (typeof dialog.showModal === "function") dialog.showModal();
+        else dialog.setAttribute("open", "");
       }
 
       function openTermsDialog(service, { onSuccess, onError }) {
