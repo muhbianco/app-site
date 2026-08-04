@@ -781,6 +781,13 @@
           phonesBlock.hidden = false;
           if (service.code === "finance_whatsapp") {
             q("dashboard-btn").hidden = false;
+            q("dashboard-btn").textContent = "Abrir painel";
+            q("dashboard-btn").href = "/financeiro.html";
+          }
+          if (service.code === "kb_whatsapp") {
+            q("dashboard-btn").hidden = false;
+            q("dashboard-btn").textContent = "Configurar agente";
+            q("dashboard-btn").href = "/kb-agente.html";
           }
           q("pause-btn").hidden = paused;
           q("resume-btn").hidden = !paused;

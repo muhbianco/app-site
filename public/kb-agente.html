@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Configure a base de conhecimento, personalidade e WhatsApp do seu agente." />
+  <title>Agente de conhecimento — MuhBianco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css?v=30" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="logo" href="/">MuhBianco</a>
+    <nav class="nav" aria-label="Principal">
+      <a href="/conta.html#servicos">Serviços</a>
+      <a href="/contato.html">Contato</a>
+      <a href="/conta.html" class="nav-cta" aria-current="page">Conta</a>
+    </nav>
+  </header>
+
+  <main class="finance-page">
+    <section class="finance-head">
+      <div class="finance-head-copy">
+        <p class="brand-mark compact">Base de conhecimento</p>
+        <h1>Seu agente</h1>
+        <p class="auth-lede" id="kb-lede">Carregando…</p>
+      </div>
+      <div class="finance-head-actions">
+        <a class="btn btn-ghost" href="/conta.html#servicos">Voltar</a>
+      </div>
+    </section>
+
+    <p class="auth-alert" id="kb-error" hidden></p>
+    <p class="auth-ok" id="kb-ok" hidden></p>
+
+    <section class="settings-section" id="kb-quota">
+      <h2>Cota do período</h2>
+      <p class="auth-lede" id="kb-quota-text">—</p>
+      <label class="toggle-row">
+        <span>On-Demand (custo Gemini + 20% no saldo após a cota)</span>
+        <button type="button" class="toggle" id="kb-ondemand" role="switch" aria-checked="false"></button>
+      </label>
+    </section>
+
+    <section class="settings-section" id="kb-persona">
+      <h2>Personalidade</h2>
+      <p class="auth-lede">Como o agente deve falar. As regras de segurança MuhBianco sempre prevalecem.</p>
+      <textarea id="kb-personality" rows="5" maxlength="2000" placeholder="Ex.: Tom didático, frases curtas, trate o cliente por você."></textarea>
+      <button type="button" class="btn btn-primary" id="kb-save-persona">Salvar personalidade</button>
+    </section>
+
+    <section class="settings-section" id="kb-docs">
+      <h2>Documentos</h2>
+      <p class="auth-lede">
+        Aceitos: .md, .txt, .csv, .pdf, .docx ou URL pública. O arquivo original é descartado após indexar;
+        ficam só metadados, texto dos trechos e vetores.
+      </p>
+      <form id="kb-upload-form" class="stack-form">
+        <input type="text" id="kb-upload-title" placeholder="Título (opcional)" maxlength="240" />
+        <input type="file" id="kb-upload-file" accept=".md,.txt,.csv,.pdf,.docx,text/plain,text/csv,application/pdf" required />
+        <button type="submit" class="btn btn-primary">Enviar arquivo</button>
+      </form>
+      <form id="kb-url-form" class="stack-form" style="margin-top:1rem">
+        <input type="url" id="kb-url" placeholder="https://…" required />
+        <input type="text" id="kb-url-title" placeholder="Título (opcional)" maxlength="240" />
+        <button type="submit" class="btn btn-ghost">Ingerir URL</button>
+      </form>
+      <div id="kb-doc-list" class="stack-list" style="margin-top:1.25rem"></div>
+    </section>
+
+    <section class="settings-section" id="kb-wa">
+      <h2>WhatsApp</h2>
+      <p class="auth-lede" id="kb-wa-status">—</p>
+      <div class="btn-row">
+        <button type="button" class="btn btn-ghost" id="kb-wa-shared">Usar número MuhBianco</button>
+        <button type="button" class="btn btn-ghost" id="kb-wa-owned">Usar meu WhatsApp</button>
+      </div>
+      <div id="kb-wa-owned-panel" hidden style="margin-top:1rem">
+        <button type="button" class="btn btn-primary" id="kb-wa-qr">Gerar QR</button>
+        <pre id="kb-wa-qr-out" class="code-block" hidden></pre>
+        <form id="kb-wa-pair-form" class="stack-form" style="margin-top:0.75rem">
+          <input type="tel" id="kb-wa-pair-phone" placeholder="Celular com DDD" required />
+          <button type="submit" class="btn btn-ghost">Pedir código de pareamento</button>
+        </form>
+        <pre id="kb-wa-pair-out" class="code-block" hidden></pre>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/auth.js?v=30"></script>
+  <script>
+    (async () => {
+      const err = document.getElementById("kb-error");
+      const ok = document.getElementById("kb-ok");
+      const showErr = (m) => { err.hidden = false; ok.hidden = true; err.textContent = m; };
+      const showOk = (m) => { ok.hidden = false; err.hidden = true; ok.textContent = m; };
+      const clearMsg = () => { err.hidden = true; ok.hidden = true; };
+
+      try {
+        await MuhAuth.requireAuth();
+      } catch {
+        location.replace("/login.html?next=" + encodeURIComponent("/kb-agente.html"));
+        return;
+      }
+
+      async function refresh() {
+        clearMsg();
+        const data = await MuhAuth.kbSettings();
+        const s = data.settings || {};
+        document.getElementById("kb-lede").textContent = data.kb_ready
+          ? "Base pronta para indexar e responder."
+          : "Base vetorial ainda não configurada no servidor.";
+        document.getElementById("kb-quota-text").textContent =
+          `${s.messages_used || 0} / ${s.included_messages || 0} mensagens usadas · ` +
+          `${s.messages_remaining || 0} restantes` +
+          (s.on_demand_enabled ? " · On-Demand ligado" : "");
+        const toggle = document.getElementById("kb-ondemand");
+        toggle.setAttribute("aria-checked", s.on_demand_enabled ? "true" : "false");
+        toggle.classList.toggle("is-on", Boolean(s.on_demand_enabled));
+        document.getElementById("kb-personality").value = s.personality || "";
+        const waMode = s.wa_mode || "shared";
+        document.getElementById("kb-wa-owned-panel").hidden = waMode !== "owned";
+        const bot = s.bot_phone ? `Bot: ${s.bot_phone}` : "Bot: (aguardando sessão)";
+        document.getElementById("kb-wa-status").textContent =
+          `Modo ${waMode === "owned" ? "WhatsApp próprio" : "compartilhado MuhBianco"} · ${bot}`;
+
+        const docs = await MuhAuth.kbListDocuments();
+        const list = document.getElementById("kb-doc-list");
+        const items = docs.items || [];
+        if (!items.length) {
+          list.innerHTML = "<p class='auth-lede'>Nenhum documento ainda.</p>";
+          return;
+        }
+        list.innerHTML = items.map((d) => `
+          <article class="stack-item">
+            <strong>${escapeHtml(d.title)}</strong>
+            <span>v${d.version} · ${d.status}${d.is_active ? " · ativo" : ""} · ${d.chunk_count || 0} trechos</span>
+            <div class="btn-row">
+              ${d.status === "ready" && !d.is_active
+                ? `<button type="button" data-activate="${d.id}" class="btn btn-ghost">Ativar</button>`
+                : ""}
+              ${d.status !== "archived"
+                ? `<button type="button" data-archive="${d.id}" class="btn btn-ghost">Arquivar</button>`
+                : ""}
+            </div>
+          </article>
+        `).join("");
+        list.querySelectorAll("[data-activate]").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            try {
+              await MuhAuth.kbActivateDocument(btn.dataset.activate);
+              showOk("Versão ativada.");
+              await refresh();
+            } catch (e) { showErr(e.message || "Falha ao ativar."); }
+          });
+        });
+        list.querySelectorAll("[data-archive]").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            if (!confirm("Arquivar e remover vetores deste documento?")) return;
+            try {
+              await MuhAuth.kbArchiveDocument(btn.dataset.archive);
+              showOk("Documento arquivado.");
+              await refresh();
+            } catch (e) { showErr(e.message || "Falha ao arquivar."); }
+          });
+        });
+      }
+
+      function escapeHtml(v) {
+        return String(v || "").replace(/[&<>"']/g, (c) => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        }[c]));
+      }
+
+      document.getElementById("kb-ondemand").addEventListener("click", async () => {
+        const btn = document.getElementById("kb-ondemand");
+        const next = btn.getAttribute("aria-checked") !== "true";
+        try {
+          await MuhAuth.kbPatchSettings({ on_demand_enabled: next });
+          showOk(next ? "On-Demand ligado." : "On-Demand desligado.");
+          await refresh();
+        } catch (e) { showErr(e.message || "Não salvou."); }
+      });
+
+      document.getElementById("kb-save-persona").addEventListener("click", async () => {
+        try {
+          await MuhAuth.kbPatchSettings({
+            personality: document.getElementById("kb-personality").value,
+          });
+          showOk("Personalidade salva.");
+        } catch (e) { showErr(e.message || "Não salvou."); }
+      });
+
+      document.getElementById("kb-upload-form").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const file = document.getElementById("kb-upload-file").files[0];
+        if (!file) return;
+        try {
+          await MuhAuth.kbUploadDocument(file, document.getElementById("kb-upload-title").value);
+          showOk("Documento indexado. Original descartado.");
+          ev.target.reset();
+          await refresh();
+        } catch (e) { showErr(e.message || "Falha no upload."); }
+      });
+
+      document.getElementById("kb-url-form").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        try {
+          await MuhAuth.kbIngestUrl(
+            document.getElementById("kb-url").value,
+            document.getElementById("kb-url-title").value
+          );
+          showOk("URL indexada.");
+          ev.target.reset();
+          await refresh();
+        } catch (e) { showErr(e.message || "Falha na URL."); }
+      });
+
+      document.getElementById("kb-wa-shared").addEventListener("click", async () => {
+        try {
+          await MuhAuth.kbSetWaMode("shared");
+          showOk("Modo compartilhado.");
+          await refresh();
+        } catch (e) { showErr(e.message || "Falha."); }
+      });
+      document.getElementById("kb-wa-owned").addEventListener("click", async () => {
+        try {
+          await MuhAuth.kbSetWaMode("owned");
+          showOk("Modo WhatsApp próprio.");
+          await refresh();
+        } catch (e) { showErr(e.message || "Falha."); }
+      });
+      document.getElementById("kb-wa-qr").addEventListener("click", async () => {
+        try {
+          const data = await MuhAuth.kbWaQr();
+          const out = document.getElementById("kb-wa-qr-out");
+          out.hidden = false;
+          out.textContent = JSON.stringify(data.qr || data, null, 2);
+        } catch (e) { showErr(e.message || "Falha no QR."); }
+      });
+      document.getElementById("kb-wa-pair-form").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        try {
+          const data = await MuhAuth.kbWaPair(document.getElementById("kb-wa-pair-phone").value);
+          const out = document.getElementById("kb-wa-pair-out");
+          out.hidden = false;
+          out.textContent = JSON.stringify(data.pair || data, null, 2);
+        } catch (e) { showErr(e.message || "Falha no pareamento."); }
+      });
+
+      try {
+        await refresh();
+      } catch (e) {
+        showErr(e.message || "Habilite o serviço em Conta → Serviços primeiro.");
+      }
+    })();
+  </script>
+</body>
+</html>
