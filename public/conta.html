@@ -963,6 +963,13 @@
             }
             return "Modo expor · pareie seu número nas configurações";
           }
+          if (aw.wa_mode === "shared") {
+            const n = phones.length;
+            const bot = aw.bot_phone
+              ? `MuhBianco ${formatPhone(String(aw.bot_phone))}`
+              : "número MuhBianco";
+            return `Modo usar · ${bot} · ${n} WhatsApp vinculado${n === 1 ? "" : "s"}`;
+          }
           const n = phones.length;
           return `Modo usar · ${n} WhatsApp vinculado${n === 1 ? "" : "s"}`;
         }
@@ -1186,7 +1193,12 @@
                 .catch(() => {});
             }
           } else if (aw.wa_mode === "shared") {
-            rows.push({ label: "Modo WhatsApp", value: "Usar agente (número MuhBianco)" });
+            rows.push({
+              label: "Modo WhatsApp",
+              value: aw.bot_phone
+                ? `Usar agente · MuhBianco ${formatPhone(String(aw.bot_phone))}`
+                : "Usar agente (número MuhBianco)",
+            });
           } else {
             rows.push({ label: "Modo WhatsApp", value: "Ainda não configurado" });
           }
