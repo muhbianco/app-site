@@ -1559,9 +1559,21 @@
             const phone = document.getElementById("wa-owned-phone").value;
             const result = await MuhAuth.agentWaPair(liveService.code, phone);
             const pre = document.getElementById("wa-owned-pair-result");
+            const pair = result.pair || result || {};
+            const code =
+              pair.LinkingCode ||
+              pair.linkingCode ||
+              pair.linking_code ||
+              (pair.data && (pair.data.LinkingCode || pair.data.linkingCode));
             pre.hidden = false;
-            pre.textContent = JSON.stringify(result.pair || result, null, 2);
-            showModalOk("Código de pareamento solicitado. Abra o WhatsApp no celular e confirme.");
+            pre.textContent = code
+              ? `Código para vincular no WhatsApp:\n\n${code}\n\nNo celular: WhatsApp → Aparelhos conectados → Conectar um aparelho → Vincular com número de telefone.`
+              : JSON.stringify(pair, null, 2);
+            showModalOk(
+              code
+                ? `Código ${code}: abra o WhatsApp no celular e vincule com número de telefone.`
+                : "Código de pareamento solicitado. Abra o WhatsApp no celular e confirme."
+            );
             if (onChanged) await onChanged();
             await refreshFromCatalog();
           } catch (e) {
