@@ -392,10 +392,12 @@
     return Array.isArray(data) ? data : [];
   }
 
-  async function enableService(code, { termsAccepted = false } = {}) {
+  async function enableService(code, { termsAccepted = false, waMode = null } = {}) {
+    const body = { terms_accepted: Boolean(termsAccepted) };
+    if (waMode) body.wa_mode = waMode;
     const response = await api(`${API_PREFIX}/services/${encodeURIComponent(code)}/enable`, {
       method: "POST",
-      body: JSON.stringify({ terms_accepted: Boolean(termsAccepted) }),
+      body: JSON.stringify(body),
     });
     return jsonOrThrow(response, "Não foi possível habilitar o serviço.");
   }

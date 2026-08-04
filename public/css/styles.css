@@ -1558,6 +1558,69 @@ img {
   gap: 0.45rem;
 }
 
+.usage-meter {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.usage-meter-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.usage-meter-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.usage-meter-title em {
+  font-style: normal;
+  font-weight: 500;
+  color: #6a7178;
+}
+
+.usage-meter-pct {
+  font-size: 0.9rem;
+  color: #6a7178;
+}
+
+.usage-meter-track {
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #e8eaed;
+  overflow: hidden;
+}
+
+.usage-meter-fill {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: #5b8def;
+  transition: width 0.25s ease;
+}
+
+.usage-meter-fill.is-full {
+  background: #4a5560;
+}
+
+.usage-meter-foot {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #6a7178;
+  line-height: 1.35;
+}
+
+.pack-limit-form {
+  margin-top: 0.65rem;
+}
+
 .service-status-list li {
   display: grid;
   grid-template-columns: minmax(7.5rem, 11rem) 1fr;

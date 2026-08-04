@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=33" />
+  <link rel="stylesheet" href="/css/styles.css?v=34" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -368,6 +368,55 @@
           <p class="hint" data-field="wa-summary"></p>
         </div>
 
+        <div data-field="pack-block" hidden>
+          <div class="usage-meter" data-field="pack-meter">
+            <div class="usage-meter-head">
+              <span class="usage-meter-title">
+                Mensagens do pacote
+                <em data-field="pack-meter-hint"></em>
+              </span>
+              <span class="usage-meter-pct" data-field="pack-meter-pct">0% usado</span>
+            </div>
+            <div class="usage-meter-track" aria-hidden="true">
+              <div class="usage-meter-fill" data-field="pack-meter-fill"></div>
+            </div>
+            <p class="usage-meter-foot" data-field="pack-meter-foot"></p>
+          </div>
+
+          <div class="service-prefs">
+            <button
+              type="button"
+              class="pref-switch"
+              data-field="ondemand-toggle"
+              role="switch"
+              aria-checked="false"
+              aria-label="On-Demand"
+            >
+              <span class="pref-switch-track" aria-hidden="true"><span class="pref-switch-knob"></span></span>
+              <span class="pref-switch-copy">
+                <strong>On-Demand</strong>
+                <small>Após a cota, cobra o custo do modelo no saldo.</small>
+              </span>
+            </button>
+            <form class="settings-inline-form pack-limit-form" data-field="ondemand-limit-form" hidden>
+              <label>
+                <span>Saldo limite On-Demand (R$)</span>
+                <input
+                  type="number"
+                  data-field="ondemand-limit"
+                  min="0"
+                  step="0.01"
+                  inputmode="decimal"
+                  placeholder="Ex.: 20,00 — vazio = sem limite"
+                />
+              </label>
+              <button type="submit" class="btn btn-ghost btn-compact" data-field="ondemand-limit-btn">
+                Salvar limite
+              </button>
+            </form>
+          </div>
+        </div>
+
         <div class="service-prefs" data-field="tts-prefs" hidden>
           <button
             type="button"
@@ -519,7 +568,7 @@
     </form>
   </dialog>
 
-  <script src="/js/auth.js?v=32"></script>
+  <script src="/js/auth.js?v=34"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -864,12 +913,21 @@
 
         function showHireReady() {
           enableActions.hidden = false;
-          q("enable-phone-hint").textContent = `Será habilitado no WhatsApp ${formatPhone(
-            service.account_phone
-          )}.`;
+          q("enable-phone-hint").textContent =
+            `Depois dos termos, você escolhe usar ou expor o agente` +
+            (service.account_phone
+              ? ` (WhatsApp da conta: ${formatPhone(service.account_phone)}).`
+              : ".");
           q("enable-btn").addEventListener("click", () => {
             openTermsDialog(service, {
-              onSuccess: (message) => reloadServicos(message || "Serviço habilitado."),
+              onAccepted: () => {
+                openWaConfigModal(service, {
+                  setupEnable: true,
+                  onChanged: () => reloadServicos(),
+                  onError: showError,
+                  onOk: showOk,
+                });
+              },
               onError: showError,
             });
           });
@@ -933,6 +991,82 @@
               delete ttsToggle.dataset.busy;
             }
           });
+
+          if (service.billing_mode === "pack") {
+            const packBlock = q("pack-block");
+            const pack = sub.pack || sub.kb || {};
+            const included = Number(pack.included_messages || service.included_messages || 0);
+            const used = Number(pack.messages_used || 0);
+            const pct = included > 0 ? Math.min(100, Math.round((used / included) * 100)) : 0;
+            packBlock.hidden = false;
+            q("pack-meter-hint").textContent = ` · inclui até ${included} msgs`;
+            q("pack-meter-pct").textContent = `${pct}% usado`;
+            q("pack-meter-fill").style.width = `${pct}%`;
+            q("pack-meter-fill").classList.toggle("is-full", pct >= 100);
+            q("pack-meter-foot").textContent =
+              `${used} de ${included} mensagens usadas` +
+              (pack.on_demand_enabled
+                ? " · On-Demand ligado após a cota"
+                : " · On-Demand desligado");
+
+            const odToggle = q("ondemand-toggle");
+            const odForm = q("ondemand-limit-form");
+            const odOn = Boolean(pack.on_demand_enabled);
+            odToggle.setAttribute("aria-checked", odOn ? "true" : "false");
+            odToggle.classList.toggle("is-on", odOn);
+            odForm.hidden = !odOn;
+            if (pack.on_demand_spend_limit_cents != null) {
+              q("ondemand-limit").value = (Number(pack.on_demand_spend_limit_cents) / 100).toFixed(2);
+            }
+            odToggle.addEventListener("click", async () => {
+              if (odToggle.dataset.busy === "1") return;
+              const next = odToggle.getAttribute("aria-checked") !== "true";
+              odToggle.dataset.busy = "1";
+              try {
+                await MuhAuth.updateServicePreferences(service.code, {
+                  on_demand_enabled: next,
+                });
+                odToggle.setAttribute("aria-checked", next ? "true" : "false");
+                odToggle.classList.toggle("is-on", next);
+                odForm.hidden = !next;
+                showOk(next ? "On-Demand ligado." : "On-Demand desligado.");
+                await reloadServicos();
+              } catch (err) {
+                showError(err.message || "Não foi possível salvar On-Demand.");
+              } finally {
+                delete odToggle.dataset.busy;
+              }
+            });
+            odForm.addEventListener("submit", async (event) => {
+              event.preventDefault();
+              const btn = q("ondemand-limit-btn");
+              btn.disabled = true;
+              try {
+                const raw = String(q("ondemand-limit").value || "").trim().replace(",", ".");
+                if (!raw) {
+                  await MuhAuth.updateServicePreferences(service.code, {
+                    clear_on_demand_spend_limit: true,
+                  });
+                  showOk("Limite On-Demand removido (sem teto).");
+                } else {
+                  const reais = Number(raw);
+                  if (!Number.isFinite(reais) || reais < 0) {
+                    throw new Error("Informe um valor válido em reais.");
+                  }
+                  await MuhAuth.updateServicePreferences(service.code, {
+                    on_demand_spend_limit_cents: Math.round(reais * 100),
+                  });
+                  showOk(`Limite On-Demand: ${brl(Math.round(reais * 100))}.`);
+                }
+                await reloadServicos();
+              } catch (err) {
+                showError(err.message || "Não foi possível salvar o limite.");
+              } finally {
+                btn.disabled = false;
+              }
+            });
+          }
+
           const rows = [];
           if (sub.phone) {
             rows.push({ label: "WhatsApp principal", value: formatPhone(sub.phone) });
@@ -1088,7 +1222,7 @@
         return node;
       }
 
-      function openWaConfigModal(service, { onChanged, onError, onOk }) {
+      function openWaConfigModal(service, { onChanged, onError, onOk, setupEnable = false }) {
         const dialog = document.getElementById("wa-config-dialog");
         const errEl = document.getElementById("wa-config-error");
         const okEl = document.getElementById("wa-config-ok");
@@ -1099,6 +1233,7 @@
         const phoneList = document.getElementById("wa-phone-list");
         let pendingExtraPhone = "";
         let liveService = service;
+        let enabling = false;
 
         function agentWa() {
           const sub = liveService.subscription || {};
@@ -1120,6 +1255,7 @@
           okEl.hidden = true;
           errEl.hidden = false;
           errEl.textContent = msg;
+          if (onError) onError(msg);
         }
         function showModalOk(msg) {
           errEl.hidden = true;
@@ -1166,6 +1302,10 @@
             }
             phoneList.appendChild(li);
           });
+          if (!phones.length) {
+            phoneList.innerHTML =
+              "<li><span>Nenhum WhatsApp vinculado ainda.</span></li>";
+          }
         }
 
         async function refreshFromCatalog() {
@@ -1180,13 +1320,47 @@
               ? `Bot pareado / cadastrado: ${formatPhone(String(aw.bot_phone))}`
               : "Aguardando pareamento do seu WhatsApp.";
             if (aw.bot_phone) {
-              document.getElementById("wa-owned-phone").value = String(aw.bot_phone);
+              document.getElementById("wa-owned-phone").value = String(aw.bot_phone).replace(
+                /:.*/,
+                ""
+              );
             }
+          }
+        }
+
+        async function ensureEnabled(mode) {
+          if (!setupEnable) return true;
+          if (liveService.subscription && ["active", "paused"].includes(liveService.subscription.status)) {
+            return true;
+          }
+          if (enabling) return false;
+          enabling = true;
+          try {
+            const result = await MuhAuth.enableService(liveService.code, {
+              termsAccepted: true,
+              waMode: mode,
+            });
+            showModalOk(result.message || "Serviço habilitado.");
+            if (onOk) onOk(result.message || "Serviço habilitado.");
+            if (onChanged) await onChanged();
+            await refreshFromCatalog();
+            return true;
+          } catch (e) {
+            showModalErr(e.message || "Não foi possível habilitar.");
+            return false;
+          } finally {
+            enabling = false;
           }
         }
 
         async function showMode(mode, { persist } = { persist: false }) {
           clearModalMsg();
+          if (setupEnable && persist) {
+            const ok = await ensureEnabled(mode);
+            if (!ok) return;
+            // Após enable, só troca a UI (já persistiu via enable).
+            persist = false;
+          }
           chooser.hidden = true;
           tabs.hidden = false;
           setTabActive(mode);
@@ -1341,14 +1515,14 @@
         };
 
         const aw = agentWa();
-        if (!aw.wa_setup_done || !aw.wa_mode) showChooser();
+        if (setupEnable || !aw.wa_setup_done || !aw.wa_mode) showChooser();
         else showMode(aw.wa_mode, { persist: false });
 
         if (typeof dialog.showModal === "function") dialog.showModal();
         else dialog.setAttribute("open", "");
       }
 
-      function openTermsDialog(service, { onSuccess, onError }) {
+      function openTermsDialog(service, { onAccepted, onSuccess, onError }) {
         const dialog = document.getElementById("terms-dialog");
         const form = document.getElementById("terms-dialog-form");
         const check = document.getElementById("terms-dialog-check");
@@ -1361,14 +1535,14 @@
         title.textContent = (service.terms && service.terms.title) || "Termos de uso";
         text.textContent =
           (service.terms && service.terms.text) ||
-          "Ao habilitar, você autoriza a cobrança do período no saldo e o uso do agente no WhatsApp principal.";
-        lede.textContent = service.account_phone
-          ? `O serviço será ligado em ${formatPhone(service.account_phone)}. A cobrança do período sai do saldo ao aceitar.`
-          : "A cobrança do período sai do saldo ao aceitar.";
+          "Ao habilitar, você autoriza a cobrança do período no saldo e o uso do agente no WhatsApp.";
+        lede.textContent =
+          "Leia e aceite os termos. Em seguida você escolhe usar ou expor o agente; a cobrança sai do saldo ao confirmar o modo.";
         check.checked = false;
         err.hidden = true;
         err.textContent = "";
         confirmBtn.disabled = false;
+        confirmBtn.textContent = onAccepted ? "Aceitar e continuar" : "Aceitar e habilitar";
 
         const close = () => {
           if (typeof dialog.close === "function") dialog.close();
@@ -1388,21 +1562,28 @@
           confirmBtn.disabled = true;
           err.hidden = true;
           try {
-            const result = await MuhAuth.enableService(service.code, { termsAccepted: true });
+            if (onAccepted) {
+              close();
+              await onAccepted();
+              return;
+            }
+            const result = await MuhAuth.enableService(service.code, {
+              termsAccepted: true,
+              waMode: "shared",
+            });
             close();
             await onSuccess(result.message || "Serviço habilitado.");
           } catch (error) {
             err.hidden = false;
-            err.textContent = error.message || "Não foi possível habilitar.";
+            err.textContent = error.message || "Não foi possível continuar.";
             confirmBtn.disabled = false;
-            if (onError) onError(error.message || "Não foi possível habilitar.");
+            if (onError) onError(error.message || "Não foi possível continuar.");
           }
         };
 
         if (typeof dialog.showModal === "function") dialog.showModal();
         else dialog.setAttribute("open", "");
       }
-
       let pendingServiceMessage = "";
 
       async function reloadServicos(message) {
