@@ -810,18 +810,29 @@
       }
 
       function priceLabel(service) {
+        const sub = service.subscription;
+        const live =
+          sub &&
+          ["active", "paused", "suspended"].includes(String(sub.status || ""));
+        // Assinatura vigente: preço/modo congelados até a renovação.
+        const mode = live ? sub.billing_mode : service.billing_mode;
+        const price = live ? Number(sub.price_cents) : Number(service.price_cents);
         const periodo = service.period_days === 30 ? "mês" : `${service.period_days} dias`;
-        if (service.billing_mode === "pack") {
-          const msgs = service.included_messages || 0;
+        if (mode === "pack") {
+          const msgs =
+            (live && sub.pack && sub.pack.included_messages) ||
+            (live && sub.kb && sub.kb.included_messages) ||
+            service.included_messages ||
+            0;
           return (
-            `${brl(service.price_cents)} / ${periodo} · ${msgs} msgs inclusas · ` +
+            `${brl(price)} / ${periodo} · ${msgs} msgs inclusas · ` +
             `On-Demand opcional`
           );
         }
-        if (service.billing_mode === "monthly") {
-          return `${brl(service.price_cents)} por ${periodo}, debitado do saldo.`;
+        if (mode === "monthly") {
+          return `${brl(price)} por ${periodo}, debitado do saldo.`;
         }
-        if (service.billing_mode === "per_use") {
+        if (mode === "per_use") {
           return (
             `Por request: custo do modelo no saldo` +
             (service.min_balance_cents
@@ -829,7 +840,7 @@
               : "")
           );
         }
-        return `${brl(service.price_cents)} por uso, debitado do saldo.`;
+        return `${brl(price)} por uso, debitado do saldo.`;
       }
 
       function buildServiceCard(service) {
@@ -992,10 +1003,12 @@
             }
           });
 
-          if (service.billing_mode === "pack") {
+          if (sub.billing_mode === "pack") {
             const packBlock = q("pack-block");
             const pack = sub.pack || sub.kb || {};
-            const included = Number(pack.included_messages || service.included_messages || 0);
+            const included = Number(
+              pack.included_messages || service.included_messages || 0
+            );
             const used = Number(pack.messages_used || 0);
             const pct = included > 0 ? Math.min(100, Math.round((used / included) * 100)) : 0;
             packBlock.hidden = false;
