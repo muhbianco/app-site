@@ -1125,7 +1125,7 @@
             <div>
               <h3>${row.label || formatPhone(row.phone)}</h3>
               <p class="hint">${formatPhone(row.phone)} · ${scope}</p>
-              <p class="hint">${active} · ${live} · ${row.subscribers || 0} assinante(s) · token ${row.token_hint || "—"}</p>
+              <p class="hint" data-field="status-line">${active} · ${live} · ${row.subscribers || 0} assinante(s) · token ${row.token_hint || "—"}</p>
               <p class="hint">Instância: ${row.instance_name || "—"}</p>
             </div>
             <span class="settings-badge" data-state="${row.is_active ? "ok" : "info"}">${row.is_active ? "Pool" : "Off"}</span>
@@ -1161,7 +1161,36 @@
           const rows = await MuhAuth.adminListSharedWa();
           waList.innerHTML = "";
           waEmpty.hidden = rows.length > 0;
-          rows.forEach((row) => waList.appendChild(renderWaCard(row)));
+          // Mostra cards já, com status “consultando…”, depois preenche ao vivo.
+          const placeholders = rows.map((row) => {
+            const card = renderWaCard({ ...row, logged_in: null, connected: null });
+            const statusHint = card.querySelector('[data-field="status-line"]');
+            if (statusHint) {
+              statusHint.textContent = statusHint.textContent.replace(
+                "Status não consultado",
+                "Consultando status…"
+              );
+            }
+            waList.appendChild(card);
+            return { row, card };
+          });
+
+          const settled = await Promise.all(
+            placeholders.map(async ({ row, card }) => {
+              try {
+                const fresh = await MuhAuth.adminSharedWaStatus(row.id);
+                return { card, fresh };
+              } catch {
+                return {
+                  card,
+                  fresh: { ...row, connected: false, logged_in: false },
+                };
+              }
+            })
+          );
+          settled.forEach(({ card, fresh }) => {
+            card.replaceWith(renderWaCard(fresh));
+          });
         } catch (err) {
           waList.innerHTML = "";
           waEmpty.hidden = true;
