@@ -1142,15 +1142,7 @@
             rows.push({ label: "Modo WhatsApp", value: "Ainda não configurado" });
           }
           if (service.code === "kb_whatsapp" && sub.kb) {
-            const kb = sub.kb;
-            if (kb.included_messages != null) {
-              rows.push({
-                label: "Cota do período",
-                value:
-                  `${kb.messages_used || 0}/${kb.included_messages} msgs` +
-                  (kb.on_demand_enabled ? " · On-Demand ligado" : ""),
-              });
-            }
+            // Cota fica só no medidor do pacote abaixo — sem repetir aqui.
           }
           setStatusDetail(rows);
         } else if (status === "suspended") {

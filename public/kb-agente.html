@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Configure a base de conhecimento, personalidade e WhatsApp do seu agente." />
+  <meta name="description" content="Configure a base de conhecimento e a personalidade do seu agente." />
   <title>Agente de conhecimento — MuhBianco</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=31" />
+  <link rel="stylesheet" href="/css/styles.css?v=32" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -22,7 +22,7 @@
     </nav>
   </header>
 
-  <main class="finance-page">
+  <main class="finance-page kb-page">
     <section class="finance-head">
       <div class="finance-head-copy">
         <p class="brand-mark compact">Base de conhecimento</p>
@@ -37,70 +37,70 @@
     <p class="auth-alert" id="kb-error" hidden></p>
     <p class="auth-ok" id="kb-ok" hidden></p>
 
-    <section class="settings-section" id="kb-quota">
-      <h2>Cota do período</h2>
-      <p class="auth-lede" id="kb-quota-text">—</p>
-      <p class="auth-lede" id="kb-price-text">—</p>
-      <label class="toggle-row">
-        <span>On-Demand (cobra o custo do modelo no saldo após a cota)</span>
-        <button type="button" class="toggle" id="kb-ondemand" role="switch" aria-checked="false"></button>
-      </label>
-    </section>
-
-    <section class="settings-section" id="kb-persona">
+    <section class="settings-section kb-panel" id="kb-persona">
       <h2>Personalidade</h2>
-      <p class="auth-lede">Como o agente deve falar. As regras de segurança MuhBianco sempre prevalecem.</p>
-      <textarea id="kb-personality" rows="5" maxlength="2000" placeholder="Ex.: Tom didático, frases curtas, trate o cliente por você."></textarea>
-      <button type="button" class="btn btn-primary" id="kb-save-persona">Salvar personalidade</button>
+      <p class="auth-lede">
+        Como o agente deve falar com seus clientes. As regras de segurança MuhBianco sempre prevalecem.
+      </p>
+      <label class="kb-field">
+        <span class="kb-field-label">Instruções do agente</span>
+        <textarea
+          id="kb-personality"
+          class="kb-textarea"
+          rows="10"
+          maxlength="2000"
+          placeholder="Ex.: Você é um assistente de vendas. Responda só com base no catálogo. Tom cordial, frases curtas, trate o cliente por você."
+        ></textarea>
+        <span class="kb-field-hint"><span id="kb-persona-count">0</span>/2000</span>
+      </label>
+      <div class="kb-actions">
+        <button type="button" class="btn btn-primary" id="kb-save-persona">Salvar personalidade</button>
+      </div>
     </section>
 
-    <section class="settings-section" id="kb-docs">
+    <section class="settings-section kb-panel" id="kb-docs">
       <h2>Documentos</h2>
       <p class="auth-lede">
         Aceitos: .md, .txt, .csv, .pdf, .docx ou URL pública. O arquivo original é descartado após indexar;
         ficam só metadados, texto dos trechos e vetores.
       </p>
-      <form id="kb-upload-form" class="stack-form">
-        <input type="text" id="kb-upload-title" placeholder="Título (opcional)" maxlength="240" />
-        <input type="file" id="kb-upload-file" accept=".md,.txt,.csv,.pdf,.docx,text/plain,text/csv,application/pdf" required />
-        <button type="submit" class="btn btn-primary">Enviar arquivo</button>
-      </form>
-      <form id="kb-url-form" class="stack-form" style="margin-top:1rem">
-        <input type="url" id="kb-url" placeholder="https://…" required />
-        <input type="text" id="kb-url-title" placeholder="Título (opcional)" maxlength="240" />
-        <button type="submit" class="btn btn-ghost">Ingerir URL</button>
-      </form>
-      <div id="kb-doc-list" class="stack-list" style="margin-top:1.25rem"></div>
-    </section>
 
-    <section class="settings-section" id="whatsapp">
-      <h2>Número que expõe o agente</h2>
-      <p class="auth-lede">
-        O <strong>WhatsApp vinculado</strong> na Conta é de onde <em>você</em> fala com o agente.
-        Aqui você escolhe em qual número o <em>bot</em> fica online: o compartilhado MuhBianco
-        ou um WhatsApp seu (QR / código de pareamento). Um telefone não opera dois agentes ao mesmo tempo.
-      </p>
-      <p class="auth-lede" id="kb-wa-status">—</p>
-      <div class="btn-row">
-        <button type="button" class="btn btn-ghost" id="kb-wa-shared">Usar número MuhBianco</button>
-        <button type="button" class="btn btn-primary" id="kb-wa-owned">Expor em meu WhatsApp</button>
-      </div>
-      <div id="kb-wa-owned-panel" hidden style="margin-top:1rem">
-        <p class="auth-lede">
-          Gere o QR no celular (Aparelhos conectados) ou peça um código de pareamento.
-        </p>
-        <button type="button" class="btn btn-primary" id="kb-wa-qr">Gerar QR</button>
-        <pre id="kb-wa-qr-out" class="code-block" hidden></pre>
-        <form id="kb-wa-pair-form" class="stack-form" style="margin-top:0.75rem">
-          <input type="tel" id="kb-wa-pair-phone" placeholder="Celular com DDD do chip que vai ser o bot" required />
-          <button type="submit" class="btn btn-ghost">Pedir código de pareamento</button>
-        </form>
-        <pre id="kb-wa-pair-out" class="code-block" hidden></pre>
-      </div>
+      <form id="kb-upload-form" class="kb-card-form">
+        <p class="kb-card-title">Enviar arquivo</p>
+        <label class="kb-field">
+          <span class="kb-field-label">Título (opcional)</span>
+          <input type="text" id="kb-upload-title" class="kb-input" placeholder="Ex.: Catálogo de produtos" maxlength="240" />
+        </label>
+        <label class="kb-file">
+          <span class="kb-field-label">Arquivo</span>
+          <input type="file" id="kb-upload-file" accept=".md,.txt,.csv,.pdf,.docx,text/plain,text/csv,application/pdf" required />
+          <span class="kb-file-ui" id="kb-upload-file-name">Arraste ou escolha um arquivo</span>
+        </label>
+        <div class="kb-actions">
+          <button type="submit" class="btn btn-primary">Enviar arquivo</button>
+        </div>
+      </form>
+
+      <form id="kb-url-form" class="kb-card-form">
+        <p class="kb-card-title">Ingerir URL pública</p>
+        <label class="kb-field">
+          <span class="kb-field-label">URL</span>
+          <input type="url" id="kb-url" class="kb-input" placeholder="https://…" required />
+        </label>
+        <label class="kb-field">
+          <span class="kb-field-label">Título (opcional)</span>
+          <input type="text" id="kb-url-title" class="kb-input" placeholder="Ex.: Política de troca" maxlength="240" />
+        </label>
+        <div class="kb-actions">
+          <button type="submit" class="btn btn-ghost">Ingerir URL</button>
+        </div>
+      </form>
+
+      <div id="kb-doc-list" class="kb-doc-list"></div>
     </section>
   </main>
 
-  <script src="/js/auth.js?v=30"></script>
+  <script src="/js/auth.js?v=35"></script>
   <script>
     (async () => {
       const err = document.getElementById("kb-error");
@@ -116,43 +116,44 @@
         return;
       }
 
+      const personality = document.getElementById("kb-personality");
+      const personaCount = document.getElementById("kb-persona-count");
+      const syncPersonaCount = () => {
+        personaCount.textContent = String((personality.value || "").length);
+      };
+      personality.addEventListener("input", syncPersonaCount);
+
+      const fileInput = document.getElementById("kb-upload-file");
+      const fileName = document.getElementById("kb-upload-file-name");
+      fileInput.addEventListener("change", () => {
+        const f = fileInput.files && fileInput.files[0];
+        fileName.textContent = f ? f.name : "Arraste ou escolha um arquivo";
+        fileName.classList.toggle("has-file", Boolean(f));
+      });
+
       async function refresh() {
         clearMsg();
         const data = await MuhAuth.kbSettings();
         const s = data.settings || {};
         document.getElementById("kb-lede").textContent = data.kb_ready
-          ? "Base pronta para indexar e responder."
-          : "Base vetorial ainda não configurada no servidor.";
-        document.getElementById("kb-quota-text").textContent =
-          `${s.messages_used || 0} / ${s.included_messages || 0} mensagens usadas · ` +
-          `${s.messages_remaining || 0} restantes` +
-          (s.on_demand_enabled ? " · On-Demand ligado" : "");
-        const pricing = data.pricing || {};
-        document.getElementById("kb-price-text").textContent =
-          `Pacote: R$ ${((pricing.price_cents || 0) / 100).toFixed(2).replace(".", ",")} · ` +
-          `${pricing.included_messages || s.included_messages || 0} msgs · ` +
-          `On-Demand opcional após a cota`;
-        const toggle = document.getElementById("kb-ondemand");
-        toggle.setAttribute("aria-checked", s.on_demand_enabled ? "true" : "false");
-        toggle.classList.toggle("is-on", Boolean(s.on_demand_enabled));
-        document.getElementById("kb-personality").value = s.personality || "";
-        const waMode = s.wa_mode || "shared";
-        document.getElementById("kb-wa-owned-panel").hidden = waMode !== "owned";
-        const bot = s.bot_phone ? `Bot: ${s.bot_phone}` : "Bot: (aguardando sessão)";
-        document.getElementById("kb-wa-status").textContent =
-          `Modo ${waMode === "owned" ? "WhatsApp próprio" : "compartilhado MuhBianco"} · ${bot}`;
+          ? "Envie documentos e ajuste a personalidade. Cota e WhatsApp ficam em Conta → Serviços."
+          : "Base vetorial ainda não configurada no servidor. Contate o suporte se o upload falhar.";
+        personality.value = s.personality || "";
+        syncPersonaCount();
 
         const docs = await MuhAuth.kbListDocuments();
         const list = document.getElementById("kb-doc-list");
         const items = docs.items || [];
         if (!items.length) {
-          list.innerHTML = "<p class='auth-lede'>Nenhum documento ainda.</p>";
+          list.innerHTML = "<p class='auth-lede kb-empty'>Nenhum documento ainda.</p>";
           return;
         }
         list.innerHTML = items.map((d) => `
-          <article class="stack-item">
-            <strong>${escapeHtml(d.title)}</strong>
-            <span>v${d.version} · ${d.status}${d.is_active ? " · ativo" : ""} · ${d.chunk_count || 0} trechos</span>
+          <article class="kb-doc-item">
+            <div class="kb-doc-meta">
+              <strong>${escapeHtml(d.title)}</strong>
+              <span>v${d.version} · ${escapeHtml(d.status)}${d.is_active ? " · ativo" : ""} · ${d.chunk_count || 0} trechos</span>
+            </div>
             <div class="btn-row">
               ${d.status === "ready" && !d.is_active
                 ? `<button type="button" data-activate="${d.id}" class="btn btn-ghost">Ativar</button>`
@@ -190,20 +191,10 @@
         }[c]));
       }
 
-      document.getElementById("kb-ondemand").addEventListener("click", async () => {
-        const btn = document.getElementById("kb-ondemand");
-        const next = btn.getAttribute("aria-checked") !== "true";
-        try {
-          await MuhAuth.kbPatchSettings({ on_demand_enabled: next });
-          showOk(next ? "On-Demand ligado." : "On-Demand desligado.");
-          await refresh();
-        } catch (e) { showErr(e.message || "Não salvou."); }
-      });
-
       document.getElementById("kb-save-persona").addEventListener("click", async () => {
         try {
           await MuhAuth.kbPatchSettings({
-            personality: document.getElementById("kb-personality").value,
+            personality: personality.value,
           });
           showOk("Personalidade salva.");
         } catch (e) { showErr(e.message || "Não salvou."); }
@@ -211,12 +202,14 @@
 
       document.getElementById("kb-upload-form").addEventListener("submit", async (ev) => {
         ev.preventDefault();
-        const file = document.getElementById("kb-upload-file").files[0];
+        const file = fileInput.files[0];
         if (!file) return;
         try {
           await MuhAuth.kbUploadDocument(file, document.getElementById("kb-upload-title").value);
           showOk("Documento indexado. Original descartado.");
           ev.target.reset();
+          fileName.textContent = "Arraste ou escolha um arquivo";
+          fileName.classList.remove("has-file");
           await refresh();
         } catch (e) { showErr(e.message || "Falha no upload."); }
       });
@@ -232,38 +225,6 @@
           ev.target.reset();
           await refresh();
         } catch (e) { showErr(e.message || "Falha na URL."); }
-      });
-
-      document.getElementById("kb-wa-shared").addEventListener("click", async () => {
-        try {
-          await MuhAuth.kbSetWaMode("shared");
-          showOk("Modo compartilhado.");
-          await refresh();
-        } catch (e) { showErr(e.message || "Falha."); }
-      });
-      document.getElementById("kb-wa-owned").addEventListener("click", async () => {
-        try {
-          await MuhAuth.kbSetWaMode("owned");
-          showOk("Modo WhatsApp próprio.");
-          await refresh();
-        } catch (e) { showErr(e.message || "Falha."); }
-      });
-      document.getElementById("kb-wa-qr").addEventListener("click", async () => {
-        try {
-          const data = await MuhAuth.kbWaQr();
-          const out = document.getElementById("kb-wa-qr-out");
-          out.hidden = false;
-          out.textContent = JSON.stringify(data.qr || data, null, 2);
-        } catch (e) { showErr(e.message || "Falha no QR."); }
-      });
-      document.getElementById("kb-wa-pair-form").addEventListener("submit", async (ev) => {
-        ev.preventDefault();
-        try {
-          const data = await MuhAuth.kbWaPair(document.getElementById("kb-wa-pair-phone").value);
-          const out = document.getElementById("kb-wa-pair-out");
-          out.hidden = false;
-          out.textContent = JSON.stringify(data.pair || data, null, 2);
-        } catch (e) { showErr(e.message || "Falha no pareamento."); }
       });
 
       try {
