@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=31" />
+  <link rel="stylesheet" href="/css/styles.css?v=32" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -35,6 +35,7 @@
       <nav class="settings-nav" aria-label="Seções do admin" id="admin-nav">
         <a href="#servicos" data-panel="servicos" class="is-current">Serviços</a>
         <a href="#usuarios" data-panel="usuarios">Usuários</a>
+        <a href="#whatsapp" data-panel="whatsapp">WhatsApp</a>
         <a href="#llm" data-panel="llm">LLM</a>
         <a href="#transacoes" data-panel="transacoes">Transações</a>
         <a href="/conta.html">Conta</a>
@@ -94,6 +95,43 @@
             <span id="usr-pager-label">—</span>
             <button type="button" class="btn btn-ghost" id="usr-next">Próxima</button>
           </div>
+        </section>
+
+        <!-- WhatsApp oficiais -->
+        <section class="settings-section admin-panel" id="panel-whatsapp" data-panel="whatsapp" hidden>
+          <h2>Números oficiais</h2>
+          <p class="hint">
+            Instâncias WuzAPI do modo <strong>Usar agente</strong>. Fonte da verdade: banco
+            (<code>shared_wa_numbers</code>). Env só faz seed se o pool estiver vazio.
+          </p>
+          <div id="wa-error" class="auth-alert" hidden></div>
+          <div id="wa-ok" class="auth-ok" hidden></div>
+
+          <form class="admin-filters" id="wa-create-form" autocomplete="off">
+            <label>
+              <span>Telefone (que vai parear)</span>
+              <input type="tel" id="wa-create-phone" placeholder="(11) 99999-8888" required />
+            </label>
+            <label>
+              <span>Rótulo</span>
+              <input type="text" id="wa-create-label" maxlength="120" placeholder="Ex.: MuhBianco — Site" />
+            </label>
+            <label>
+              <span>Escopo</span>
+              <select id="wa-create-service">
+                <option value="">Geral (qualquer serviço)</option>
+              </select>
+            </label>
+            <div class="admin-filters-actions">
+              <button type="submit" class="btn btn-primary">Adicionar número</button>
+              <button type="button" class="btn btn-ghost" id="wa-refresh">Atualizar lista</button>
+            </div>
+          </form>
+
+          <div id="wa-empty" class="tx-empty" hidden>
+            <p>Nenhum número oficial cadastrado.</p>
+          </div>
+          <div id="wa-list"></div>
         </section>
 
         <!-- LLM -->
@@ -308,7 +346,7 @@
     </article>
   </template>
 
-  <script src="/js/auth.js?v=19"></script>
+  <script src="/js/auth.js?v=20"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -322,6 +360,11 @@
         usuarios: {
           title: "Usuários e saldo",
           lede: "Todo mundo cadastrado na plataforma. Conceda saldo bonificado para treino ou família.",
+        },
+        whatsapp: {
+          title: "Números oficiais WhatsApp",
+          lede:
+            "Gerencie as instâncias MuhBianco do modo Usar agente: provisionar no WuzAPI, parear (QR ou código), ativar e remover.",
         },
         llm: {
           title: "Uso de LLM",
@@ -341,6 +384,8 @@
       let txLoadedOnce = false;
       let usrLoadedOnce = false;
       let llmLoadedOnce = false;
+      let waLoadedOnce = false;
+      let waServiceOptions = [];
 
       function showPanel(name) {
         if (!PANELS[name]) name = "servicos";
@@ -365,6 +410,12 @@
           if (!usrLoadedOnce) {
             usrLoadedOnce = true;
             loadUsers();
+          }
+        }
+        if (name === "whatsapp") {
+          if (!waLoadedOnce) {
+            waLoadedOnce = true;
+            loadWhatsapp();
           }
         }
         if (name === "llm") {
@@ -978,6 +1029,239 @@
           await loadTransactions();
         } catch (err) {
           showTxError(err.message || "Falha ao estornar.");
+          btn.disabled = false;
+        }
+      });
+
+      // ---------- WhatsApp oficiais ----------
+      const waError = document.getElementById("wa-error");
+      const waOk = document.getElementById("wa-ok");
+      const waEmpty = document.getElementById("wa-empty");
+      const waList = document.getElementById("wa-list");
+      const waCreateService = document.getElementById("wa-create-service");
+
+      function showWaError(msg) {
+        waOk.hidden = true;
+        waError.hidden = !msg;
+        waError.textContent = msg || "";
+      }
+      function showWaOk(msg) {
+        waError.hidden = true;
+        waOk.hidden = !msg;
+        waOk.textContent = msg || "";
+      }
+
+      function formatPhone(phone) {
+        const d = String(phone || "").replace(/\D/g, "");
+        if (d.length === 13 && d.startsWith("55")) {
+          return `+${d.slice(0, 2)} (${d.slice(2, 4)}) ${d.slice(4, 9)}-${d.slice(9)}`;
+        }
+        if (d.length === 12 && d.startsWith("55")) {
+          return `+${d.slice(0, 2)} (${d.slice(2, 4)}) ${d.slice(4, 8)}-${d.slice(8)}`;
+        }
+        return phone || "—";
+      }
+
+      function qrSrc(payload) {
+        const raw =
+          payload.QRCode ||
+          payload.qrcode ||
+          payload.qr ||
+          payload.base64 ||
+          (payload.data && (payload.data.QRCode || payload.data.qrcode || payload.data.qr));
+        if (!raw) return null;
+        const s = String(raw);
+        if (s.startsWith("data:")) return s;
+        return `data:image/png;base64,${s}`;
+      }
+
+      function linkingCode(payload) {
+        return (
+          payload.LinkingCode ||
+          payload.linkingCode ||
+          payload.linking_code ||
+          (payload.data &&
+            (payload.data.LinkingCode || payload.data.linkingCode || payload.data.linking_code)) ||
+          ""
+        );
+      }
+
+      async function ensureWaServiceOptions() {
+        if (waServiceOptions.length) return;
+        try {
+          const catalog = await MuhAuth.adminListServices();
+          waServiceOptions = Array.isArray(catalog) ? catalog : [];
+        } catch {
+          waServiceOptions = [];
+        }
+        waCreateService.innerHTML =
+          '<option value="">Geral (qualquer serviço)</option>' +
+          waServiceOptions
+            .map(
+              (s) =>
+                `<option value="${s.id}">${s.name || s.code}</option>`
+            )
+            .join("");
+      }
+
+      function renderWaCard(row) {
+        const scope = row.service_name
+          ? row.service_name
+          : row.service_id
+            ? "Serviço dedicado"
+            : "Geral";
+        const active = row.is_active ? "Ativo no pool" : "Inativo (não aloca)";
+        const live =
+          row.logged_in === true
+            ? "Conectado"
+            : row.logged_in === false
+              ? "Desconectado"
+              : "Status não consultado";
+        const article = document.createElement("article");
+        article.className = "settings-card";
+        article.dataset.id = row.id;
+        article.innerHTML = `
+          <header class="settings-card-head">
+            <div>
+              <h3>${row.label || formatPhone(row.phone)}</h3>
+              <p class="hint">${formatPhone(row.phone)} · ${scope}</p>
+              <p class="hint">${active} · ${live} · ${row.subscribers || 0} assinante(s) · token ${row.token_hint || "—"}</p>
+              <p class="hint">Instância: ${row.instance_name || "—"}</p>
+            </div>
+            <span class="settings-badge" data-state="${row.is_active ? "ok" : "info"}">${row.is_active ? "Pool" : "Off"}</span>
+          </header>
+          <div class="settings-card-body admin-wa-actions">
+            <div class="admin-filters-actions">
+              <button type="button" class="btn btn-ghost" data-wa="status">Atualizar status</button>
+              <button type="button" class="btn btn-ghost" data-wa="qr">Gerar QR</button>
+              <button type="button" class="btn btn-ghost" data-wa="pair">Código de pareamento</button>
+              <button type="button" class="btn btn-ghost" data-wa="toggle">${row.is_active ? "Desativar" : "Ativar"}</button>
+              <button type="button" class="btn btn-ghost" data-wa="logout">Logout</button>
+              <button type="button" class="btn btn-ghost" data-wa="delete">Excluir</button>
+            </div>
+            <div class="admin-wa-pair" hidden>
+              <label>
+                <span>Celular para código</span>
+                <input type="tel" data-field="pair-phone" value="${row.phone || ""}" />
+              </label>
+              <button type="button" class="btn btn-primary" data-wa="pair-go">Gerar código</button>
+            </div>
+            <pre class="admin-wa-code" data-field="code" hidden></pre>
+            <img class="admin-wa-qr" data-field="qr" alt="QR WhatsApp" hidden />
+          </div>
+        `;
+        return article;
+      }
+
+      async function loadWhatsapp() {
+        showWaError("");
+        showWaOk("");
+        await ensureWaServiceOptions();
+        try {
+          const rows = await MuhAuth.adminListSharedWa();
+          waList.innerHTML = "";
+          waEmpty.hidden = rows.length > 0;
+          rows.forEach((row) => waList.appendChild(renderWaCard(row)));
+        } catch (err) {
+          waList.innerHTML = "";
+          waEmpty.hidden = true;
+          showWaError(err.message || "Falha ao carregar números.");
+        }
+      }
+
+      document.getElementById("wa-refresh").addEventListener("click", () => {
+        loadWhatsapp();
+      });
+
+      document.getElementById("wa-create-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const phone = document.getElementById("wa-create-phone").value;
+        const label = document.getElementById("wa-create-label").value;
+        const serviceId = waCreateService.value || undefined;
+        const btn = event.target.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        showWaError("");
+        try {
+          await MuhAuth.adminCreateSharedWa({ phone, label, serviceId });
+          document.getElementById("wa-create-phone").value = "";
+          document.getElementById("wa-create-label").value = "";
+          waCreateService.value = "";
+          showWaOk("Número provisionado no WuzAPI. Pareie com QR ou código e ative no pool.");
+          await loadWhatsapp();
+        } catch (err) {
+          showWaError(err.message || "Falha ao criar.");
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
+      waList.addEventListener("click", async (event) => {
+        const btn = event.target.closest("[data-wa]");
+        if (!btn) return;
+        const card = btn.closest("article.settings-card");
+        if (!card) return;
+        const id = card.dataset.id;
+        const action = btn.dataset.wa;
+        const codeEl = card.querySelector('[data-field="code"]');
+        const qrEl = card.querySelector('[data-field="qr"]');
+        const pairBox = card.querySelector(".admin-wa-pair");
+
+        btn.disabled = true;
+        showWaError("");
+        try {
+          if (action === "status") {
+            const row = await MuhAuth.adminSharedWaStatus(id);
+            const fresh = renderWaCard(row);
+            card.replaceWith(fresh);
+            showWaOk(
+              row.logged_in
+                ? "Sessão conectada — número ativo no pool."
+                : "Status atualizado."
+            );
+          } else if (action === "qr") {
+            const payload = await MuhAuth.adminSharedWaQr(id);
+            const src = qrSrc(payload);
+            if (!src) throw new Error("WuzAPI não devolveu QR.");
+            qrEl.src = src;
+            qrEl.hidden = false;
+            codeEl.hidden = true;
+            showWaOk("QR gerado — escaneie no WhatsApp do número oficial.");
+          } else if (action === "pair") {
+            pairBox.hidden = !pairBox.hidden;
+          } else if (action === "pair-go") {
+            const phone = card.querySelector('[data-field="pair-phone"]').value;
+            const payload = await MuhAuth.adminSharedWaPair(id, phone);
+            const code = linkingCode(payload);
+            if (!code) throw new Error("WuzAPI não devolveu LinkingCode.");
+            codeEl.textContent = code;
+            codeEl.hidden = false;
+            qrEl.hidden = true;
+            showWaOk("Código gerado — digite no aparelho em Aparelhos conectados.");
+          } else if (action === "toggle") {
+            const activate = btn.textContent.includes("Ativar");
+            await MuhAuth.adminUpdateSharedWa(id, { is_active: activate });
+            showWaOk(activate ? "Número ativado no pool." : "Número desativado.");
+            await loadWhatsapp();
+          } else if (action === "logout") {
+            if (!confirm("Desconectar a sessão deste número oficial?")) return;
+            await MuhAuth.adminSharedWaLogout(id);
+            showWaOk("Sessão desconectada (número inativo no pool).");
+            await loadWhatsapp();
+          } else if (action === "delete") {
+            if (
+              !confirm(
+                "Excluir permanentemente este número (WuzAPI + banco)? Só funciona sem assinantes."
+              )
+            ) {
+              return;
+            }
+            await MuhAuth.adminDeleteSharedWa(id);
+            showWaOk("Número excluído.");
+            await loadWhatsapp();
+          }
+        } catch (err) {
+          showWaError(err.message || "Falha na operação.");
+        } finally {
           btn.disabled = false;
         }
       });

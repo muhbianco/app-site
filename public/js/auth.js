@@ -695,6 +695,74 @@
     return data;
   }
 
+  async function adminListSharedWa() {
+    const response = await api(`${API_PREFIX}/services/admin/shared-wa-numbers`);
+    return jsonOrThrow(response, "Não foi possível carregar os números oficiais.");
+  }
+
+  async function adminCreateSharedWa({ phone, label, serviceId } = {}) {
+    const body = { phone: String(phone || "").trim() };
+    if (label) body.label = String(label).trim();
+    if (serviceId) body.service_id = String(serviceId).trim();
+    const response = await api(`${API_PREFIX}/services/admin/shared-wa-numbers`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    return jsonOrThrow(response, "Não foi possível provisionar o número oficial.");
+  }
+
+  async function adminUpdateSharedWa(id, patch) {
+    const body = {};
+    if (patch.label !== undefined) body.label = patch.label;
+    if (patch.service_id !== undefined) body.service_id = patch.service_id;
+    if (patch.is_active !== undefined) body.is_active = Boolean(patch.is_active);
+    const response = await api(
+      `${API_PREFIX}/services/admin/shared-wa-numbers/${encodeURIComponent(id)}`,
+      { method: "PATCH", body: JSON.stringify(body) }
+    );
+    return jsonOrThrow(response, "Não foi possível atualizar o número oficial.");
+  }
+
+  async function adminSharedWaStatus(id) {
+    const response = await api(
+      `${API_PREFIX}/services/admin/shared-wa-numbers/${encodeURIComponent(id)}/status`
+    );
+    return jsonOrThrow(response, "Não foi possível consultar o status.");
+  }
+
+  async function adminSharedWaQr(id) {
+    const response = await api(
+      `${API_PREFIX}/services/admin/shared-wa-numbers/${encodeURIComponent(id)}/qr`,
+      { method: "POST" }
+    );
+    return jsonOrThrow(response, "Não foi possível gerar o QR.");
+  }
+
+  async function adminSharedWaPair(id, phone) {
+    const response = await api(
+      `${API_PREFIX}/services/admin/shared-wa-numbers/${encodeURIComponent(id)}/pair`,
+      { method: "POST", body: JSON.stringify({ phone: String(phone || "").trim() }) }
+    );
+    return jsonOrThrow(response, "Não foi possível gerar o código de pareamento.");
+  }
+
+  async function adminSharedWaLogout(id) {
+    const response = await api(
+      `${API_PREFIX}/services/admin/shared-wa-numbers/${encodeURIComponent(id)}/logout`,
+      { method: "POST" }
+    );
+    return jsonOrThrow(response, "Não foi possível desconectar a sessão.");
+  }
+
+  async function adminDeleteSharedWa(id) {
+    const response = await api(
+      `${API_PREFIX}/services/admin/shared-wa-numbers/${encodeURIComponent(id)}`,
+      { method: "DELETE" }
+    );
+    if (response.status === 204) return null;
+    return jsonOrThrow(response, "Não foi possível excluir o número oficial.");
+  }
+
   async function cancelTopup(id) {
     const response = await api(`${API_PREFIX}/billing/topups/${encodeURIComponent(id)}/cancel`, {
       method: "POST",
@@ -827,6 +895,14 @@
     adminLlmUsage,
     adminRefundTopup,
     adminCancelTopup,
+    adminListSharedWa,
+    adminCreateSharedWa,
+    adminUpdateSharedWa,
+    adminSharedWaStatus,
+    adminSharedWaQr,
+    adminSharedWaPair,
+    adminSharedWaLogout,
+    adminDeleteSharedWa,
     cancelTopup,
     adminPauseSubscription,
     adminResumeSubscription,
