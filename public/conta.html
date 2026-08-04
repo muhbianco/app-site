@@ -522,22 +522,37 @@
         <p class="hint" id="wa-owned-status">
           Informe o número que vai receber o agente e avance com QR ou código de pareamento.
         </p>
-        <form class="settings-inline-form" id="wa-owned-phone-form">
-          <label>
-            <span>Número do WhatsApp (seu / da empresa)</span>
-            <input type="tel" id="wa-owned-phone" inputmode="tel" autocomplete="tel"
-                   placeholder="(11) 99999-8888" maxlength="20" required />
-          </label>
-          <button type="submit" class="btn btn-primary" id="wa-owned-pair-btn">
-            Gerar código de pareamento
-          </button>
-        </form>
-        <div class="balance-actions" style="margin-top:0.75rem">
-          <button type="button" class="btn btn-ghost" id="wa-owned-qr-btn">Gerar QR code</button>
-          <button type="button" class="btn btn-ghost" id="wa-owned-refresh-btn">Atualizar status</button>
+        <div id="wa-owned-connected" hidden>
+          <p class="hint" id="wa-owned-connected-text">
+            WhatsApp já conectado nesta instância.
+          </p>
+          <div class="balance-actions" style="margin-top:0.75rem">
+            <button type="button" class="btn btn-ghost" id="wa-owned-logout-btn">
+              Desconectar instância
+            </button>
+            <button type="button" class="btn btn-ghost" id="wa-owned-connected-refresh-btn">
+              Atualizar status
+            </button>
+          </div>
         </div>
-        <pre class="terms-box" id="wa-owned-pair-result" hidden></pre>
-        <div id="wa-owned-qr" class="wa-qr-wrap" hidden></div>
+        <div id="wa-owned-pair-block">
+          <form class="settings-inline-form" id="wa-owned-phone-form">
+            <label>
+              <span>Número do WhatsApp (seu / da empresa)</span>
+              <input type="tel" id="wa-owned-phone" inputmode="tel" autocomplete="tel"
+                     placeholder="(11) 99999-8888" maxlength="20" required />
+            </label>
+            <button type="submit" class="btn btn-primary" id="wa-owned-pair-btn">
+              Gerar código de pareamento
+            </button>
+          </form>
+          <div class="balance-actions" style="margin-top:0.75rem">
+            <button type="button" class="btn btn-ghost" id="wa-owned-qr-btn">Gerar QR code</button>
+            <button type="button" class="btn btn-ghost" id="wa-owned-refresh-btn">Atualizar status</button>
+          </div>
+          <pre class="terms-box" id="wa-owned-pair-result" hidden></pre>
+          <div id="wa-owned-qr" class="wa-qr-wrap" hidden></div>
+        </div>
       </div>
     </div>
   </dialog>
@@ -594,7 +609,7 @@
     </form>
   </dialog>
 
-  <script src="/js/auth.js?v=35"></script>
+  <script src="/js/auth.js?v=36"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -1402,23 +1417,73 @@
           }
         }
 
+        function setOwnedUi({ loggedIn, botPhone, connected }) {
+          const statusEl = document.getElementById("wa-owned-status");
+          const connectedEl = document.getElementById("wa-owned-connected");
+          const pairBlock = document.getElementById("wa-owned-pair-block");
+          const connectedText = document.getElementById("wa-owned-connected-text");
+          const phoneInput = document.getElementById("wa-owned-phone");
+          if (loggedIn) {
+            connectedEl.hidden = false;
+            pairBlock.hidden = true;
+            document.getElementById("wa-owned-pair-result").hidden = true;
+            document.getElementById("wa-owned-qr").hidden = true;
+            document.getElementById("wa-owned-qr").innerHTML = "";
+            const phoneLabel = botPhone ? formatPhone(String(botPhone)) : "número ativo";
+            const linkHint = connected ? "conectado" : "logado (reconectando…)";
+            statusEl.textContent = `Instância ${linkHint} · ${phoneLabel}`;
+            connectedText.textContent =
+              `WhatsApp já conectado (${phoneLabel}). Não é preciso parear de novo. ` +
+              "Use Desconectar instância se quiser trocar de número.";
+            if (botPhone) {
+              phoneInput.value = String(botPhone).replace(/:.*/, "");
+            }
+            return;
+          }
+          connectedEl.hidden = true;
+          pairBlock.hidden = false;
+          statusEl.textContent = botPhone
+            ? `Bot cadastrado: ${formatPhone(String(botPhone))} — conclua o pareamento se ainda não estiver logado.`
+            : "Informe o número e avance com QR ou código de pareamento.";
+          if (botPhone) {
+            phoneInput.value = String(botPhone).replace(/:.*/, "");
+          }
+        }
+
+        async function refreshOwnedSessionUi({ quiet } = { quiet: false }) {
+          try {
+            const st = await MuhAuth.agentWaStatus(liveService.code);
+            setOwnedUi({
+              loggedIn: Boolean(st.logged_in),
+              botPhone: st.bot_phone,
+              connected: Boolean(st.connected),
+            });
+            if (!quiet) showModalOk("Status atualizado.");
+            return st;
+          } catch (e) {
+            const aw = agentWa();
+            setOwnedUi({
+              loggedIn: false,
+              botPhone: aw.bot_phone,
+              connected: false,
+            });
+            if (!quiet) showModalErr(e.message || "Falha ao consultar status.");
+            return null;
+          }
+        }
+
         async function refreshFromCatalog() {
           const list = await MuhAuth.listServices();
           const next = list.find((s) => s.code === liveService.code);
           if (next) liveService = next;
           renderPhones();
           const aw = agentWa();
-          const statusEl = document.getElementById("wa-owned-status");
           if (aw.wa_mode === "owned") {
-            statusEl.textContent = aw.bot_phone
-              ? `Bot pareado / cadastrado: ${formatPhone(String(aw.bot_phone))}`
-              : "Aguardando pareamento do seu WhatsApp.";
-            if (aw.bot_phone) {
-              document.getElementById("wa-owned-phone").value = String(aw.bot_phone).replace(
-                /:.*/,
-                ""
-              );
-            }
+            setOwnedUi({
+              loggedIn: false,
+              botPhone: aw.bot_phone,
+              connected: false,
+            });
           }
         }
 
@@ -1474,6 +1539,7 @@
             await refreshFromCatalog();
           }
           if (mode === "shared") renderPhones();
+          if (mode === "owned") await refreshOwnedSessionUi({ quiet: true });
         }
 
         function showChooser() {
@@ -1568,6 +1634,7 @@
             );
             if (onChanged) await onChanged();
             await refreshFromCatalog();
+            await refreshOwnedSessionUi({ quiet: true });
           } catch (e) {
             showModalErr(e.message || "Falha no pareamento.");
           } finally {
@@ -1605,18 +1672,37 @@
           }
         };
 
-        document.getElementById("wa-owned-refresh-btn").onclick = async () => {
+        async function onOwnedRefreshClick() {
+          await refreshOwnedSessionUi({ quiet: false });
+          if (onChanged) await onChanged();
+          await refreshFromCatalog();
+          // Reaplica status live (refreshFromCatalog só usa snapshot do catálogo).
+          await refreshOwnedSessionUi({ quiet: true });
+        }
+
+        document.getElementById("wa-owned-refresh-btn").onclick = onOwnedRefreshClick;
+        document.getElementById("wa-owned-connected-refresh-btn").onclick = onOwnedRefreshClick;
+
+        document.getElementById("wa-owned-logout-btn").onclick = async () => {
+          if (
+            !confirm(
+              "Desconectar esta instância? O WhatsApp sai do aparelho vinculado e será preciso parear de novo."
+            )
+          ) {
+            return;
+          }
+          const btn = document.getElementById("wa-owned-logout-btn");
+          btn.disabled = true;
           try {
-            const st = await MuhAuth.agentWaStatus(liveService.code);
-            const statusEl = document.getElementById("wa-owned-status");
-            statusEl.textContent = st.bot_phone
-              ? `Sessão ok · bot ${formatPhone(String(st.bot_phone))}`
-              : "Sessão ainda sem JID — complete o pareamento.";
-            showModalOk("Status atualizado.");
+            const result = await MuhAuth.agentWaLogout(liveService.code);
+            showModalOk(result.message || "Instância desconectada.");
             if (onChanged) await onChanged();
             await refreshFromCatalog();
+            setOwnedUi({ loggedIn: false, botPhone: null, connected: false });
           } catch (e) {
-            showModalErr(e.message || "Falha ao consultar status.");
+            showModalErr(e.message || "Falha ao desconectar.");
+          } finally {
+            btn.disabled = false;
           }
         };
 

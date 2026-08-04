@@ -508,6 +508,14 @@
     return jsonOrThrow(response, "Não foi possível pedir o código de pareamento.");
   }
 
+  async function agentWaLogout(code) {
+    const response = await api(
+      `${API_PREFIX}/services/${encodeURIComponent(code)}/agent-whatsapp/logout`,
+      { method: "POST" }
+    );
+    return jsonOrThrow(response, "Não foi possível desconectar a instância WhatsApp.");
+  }
+
   async function disableService(code, { immediateRefund = false } = {}) {
     const response = await api(`${API_PREFIX}/services/${encodeURIComponent(code)}/disable`, {
       method: "POST",
@@ -796,6 +804,7 @@
     agentWaStatus,
     agentWaQr,
     agentWaPair,
+    agentWaLogout,
     disableService,
     kbSettings,
     kbPatchSettings,
