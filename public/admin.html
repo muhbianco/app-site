@@ -269,6 +269,18 @@
             <span>Saldo mínimo (R$)</span>
             <input type="number" data-field="min_balance" min="0" step="0.01" required />
           </label>
+          <label data-field="pack-block">
+            <span>Msgs inclusas / período</span>
+            <input type="number" data-field="included_messages" min="0" max="1000000" step="1" placeholder="Ex.: 300" />
+          </label>
+          <label data-field="pack-block">
+            <span>Markup On-Demand (%)</span>
+            <input type="number" data-field="on_demand_markup_pct" min="0" max="500" step="1" placeholder="Ex.: 20" />
+          </label>
+          <p class="hint" data-field="pack-hint" hidden>
+            Pacote: cobrança do período + cota de mensagens. Acabou a cota → On-Demand
+            (custo Gemini + markup %) se o cliente ligar o toggle.
+          </p>
           <label>
             <span>Situação</span>
             <select data-field="is_active">
@@ -449,6 +461,28 @@
         q("is_active").value = String(service.is_active);
         q("requires_phone").value = String(service.requires_phone);
 
+        const isPack =
+          service.code === "kb_whatsapp" ||
+          service.included_messages != null ||
+          service.on_demand_markup_pct != null;
+        node.querySelectorAll('[data-field="pack-block"]').forEach((el) => {
+          el.hidden = !isPack && service.code !== "kb_whatsapp";
+        });
+        const packHint = q("pack-hint");
+        packHint.hidden = !isPack && service.code !== "kb_whatsapp";
+        q("included_messages").value =
+          service.included_messages != null ? service.included_messages : "";
+        q("on_demand_markup_pct").value =
+          service.on_demand_markup_pct != null ? service.on_demand_markup_pct : "";
+        if (service.code === "kb_whatsapp") {
+          node.querySelectorAll('[data-field="pack-block"]').forEach((el) => {
+            el.hidden = false;
+          });
+          packHint.hidden = false;
+          if (q("included_messages").value === "") q("included_messages").value = "300";
+          if (q("on_demand_markup_pct").value === "") q("on_demand_markup_pct").value = "20";
+        }
+
         q("users-link").href = `/admin-servico-usuarios.html?service_id=${encodeURIComponent(
           service.id
         )}`;
@@ -458,14 +492,21 @@
           const btn = q("save");
           btn.disabled = true;
           try {
-            await MuhAuth.adminUpdateService(service.id, {
+            const payload = {
               billing_mode: q("billing_mode").value,
               price_cents: Math.round(Number(q("price").value) * 100),
               period_days: Number(q("period_days").value),
               min_balance_cents: Math.round(Number(q("min_balance").value) * 100),
               is_active: q("is_active").value === "true",
               requires_phone: q("requires_phone").value === "true",
-            });
+            };
+            const msgsRaw = q("included_messages").value.trim();
+            const markupRaw = q("on_demand_markup_pct").value.trim();
+            if (service.code === "kb_whatsapp" || msgsRaw !== "" || markupRaw !== "") {
+              payload.included_messages = msgsRaw === "" ? null : Number(msgsRaw);
+              payload.on_demand_markup_pct = markupRaw === "" ? null : Number(markupRaw);
+            }
+            await MuhAuth.adminUpdateService(service.id, payload);
             showSvcOk(`"${service.name}" atualizado.`);
             await loadServices();
           } catch (err) {

@@ -74,6 +74,8 @@
               <thead>
                 <tr>
                   <th scope="col">Cliente</th>
+                  <th scope="col">Cliente fala de</th>
+                  <th scope="col">Agente no (bot)</th>
                   <th scope="col">Status</th>
                   <th scope="col">Renovação</th>
                   <th scope="col">Gestão</th>
@@ -195,7 +197,17 @@
             ? `<span class="tx-detail tx-phone">${escapeHtml(
                 row.service_phone || row.phone
               )}${verifiedMark(row.phone_verified, "WhatsApp confirmado")}</span>`
-            : "";
+            : `<span class="tx-detail">—</span>`;
+          const waMode =
+            row.wa_mode === "owned"
+              ? "próprio"
+              : row.wa_mode === "shared"
+                ? "MuhBianco"
+                : "";
+          const agentLine = row.agent_phone
+            ? `<span class="tx-detail tx-phone">${escapeHtml(row.agent_phone)}</span>` +
+              (waMode ? `<span class="tx-detail">(${escapeHtml(waMode)})</span>` : "")
+            : `<span class="tx-detail">${waMode ? `aguardando · ${escapeHtml(waMode)}` : "—"}</span>`;
           const actions = (row.actions || [])
             .map(
               (action) =>
@@ -210,8 +222,9 @@
             <td>
               <span class="tx-client">${escapeHtml(row.full_name || "—")}</span>
               ${emailLine}
-              ${phoneLine}
             </td>
+            <td>${phoneLine}</td>
+            <td>${agentLine}</td>
             <td><span class="tx-detail">${escapeHtml(statusLabel(row.status))}</span></td>
             <td><span class="tx-date">${formatDate(row.current_period_end)}</span></td>
             <td class="tx-actions">${actions || '<span class="tx-detail">—</span>'}</td>

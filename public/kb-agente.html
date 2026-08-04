@@ -40,8 +40,9 @@
     <section class="settings-section" id="kb-quota">
       <h2>Cota do período</h2>
       <p class="auth-lede" id="kb-quota-text">—</p>
+      <p class="auth-lede" id="kb-price-text">—</p>
       <label class="toggle-row">
-        <span>On-Demand (custo Gemini + 20% no saldo após a cota)</span>
+        <span>On-Demand (custo Gemini + markup no saldo após a cota)</span>
         <button type="button" class="toggle" id="kb-ondemand" role="switch" aria-checked="false"></button>
       </label>
     </section>
@@ -72,18 +73,26 @@
       <div id="kb-doc-list" class="stack-list" style="margin-top:1.25rem"></div>
     </section>
 
-    <section class="settings-section" id="kb-wa">
-      <h2>WhatsApp</h2>
+    <section class="settings-section" id="whatsapp">
+      <h2>Número que expõe o agente</h2>
+      <p class="auth-lede">
+        O <strong>WhatsApp vinculado</strong> na Conta é de onde <em>você</em> fala com o agente.
+        Aqui você escolhe em qual número o <em>bot</em> fica online: o compartilhado MuhBianco
+        ou um WhatsApp seu (QR / código de pareamento). Um telefone não opera dois agentes ao mesmo tempo.
+      </p>
       <p class="auth-lede" id="kb-wa-status">—</p>
       <div class="btn-row">
         <button type="button" class="btn btn-ghost" id="kb-wa-shared">Usar número MuhBianco</button>
-        <button type="button" class="btn btn-ghost" id="kb-wa-owned">Usar meu WhatsApp</button>
+        <button type="button" class="btn btn-primary" id="kb-wa-owned">Expor em meu WhatsApp</button>
       </div>
       <div id="kb-wa-owned-panel" hidden style="margin-top:1rem">
+        <p class="auth-lede">
+          Gere o QR no celular (Aparelhos conectados) ou peça um código de pareamento.
+        </p>
         <button type="button" class="btn btn-primary" id="kb-wa-qr">Gerar QR</button>
         <pre id="kb-wa-qr-out" class="code-block" hidden></pre>
         <form id="kb-wa-pair-form" class="stack-form" style="margin-top:0.75rem">
-          <input type="tel" id="kb-wa-pair-phone" placeholder="Celular com DDD" required />
+          <input type="tel" id="kb-wa-pair-phone" placeholder="Celular com DDD do chip que vai ser o bot" required />
           <button type="submit" class="btn btn-ghost">Pedir código de pareamento</button>
         </form>
         <pre id="kb-wa-pair-out" class="code-block" hidden></pre>
@@ -118,6 +127,17 @@
           `${s.messages_used || 0} / ${s.included_messages || 0} mensagens usadas · ` +
           `${s.messages_remaining || 0} restantes` +
           (s.on_demand_enabled ? " · On-Demand ligado" : "");
+        const pricing = data.pricing || {};
+        const markup =
+          pricing.on_demand_markup_pct != null
+            ? pricing.on_demand_markup_pct
+            : s.on_demand_markup_pct != null
+              ? s.on_demand_markup_pct
+              : 20;
+        document.getElementById("kb-price-text").textContent =
+          `Pacote: R$ ${((pricing.price_cents || 0) / 100).toFixed(2).replace(".", ",")} · ` +
+          `${pricing.included_messages || s.included_messages || 0} msgs · ` +
+          `On-Demand = Gemini + ${markup}%`;
         const toggle = document.getElementById("kb-ondemand");
         toggle.setAttribute("aria-checked", s.on_demand_enabled ? "true" : "false");
         toggle.classList.toggle("is-on", Boolean(s.on_demand_enabled));

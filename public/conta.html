@@ -690,8 +690,20 @@
       }
 
       function priceLabel(service) {
+        const periodo = service.period_days === 30 ? "mês" : `${service.period_days} dias`;
+        if (
+          service.code === "kb_whatsapp" ||
+          (service.included_messages != null && service.included_messages > 0)
+        ) {
+          const msgs = service.included_messages || 300;
+          const markup =
+            service.on_demand_markup_pct != null ? service.on_demand_markup_pct : 20;
+          return (
+            `${brl(service.price_cents)} / ${periodo} · ${msgs} msgs inclusas · ` +
+            `On-Demand opcional (Gemini + ${markup}%)`
+          );
+        }
         if (service.billing_mode === "monthly") {
-          const periodo = service.period_days === 30 ? "mês" : `${service.period_days} dias`;
           return `${brl(service.price_cents)} por ${periodo}, debitado do saldo.`;
         }
         return `${brl(service.price_cents)} por uso, debitado do saldo.`;
@@ -787,7 +799,7 @@
           if (service.code === "kb_whatsapp") {
             q("dashboard-btn").hidden = false;
             q("dashboard-btn").textContent = "Configurar agente";
-            q("dashboard-btn").href = "/kb-agente.html";
+            q("dashboard-btn").href = "/kb-agente.html#whatsapp";
           }
           q("pause-btn").hidden = paused;
           q("resume-btn").hidden = !paused;
@@ -835,6 +847,23 @@
           }
           if (paused) partes.push("Agente silenciado — a cobrança do período segue normal");
           if (ttsOn) partes.push("TTS ligado");
+          if (service.code === "kb_whatsapp") {
+            const kb = sub.kb || {};
+            const modo =
+              kb.wa_mode === "owned" ? "WhatsApp próprio" : "número MuhBianco";
+            partes.push(`Agente no ${modo}`);
+            partes.push(
+              kb.bot_phone
+                ? `Bot: ${formatPhone(String(kb.bot_phone))}`
+                : "Bot: configure em Configurar agente"
+            );
+            if (kb.included_messages != null) {
+              partes.push(
+                `${kb.messages_used || 0}/${kb.included_messages} msgs` +
+                  (kb.on_demand_enabled ? " · On-Demand ligado" : "")
+              );
+            }
+          }
           statusDetail.textContent = partes.join(" · ");
           statusDetail.hidden = partes.length === 0;
         } else if (status === "suspended") {
