@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=32" />
+  <link rel="stylesheet" href="/css/styles.css?v=33" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -341,7 +341,7 @@
       <div class="auth-alert" data-field="alert" hidden></div>
       <div class="auth-ok" data-field="ok" hidden></div>
       <div class="settings-card-body" data-field="body">
-        <p class="hint" data-field="status-detail" hidden></p>
+        <ul class="service-status-list" data-field="status-detail" hidden></ul>
 
         <div class="balance-actions" data-field="phone-gate" hidden>
           <a class="btn btn-primary" href="#configuracoes" data-goto="configuracoes">
@@ -764,21 +764,17 @@
         const periodo = service.period_days === 30 ? "mês" : `${service.period_days} dias`;
         if (service.billing_mode === "pack") {
           const msgs = service.included_messages || 0;
-          const markup =
-            service.on_demand_markup_pct != null ? service.on_demand_markup_pct : 20;
           return (
             `${brl(service.price_cents)} / ${periodo} · ${msgs} msgs inclusas · ` +
-            `On-Demand opcional (Gemini + ${markup}%)`
+            `On-Demand opcional`
           );
         }
         if (service.billing_mode === "monthly") {
           return `${brl(service.price_cents)} por ${periodo}, debitado do saldo.`;
         }
         if (service.billing_mode === "per_use") {
-          const markup =
-            service.on_demand_markup_pct != null ? service.on_demand_markup_pct : 20;
           return (
-            `Por request: custo LLM + ${markup}% no saldo` +
+            `Por request: custo do modelo no saldo` +
             (service.min_balance_cents
               ? ` · saldo mínimo ${brl(service.min_balance_cents)}`
               : "")
@@ -798,7 +794,6 @@
         const badge = q("badge");
         const sub = service.subscription;
         const status = sub ? sub.status : null;
-        const statusDetail = q("status-detail");
         const phoneGate = q("phone-gate");
         const enableActions = q("enable-actions");
         const balanceGate = q("balance-gate");
@@ -817,6 +812,35 @@
           q("alert").hidden = true;
           q("ok").hidden = false;
           q("ok").textContent = message;
+        }
+
+        function setStatusDetail(rows) {
+          const el = q("status-detail");
+          el.innerHTML = "";
+          if (!rows || !rows.length) {
+            el.hidden = true;
+            return;
+          }
+          rows.forEach((row) => {
+            const li = document.createElement("li");
+            if (typeof row === "string") {
+              li.innerHTML = `<span class="service-status-value">${escapeHtml(row)}</span>`;
+            } else {
+              li.innerHTML =
+                `<span class="service-status-label">${escapeHtml(row.label)}</span>` +
+                `<span class="service-status-value">${escapeHtml(row.value)}</span>`;
+            }
+            el.appendChild(li);
+          });
+          el.hidden = false;
+        }
+
+        function escapeHtml(value) {
+          return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
         }
 
         function waSummaryText() {
@@ -909,41 +933,62 @@
               delete ttsToggle.dataset.busy;
             }
           });
-          const partes = [];
-          if (sub.phone) partes.push(`Principal: ${formatPhone(sub.phone)}`);
-          if (sub.current_period_end) {
-            partes.push(
-              sub.cancel_at_period_end
-                ? `Ativo até ${formatDate(sub.current_period_end)} (não renova)`
-                : `Renova em ${formatDate(sub.current_period_end)}`
-            );
+          const rows = [];
+          if (sub.phone) {
+            rows.push({ label: "WhatsApp principal", value: formatPhone(sub.phone) });
           }
-          if (paused) partes.push("Agente silenciado — a cobrança do período segue normal");
-          if (ttsOn) partes.push("TTS ligado");
+          if (sub.current_period_end) {
+            rows.push({
+              label: sub.cancel_at_period_end ? "Ativo até" : "Renovação",
+              value: sub.cancel_at_period_end
+                ? `${formatDate(sub.current_period_end)} (não renova)`
+                : formatDate(sub.current_period_end),
+            });
+          }
+          if (paused) {
+            rows.push({
+              label: "Agente",
+              value: "Silenciado — a cobrança do período segue normal",
+            });
+          }
+          rows.push({
+            label: "Resposta em áudio (TTS)",
+            value: ttsOn ? "Ligado" : "Desligado",
+          });
           const aw = sub.agent_wa || sub.kb || {};
           if (aw.wa_mode === "owned") {
-            partes.push("WhatsApp próprio");
-            if (aw.bot_phone) partes.push(`Bot: ${formatPhone(String(aw.bot_phone))}`);
+            rows.push({
+              label: "Modo WhatsApp",
+              value: aw.bot_phone
+                ? `Expor no próprio · ${formatPhone(String(aw.bot_phone))}`
+                : "Expor no próprio (aguardando pareamento)",
+            });
           } else if (aw.wa_mode === "shared") {
-            partes.push("número MuhBianco");
+            rows.push({ label: "Modo WhatsApp", value: "Usar agente (número MuhBianco)" });
+          } else {
+            rows.push({ label: "Modo WhatsApp", value: "Ainda não configurado" });
           }
           if (service.code === "kb_whatsapp" && sub.kb) {
             const kb = sub.kb;
             if (kb.included_messages != null) {
-              partes.push(
-                `${kb.messages_used || 0}/${kb.included_messages} msgs` +
-                  (kb.on_demand_enabled ? " · On-Demand ligado" : "")
-              );
+              rows.push({
+                label: "Cota do período",
+                value:
+                  `${kb.messages_used || 0}/${kb.included_messages} msgs` +
+                  (kb.on_demand_enabled ? " · On-Demand ligado" : ""),
+              });
             }
           }
-          statusDetail.textContent = partes.join(" · ");
-          statusDetail.hidden = partes.length === 0;
+          setStatusDetail(rows);
         } else if (status === "suspended") {
           badge.dataset.state = "pending";
           badge.textContent = "Suspenso";
-          statusDetail.textContent =
-            "Suspenso por saldo insuficiente. Adicione saldo e habilite de novo.";
-          statusDetail.hidden = false;
+          setStatusDetail([
+            {
+              label: "Situação",
+              value: "Suspenso por saldo insuficiente. Adicione saldo e habilite de novo.",
+            },
+          ]);
           if (!needsPhone || phoneOk) {
             if (service.can_enable) showHireReady();
             else balanceGate.hidden = false;
@@ -955,13 +1000,21 @@
           badge.textContent = "Disponível";
 
           if (needsPhone && !phoneOk) {
-            statusDetail.textContent =
-              "Primeiro confirme seu WhatsApp em Configurações. Sem isso não dá para contratar.";
-            statusDetail.hidden = false;
+            setStatusDetail([
+              {
+                label: "Antes de habilitar",
+                value:
+                  "Confirme seu WhatsApp em Configurações. Sem isso não dá para contratar.",
+              },
+            ]);
             phoneGate.hidden = false;
           } else if (!service.can_enable) {
-            statusDetail.textContent = service.blocked_reason || "Saldo insuficiente para habilitar.";
-            statusDetail.hidden = false;
+            setStatusDetail([
+              {
+                label: "Saldo",
+                value: service.blocked_reason || "Saldo insuficiente para habilitar.",
+              },
+            ]);
             balanceGate.hidden = false;
           } else {
             showHireReady();

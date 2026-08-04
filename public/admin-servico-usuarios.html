@@ -56,6 +56,7 @@
                 <option value="active">Ativo</option>
                 <option value="paused">Pausado</option>
                 <option value="suspended">Suspenso</option>
+                <option value="cancelled">Cancelado</option>
               </select>
             </label>
             <div class="admin-filters-actions">
@@ -94,7 +95,7 @@
     </div>
   </main>
 
-  <script src="/js/auth.js?v=19"></script>
+  <script src="/js/auth.js?v=33"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -126,6 +127,7 @@
         pause: (id) => MuhAuth.adminPauseSubscription(id),
         resume: (id) => MuhAuth.adminResumeSubscription(id),
         ping_contact: (id) => MuhAuth.adminPingSubscription(id),
+        cancel_now: (id) => MuhAuth.adminCancelSubscription(id),
       };
 
       function showError(message) {
@@ -161,6 +163,7 @@
         if (status === "paused") return "pausado (mudo)";
         if (status === "active") return "ativo";
         if (status === "suspended") return "suspenso";
+        if (status === "cancelled") return "cancelado";
         return status || "—";
       }
       function verifiedMark(verified, title) {
@@ -308,7 +311,9 @@
               ? "Agente pausado (mudo)."
               : actionId === "resume"
                 ? "Agente retomado."
-                : "Ação concluída.");
+                : actionId === "cancel_now"
+                  ? "Serviço cancelado na hora."
+                  : "Ação concluída.");
           showOk(msg);
           await load();
         } catch (err) {

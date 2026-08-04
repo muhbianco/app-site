@@ -715,6 +715,14 @@
     return jsonOrThrow(response, "Não foi possível enviar a mensagem do agente.");
   }
 
+  async function adminCancelSubscription(userServiceId) {
+    const response = await api(
+      `${API_PREFIX}/services/admin/subscriptions/${encodeURIComponent(userServiceId)}/cancel`,
+      { method: "POST" }
+    );
+    return jsonOrThrow(response, "Não foi possível cancelar a assinatura.");
+  }
+
   async function financeDashboard() {
     const response = await api(`${API_PREFIX}/finance/dashboard`);
     return jsonOrThrow(response, "Não foi possível carregar o dashboard financeiro.");
@@ -811,6 +819,7 @@
     adminPauseSubscription,
     adminResumeSubscription,
     adminPingSubscription,
+    adminCancelSubscription,
     api,
   };
 })(window);

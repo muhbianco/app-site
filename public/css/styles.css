@@ -1550,6 +1550,39 @@ img {
   border-top: 1px solid var(--line);
 }
 
+.service-status-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.service-status-list li {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, 11rem) 1fr;
+  gap: 0.5rem 0.85rem;
+  align-items: baseline;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.service-status-label {
+  color: #6a7178;
+  font-weight: 600;
+}
+
+.service-status-value {
+  color: var(--ink, #1c2127);
+}
+
+@media (max-width: 560px) {
+  .service-status-list li {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+}
+
 .settings-card-body[hidden],
 .settings-inline-form[hidden] {
   display: none !important;

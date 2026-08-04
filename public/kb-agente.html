@@ -42,7 +42,7 @@
       <p class="auth-lede" id="kb-quota-text">—</p>
       <p class="auth-lede" id="kb-price-text">—</p>
       <label class="toggle-row">
-        <span>On-Demand (custo Gemini + markup no saldo após a cota)</span>
+        <span>On-Demand (cobra o custo do modelo no saldo após a cota)</span>
         <button type="button" class="toggle" id="kb-ondemand" role="switch" aria-checked="false"></button>
       </label>
     </section>
@@ -128,16 +128,10 @@
           `${s.messages_remaining || 0} restantes` +
           (s.on_demand_enabled ? " · On-Demand ligado" : "");
         const pricing = data.pricing || {};
-        const markup =
-          pricing.on_demand_markup_pct != null
-            ? pricing.on_demand_markup_pct
-            : s.on_demand_markup_pct != null
-              ? s.on_demand_markup_pct
-              : 20;
         document.getElementById("kb-price-text").textContent =
           `Pacote: R$ ${((pricing.price_cents || 0) / 100).toFixed(2).replace(".", ",")} · ` +
           `${pricing.included_messages || s.included_messages || 0} msgs · ` +
-          `On-Demand = Gemini + ${markup}%`;
+          `On-Demand opcional após a cota`;
         const toggle = document.getElementById("kb-ondemand");
         toggle.setAttribute("aria-checked", s.on_demand_enabled ? "true" : "false");
         toggle.classList.toggle("is-on", Boolean(s.on_demand_enabled));
