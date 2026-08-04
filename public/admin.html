@@ -107,26 +107,10 @@
           <div id="wa-error" class="auth-alert" hidden></div>
           <div id="wa-ok" class="auth-ok" hidden></div>
 
-          <form class="admin-filters" id="wa-create-form" autocomplete="off">
-            <label>
-              <span>Telefone (que vai parear)</span>
-              <input type="tel" id="wa-create-phone" placeholder="(11) 99999-8888" required />
-            </label>
-            <label>
-              <span>Rótulo</span>
-              <input type="text" id="wa-create-label" maxlength="120" placeholder="Ex.: MuhBianco — Site" />
-            </label>
-            <label>
-              <span>Escopo</span>
-              <select id="wa-create-service">
-                <option value="">Geral (qualquer serviço)</option>
-              </select>
-            </label>
-            <div class="admin-filters-actions">
-              <button type="submit" class="btn btn-primary">Adicionar número</button>
-              <button type="button" class="btn btn-ghost" id="wa-refresh">Atualizar lista</button>
-            </div>
-          </form>
+          <div class="admin-filters-actions">
+            <button type="button" class="btn btn-primary" id="wa-open-create">Adicionar número</button>
+            <button type="button" class="btn btn-ghost" id="wa-refresh">Atualizar lista</button>
+          </div>
 
           <div id="wa-empty" class="tx-empty" hidden>
             <p>Nenhum número oficial cadastrado.</p>
@@ -270,6 +254,34 @@
       </label>
       <div class="admin-filters-actions">
         <button type="submit" class="btn btn-primary" value="confirm">Conceder</button>
+        <button type="submit" class="btn btn-ghost" value="cancel">Cancelar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="admin-credit-dialog" id="wa-create-dialog">
+    <form method="dialog" id="wa-create-form" autocomplete="off">
+      <h3>Adicionar número oficial</h3>
+      <p class="hint">Cria a instância no WuzAPI. Depois pareie com QR ou código.</p>
+      <label>
+        <span>Telefone (que vai parear)</span>
+        <input type="tel" id="wa-create-phone" placeholder="(11) 99999-8888" required />
+      </label>
+      <label>
+        <span>Rótulo</span>
+        <input type="text" id="wa-create-label" maxlength="120" placeholder="Ex.: MuhBianco — Site" />
+      </label>
+      <label>
+        <span>Escopo</span>
+        <select id="wa-create-service">
+          <option value="">Geral (qualquer serviço)</option>
+        </select>
+      </label>
+      <p class="auth-alert" id="wa-create-error" hidden></p>
+      <div class="admin-filters-actions">
+        <button type="submit" class="btn btn-primary" value="confirm" id="wa-create-submit">
+          Adicionar
+        </button>
         <button type="submit" class="btn btn-ghost" value="cancel">Cancelar</button>
       </div>
     </form>
@@ -1039,6 +1051,9 @@
       const waEmpty = document.getElementById("wa-empty");
       const waList = document.getElementById("wa-list");
       const waCreateService = document.getElementById("wa-create-service");
+      const waCreateDialog = document.getElementById("wa-create-dialog");
+      const waCreateForm = document.getElementById("wa-create-form");
+      const waCreateError = document.getElementById("wa-create-error");
 
       function showWaError(msg) {
         waOk.hidden = true;
@@ -1204,23 +1219,42 @@
         loadWhatsapp();
       });
 
-      document.getElementById("wa-create-form").addEventListener("submit", async (event) => {
+      document.getElementById("wa-open-create").addEventListener("click", async () => {
+        showWaError("");
+        showWaOk("");
+        waCreateError.hidden = true;
+        waCreateError.textContent = "";
+        document.getElementById("wa-create-phone").value = "";
+        document.getElementById("wa-create-label").value = "";
+        waCreateService.value = "";
+        await ensureWaServiceOptions();
+        waCreateDialog.showModal();
+        document.getElementById("wa-create-phone").focus();
+      });
+
+      waCreateForm.addEventListener("submit", async (event) => {
+        const submitter = event.submitter;
+        if (!submitter || submitter.value !== "confirm") {
+          return;
+        }
         event.preventDefault();
         const phone = document.getElementById("wa-create-phone").value;
         const label = document.getElementById("wa-create-label").value;
         const serviceId = waCreateService.value || undefined;
-        const btn = event.target.querySelector('button[type="submit"]');
+        const btn = document.getElementById("wa-create-submit");
         btn.disabled = true;
-        showWaError("");
+        waCreateError.hidden = true;
+        waCreateError.textContent = "";
         try {
           await MuhAuth.adminCreateSharedWa({ phone, label, serviceId });
-          document.getElementById("wa-create-phone").value = "";
-          document.getElementById("wa-create-label").value = "";
-          waCreateService.value = "";
-          showWaOk("Número provisionado no WuzAPI. Pareie com QR ou código e ative no pool.");
+          waCreateDialog.close();
+          showWaOk(
+            "Número provisionado no WuzAPI. Pareie com QR ou código e ative no pool."
+          );
           await loadWhatsapp();
         } catch (err) {
-          showWaError(err.message || "Falha ao criar.");
+          waCreateError.hidden = false;
+          waCreateError.textContent = err.message || "Falha ao criar.";
         } finally {
           btn.disabled = false;
         }
