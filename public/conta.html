@@ -703,6 +703,16 @@
         if (service.billing_mode === "monthly") {
           return `${brl(service.price_cents)} por ${periodo}, debitado do saldo.`;
         }
+        if (service.billing_mode === "per_use") {
+          const markup =
+            service.on_demand_markup_pct != null ? service.on_demand_markup_pct : 20;
+          return (
+            `Por request: custo LLM + ${markup}% no saldo` +
+            (service.min_balance_cents
+              ? ` · saldo mínimo ${brl(service.min_balance_cents)}`
+              : "")
+          );
+        }
         return `${brl(service.price_cents)} por uso, debitado do saldo.`;
       }
 

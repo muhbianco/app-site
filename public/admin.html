@@ -254,34 +254,30 @@
             <span>Modo de cobrança</span>
             <select data-field="billing_mode">
               <option value="monthly">Assinatura por período</option>
-              <option value="per_use">Por uso</option>
+              <option value="per_use">Por uso (LLM + markup)</option>
               <option value="pack">Pacote (cota + On-Demand)</option>
             </select>
           </label>
-          <label>
+          <label data-field="price-block">
             <span>Preço (R$)</span>
-            <input type="number" data-field="price" min="0" step="0.01" required />
+            <input type="number" data-field="price" min="0" step="0.01" />
           </label>
-          <label>
+          <label data-field="period-block">
             <span>Período (dias)</span>
-            <input type="number" data-field="period_days" min="1" max="365" required />
+            <input type="number" data-field="period_days" min="1" max="365" />
           </label>
           <label>
             <span>Saldo mínimo (R$)</span>
             <input type="number" data-field="min_balance" min="0" step="0.01" required />
           </label>
-          <label data-field="pack-block">
+          <label data-field="msgs-block" hidden>
             <span>Msgs inclusas / período</span>
             <input type="number" data-field="included_messages" min="0" max="1000000" step="1" placeholder="Ex.: 300" />
           </label>
-          <label data-field="pack-block">
-            <span>Markup On-Demand (%)</span>
+          <label data-field="markup-block" hidden>
+            <span>Markup sobre LLM (%)</span>
             <input type="number" data-field="on_demand_markup_pct" min="0" max="500" step="1" placeholder="Ex.: 20" />
           </label>
-          <p class="hint" data-field="pack-hint" hidden>
-            Pacote: cobrança do período + cota de mensagens. Acabou a cota → On-Demand
-            (custo Gemini + markup %) se o cliente ligar o toggle.
-          </p>
           <label>
             <span>Situação</span>
             <select data-field="is_active">
@@ -314,7 +310,7 @@
         servicos: {
           title: "Cobrança dos serviços",
           lede:
-            "Cada serviço define seu modo de cobrança (período, por uso ou pacote com cota/On-Demand). Alterações valem para novas assinaturas — quem já assinou mantém o preço congelado até renovar.",
+            "Cada serviço define o modo de cobrança: assinatura por período, por uso (LLM + markup) ou pacote com cota/On-Demand. Alterações valem para novas assinaturas — quem já assinou mantém o preço congelado até renovar.",
         },
         usuarios: {
           title: "Usuários e saldo",
@@ -457,35 +453,37 @@
 
         q("billing_mode").value = service.billing_mode;
         q("price").value = (service.price_cents / 100).toFixed(2);
-        q("period_days").value = service.period_days;
+        q("period_days").value = service.period_days || 30;
         q("min_balance").value = (service.min_balance_cents / 100).toFixed(2);
         q("is_active").value = String(service.is_active);
         q("requires_phone").value = String(service.requires_phone);
-
-        function syncPackFields() {
-          const isPack = q("billing_mode").value === "pack";
-          node.querySelectorAll('[data-field="pack-block"]').forEach((el) => {
-            el.hidden = !isPack;
-          });
-          q("pack-hint").hidden = !isPack;
-          if (isPack) {
-            if (q("included_messages").value === "") {
-              q("included_messages").value =
-                service.included_messages != null ? service.included_messages : "300";
-            }
-            if (q("on_demand_markup_pct").value === "") {
-              q("on_demand_markup_pct").value =
-                service.on_demand_markup_pct != null ? service.on_demand_markup_pct : "20";
-            }
-          }
-        }
-
         q("included_messages").value =
           service.included_messages != null ? service.included_messages : "";
         q("on_demand_markup_pct").value =
           service.on_demand_markup_pct != null ? service.on_demand_markup_pct : "";
-        syncPackFields();
-        q("billing_mode").addEventListener("change", syncPackFields);
+
+        function syncModeFields() {
+          const mode = q("billing_mode").value;
+          const isPerUse = mode === "per_use";
+          const isPack = mode === "pack";
+          q("price-block").hidden = isPerUse;
+          q("period-block").hidden = isPerUse;
+          q("msgs-block").hidden = !isPack;
+          q("markup-block").hidden = !(isPerUse || isPack);
+          if ((isPerUse || isPack) && q("on_demand_markup_pct").value === "") {
+            q("on_demand_markup_pct").value =
+              service.on_demand_markup_pct != null ? service.on_demand_markup_pct : "20";
+          }
+          if (isPack && q("included_messages").value === "") {
+            q("included_messages").value =
+              service.included_messages != null ? service.included_messages : "300";
+          }
+          q("price").required = !isPerUse;
+          q("period_days").required = !isPerUse;
+        }
+
+        syncModeFields();
+        q("billing_mode").addEventListener("change", syncModeFields);
 
         q("users-link").href = `/admin-servico-usuarios.html?service_id=${encodeURIComponent(
           service.id
@@ -499,18 +497,29 @@
             const mode = q("billing_mode").value;
             const payload = {
               billing_mode: mode,
-              price_cents: Math.round(Number(q("price").value) * 100),
-              period_days: Number(q("period_days").value),
               min_balance_cents: Math.round(Number(q("min_balance").value) * 100),
               is_active: q("is_active").value === "true",
               requires_phone: q("requires_phone").value === "true",
             };
-            if (mode === "pack") {
-              const msgsRaw = q("included_messages").value.trim();
-              const markupRaw = q("on_demand_markup_pct").value.trim();
-              payload.included_messages = Number(msgsRaw || "0");
-              payload.on_demand_markup_pct = Number(markupRaw || "20");
+            if (mode === "per_use") {
+              payload.price_cents = 0;
+              payload.period_days = service.period_days || 30;
+              payload.included_messages = null;
+              payload.on_demand_markup_pct = Number(
+                q("on_demand_markup_pct").value.trim() || "20"
+              );
+            } else if (mode === "pack") {
+              payload.price_cents = Math.round(Number(q("price").value) * 100);
+              payload.period_days = Number(q("period_days").value || "30");
+              payload.included_messages = Number(
+                q("included_messages").value.trim() || "0"
+              );
+              payload.on_demand_markup_pct = Number(
+                q("on_demand_markup_pct").value.trim() || "20"
+              );
             } else {
+              payload.price_cents = Math.round(Number(q("price").value) * 100);
+              payload.period_days = Number(q("period_days").value || "30");
               payload.included_messages = null;
               payload.on_demand_markup_pct = null;
             }
