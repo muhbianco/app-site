@@ -1127,7 +1127,7 @@
             <div>
               <h3>${row.label || formatPhone(row.phone)}</h3>
               <p class="hint">${formatPhone(row.phone)} · ${scope}</p>
-              <p class="hint" data-field="status-line">${active} · ${live} · ${row.subscribers || 0} assinante(s) · token ${row.token_hint || "—"}</p>
+              <p class="hint" data-field="status-line">${active} · ${live} · ${row.subscribers || 0} assinatura(s) neste número · token ${row.token_hint || "—"}</p>
               <p class="hint">Instância: ${row.instance_name || "—"}</p>
             </div>
             <span class="settings-badge" data-state="${row.is_active ? "ok" : "info"}">${row.is_active ? "Pool" : "Off"}</span>
