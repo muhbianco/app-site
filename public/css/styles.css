@@ -1977,12 +1977,12 @@ button.linkish {
 }
 
 .wa-config-dialog {
-  max-width: min(560px, calc(100vw - 1.5rem));
+  max-width: min(640px, calc(100vw - 1.5rem));
 }
 
 .wa-config-card {
-  max-height: min(88vh, 720px);
-  overflow: auto;
+  max-height: min(94vh, 920px);
+  overflow: visible;
 }
 
 .wa-chooser {
@@ -2075,7 +2075,7 @@ button.linkish {
 .wa-groups-list {
   display: grid;
   gap: 0.45rem;
-  max-height: 280px;
+  max-height: min(48vh, 420px);
   overflow: auto;
   padding-right: 0.15rem;
 }
