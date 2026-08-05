@@ -525,6 +525,10 @@
         </p>
 
         <div id="wa-owned-step-pair">
+          <p class="hint" style="margin-top:0">
+            Pareie o WhatsApp agora. O bot só começa a responder depois que você
+            concluir onde ele deve atender (próximos passos).
+          </p>
           <div id="wa-owned-connected" hidden>
             <p class="hint" id="wa-owned-connected-text">
               WhatsApp já conectado nesta instância.
@@ -563,6 +567,9 @@
 
         <div id="wa-owned-step-scope" hidden>
           <p class="hint">Onde o agente deve responder neste WhatsApp?</p>
+          <p class="hint">
+            Ao confirmar, o bot é ativado nesse número com a opção escolhida.
+          </p>
           <div class="wa-scope-choices" id="wa-scope-choices">
             <button type="button" class="wa-choice-box" data-wa-scope="dm">
               <strong>Só conversas privadas</strong>
@@ -1777,7 +1784,10 @@
               agent_wa: result.agent_wa,
             };
           }
-          showModalOk(result.message || "Configuração salva.");
+          showModalOk(
+            result.message ||
+              "Configuração salva. O agente já pode responder neste WhatsApp."
+          );
           setOwnedUi({
             loggedIn: true,
             botPhone: (result.agent_wa && result.agent_wa.bot_phone) || agentWa().bot_phone,
