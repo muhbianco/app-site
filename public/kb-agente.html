@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=32" />
+  <link rel="stylesheet" href="/css/styles.css?v=33" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -40,16 +40,30 @@
     <section class="settings-section kb-panel" id="kb-persona">
       <h2>Personalidade</h2>
       <p class="auth-lede">
-        Como o agente deve falar com seus clientes. As regras de segurança MuhBianco sempre prevalecem.
+        Como o agente deve falar com seus clientes. As regras mestras da plataforma MuhBianco
+        sempre prevalecem — em qualquer modo.
       </p>
-      <label class="kb-field">
+
+      <p class="kb-field-label">Modo do agente</p>
+      <div class="wa-scope-choices kb-mode-choices" id="kb-mode-choices" role="radiogroup" aria-label="Modo do agente">
+        <button type="button" class="wa-choice-box is-active" data-kb-mode="closed">
+          <strong>Universo fechado</strong>
+          <span>Responde só com base nos documentos indexados. Exige documentos ativos.</span>
+        </button>
+        <button type="button" class="wa-choice-box" data-kb-mode="open">
+          <strong>Modo aberto</strong>
+          <span>Não exige documentos. Pode conversar de forma geral, ainda respeitando as regras mestras.</span>
+        </button>
+      </div>
+
+      <label class="kb-field" style="margin-top:1rem">
         <span class="kb-field-label">Instruções do agente</span>
         <textarea
           id="kb-personality"
           class="kb-textarea"
           rows="10"
           maxlength="2000"
-          placeholder="Ex.: Você é um assistente de vendas. Responda só com base no catálogo. Tom cordial, frases curtas, trate o cliente por você."
+          placeholder="Ex.: Você é um assistente de vendas. Tom cordial, frases curtas, trate o cliente por você."
         ></textarea>
         <span class="kb-field-hint"><span id="kb-persona-count">0</span>/2000</span>
       </label>
@@ -60,9 +74,9 @@
 
     <section class="settings-section kb-panel" id="kb-docs">
       <h2>Documentos</h2>
-      <p class="auth-lede">
+      <p class="auth-lede" id="kb-docs-lede">
         Aceitos: .md, .txt, .csv, .pdf, .docx ou URL pública. O arquivo original é descartado após indexar;
-        ficam só metadados, texto dos trechos e vetores.
+        ficam só metadados, texto dos trechos e vetores. No universo fechado, documentos ativos são obrigatórios.
       </p>
 
       <form id="kb-upload-form" class="kb-card-form">
@@ -118,10 +132,32 @@
 
       const personality = document.getElementById("kb-personality");
       const personaCount = document.getElementById("kb-persona-count");
+      let selectedKbMode = "closed";
+
       const syncPersonaCount = () => {
         personaCount.textContent = String((personality.value || "").length);
       };
       personality.addEventListener("input", syncPersonaCount);
+
+      function syncKbModeUi() {
+        document.querySelectorAll("#kb-mode-choices [data-kb-mode]").forEach((btn) => {
+          btn.classList.toggle("is-active", btn.dataset.kbMode === selectedKbMode);
+        });
+        const docsLede = document.getElementById("kb-docs-lede");
+        if (docsLede) {
+          docsLede.textContent =
+            selectedKbMode === "open"
+              ? "Aceitos: .md, .txt, .csv, .pdf, .docx ou URL pública. No modo aberto os documentos são opcionais — se existirem, o agente pode consultá-los."
+              : "Aceitos: .md, .txt, .csv, .pdf, .docx ou URL pública. O arquivo original é descartado após indexar; ficam só metadados, texto dos trechos e vetores. No universo fechado, documentos ativos são obrigatórios.";
+        }
+      }
+
+      document.querySelectorAll("#kb-mode-choices [data-kb-mode]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          selectedKbMode = btn.dataset.kbMode || "closed";
+          syncKbModeUi();
+        });
+      });
 
       const fileInput = document.getElementById("kb-upload-file");
       const fileName = document.getElementById("kb-upload-file-name");
@@ -139,7 +175,9 @@
           ? "Envie documentos e ajuste a personalidade. Cota e WhatsApp ficam em Conta → Serviços."
           : "Base vetorial ainda não configurada no servidor. Contate o suporte se o upload falhar.";
         personality.value = s.personality || "";
+        selectedKbMode = s.kb_mode === "open" ? "open" : "closed";
         syncPersonaCount();
+        syncKbModeUi();
 
         const docs = await MuhAuth.kbListDocuments();
         const list = document.getElementById("kb-doc-list");
@@ -195,8 +233,9 @@
         try {
           await MuhAuth.kbPatchSettings({
             personality: personality.value,
+            kb_mode: selectedKbMode,
           });
-          showOk("Personalidade salva.");
+          showOk("Personalidade e modo salvos.");
         } catch (e) { showErr(e.message || "Não salvou."); }
       });
 

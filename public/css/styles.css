@@ -2802,6 +2802,10 @@ button.linkish {
   max-width: 52ch;
 }
 
+.kb-mode-choices {
+  margin: 0.35rem 0 0.85rem;
+}
+
 .kb-field {
   display: grid;
   gap: 0.45rem;
