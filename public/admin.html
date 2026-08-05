@@ -351,6 +351,13 @@
               <option value="false">Não — só Usar agente (número MuhBianco)</option>
             </select>
           </label>
+          <label>
+            <span>Reconhecer imagem / emote</span>
+            <select data-field="image_recognition_enabled">
+              <option value="false">Off — ignora foto e emoji puro</option>
+              <option value="true">On — lê imagens e emotes no WhatsApp</option>
+            </select>
+          </label>
         </div>
         <div class="admin-filters-actions">
           <a class="btn btn-ghost" data-field="users-link" href="#">Ver usuários</a>
@@ -563,6 +570,9 @@
         q("allow_owned_whatsapp").value = String(
           service.allow_owned_whatsapp !== false
         );
+        q("image_recognition_enabled").value = String(
+          service.image_recognition_enabled === true
+        );
         q("included_messages").value =
           service.included_messages != null ? service.included_messages : "";
         q("on_demand_markup_pct").value =
@@ -607,6 +617,8 @@
               is_active: q("is_active").value === "true",
               requires_phone: q("requires_phone").value === "true",
               allow_owned_whatsapp: q("allow_owned_whatsapp").value === "true",
+              image_recognition_enabled:
+                q("image_recognition_enabled").value === "true",
             };
             if (mode === "per_use") {
               payload.price_cents = 0;
