@@ -472,6 +472,37 @@
           .replace(/"/g, "&quot;");
       }
 
+      let modalScrollY = 0;
+      function syncModalScrollLock() {
+        const anyOpen = Boolean(document.querySelector("dialog[open]"));
+        const root = document.documentElement;
+        if (anyOpen) {
+          if (!root.classList.contains("modal-open")) {
+            modalScrollY = window.scrollY || window.pageYOffset || 0;
+            root.classList.add("modal-open");
+            document.body.classList.add("modal-open");
+            document.body.style.top = `-${modalScrollY}px`;
+          }
+          return;
+        }
+        if (!root.classList.contains("modal-open")) return;
+        root.classList.remove("modal-open");
+        document.body.classList.remove("modal-open");
+        document.body.style.top = "";
+        window.scrollTo(0, modalScrollY);
+      }
+
+      function openAppDialog(dialog) {
+        if (!dialog) return;
+        if (typeof dialog.showModal === "function") dialog.showModal();
+        else dialog.setAttribute("open", "");
+        syncModalScrollLock();
+      }
+
+      document.querySelectorAll("dialog").forEach((dialog) => {
+        dialog.addEventListener("close", syncModalScrollLock);
+      });
+
       function verifiedMark(verified, title) {
         if (!verified) return "";
         return (
@@ -763,6 +794,7 @@
         document.getElementById("credit-amount").value = "50.00";
         document.getElementById("credit-note").value = "";
         creditDialog.showModal();
+        syncModalScrollLock();
       });
 
       creditForm.addEventListener("submit", async (event) => {
@@ -1231,6 +1263,7 @@
         waCreateService.value = "";
         await ensureWaServiceOptions();
         waCreateDialog.showModal();
+        syncModalScrollLock();
         document.getElementById("wa-create-phone").focus();
       });
 

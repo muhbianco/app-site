@@ -910,6 +910,45 @@
         return phone || "";
       }
 
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      let modalScrollY = 0;
+      function syncModalScrollLock() {
+        const anyOpen = Boolean(document.querySelector("dialog[open]"));
+        const root = document.documentElement;
+        if (anyOpen) {
+          if (!root.classList.contains("modal-open")) {
+            modalScrollY = window.scrollY || window.pageYOffset || 0;
+            root.classList.add("modal-open");
+            document.body.classList.add("modal-open");
+            document.body.style.top = `-${modalScrollY}px`;
+          }
+          return;
+        }
+        if (!root.classList.contains("modal-open")) return;
+        root.classList.remove("modal-open");
+        document.body.classList.remove("modal-open");
+        document.body.style.top = "";
+        window.scrollTo(0, modalScrollY);
+      }
+
+      function openAppDialog(dialog) {
+        if (!dialog) return;
+        if (typeof dialog.showModal === "function") dialog.showModal();
+        else dialog.setAttribute("open", "");
+        syncModalScrollLock();
+      }
+
+      document.querySelectorAll("dialog").forEach((dialog) => {
+        dialog.addEventListener("close", syncModalScrollLock);
+      });
+
       function formatDate(iso) {
         if (!iso) return "";
         const d = new Date(iso);
@@ -1002,14 +1041,6 @@
             el.appendChild(li);
           });
           el.hidden = false;
-        }
-
-        function escapeHtml(value) {
-          return String(value ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;");
         }
 
         function waSummaryText() {
@@ -1439,7 +1470,7 @@
           endBtn.onclick = onEnd;
           abortBtn.onclick = closeDialog;
           closeBtn.onclick = closeDialog;
-          dialog.showModal();
+          openAppDialog(dialog);
         });
 
         return node;
@@ -1727,6 +1758,7 @@
         async function loadOwnedGroups() {
           const result = await MuhAuth.agentWaGroups(liveService.code);
           renderGroupsList(result.groups || []);
+          clearModalMsg();
           return result;
         }
 
@@ -1849,7 +1881,10 @@
 
         function close() {
           if (typeof dialog.close === "function") dialog.close();
-          else dialog.removeAttribute("open");
+          else {
+            dialog.removeAttribute("open");
+            syncModalScrollLock();
+          }
         }
 
         document.getElementById("wa-config-service-name").textContent = liveService.name || "";
@@ -2095,8 +2130,7 @@
         else if (aw.wa_mode === "owned" && !ownedAllowed()) showChooser();
         else showMode(aw.wa_mode, { persist: false });
 
-        if (typeof dialog.showModal === "function") dialog.showModal();
-        else dialog.setAttribute("open", "");
+        openAppDialog(dialog);
       }
 
       function openTermsDialog(service, { onAccepted, onSuccess, onError }) {
@@ -2123,7 +2157,10 @@
 
         const close = () => {
           if (typeof dialog.close === "function") dialog.close();
-          else dialog.removeAttribute("open");
+          else {
+            dialog.removeAttribute("open");
+            syncModalScrollLock();
+          }
         };
 
         document.getElementById("terms-dialog-close").onclick = close;
@@ -2158,8 +2195,7 @@
           }
         };
 
-        if (typeof dialog.showModal === "function") dialog.showModal();
-        else dialog.setAttribute("open", "");
+        openAppDialog(dialog);
       }
       let pendingServiceMessage = "";
 

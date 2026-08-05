@@ -1913,6 +1913,19 @@ img {
   background: rgba(20, 24, 28, 0.45);
 }
 
+/* Trava o scroll da página enquanto qualquer <dialog> estiver aberto. */
+html.modal-open,
+body.modal-open {
+  overflow: hidden;
+}
+
+body.modal-open {
+  position: fixed;
+  left: 0;
+  right: 0;
+  width: 100%;
+}
+
 .terms-dialog-card {
   margin: 0;
   padding: 1.15rem 1.25rem 1.25rem;
