@@ -2049,6 +2049,49 @@ button.linkish {
   background: #fff;
 }
 
+.wa-scope-choices {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.wa-scope-choices .wa-choice-box.is-active {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+
+.wa-groups-list {
+  display: grid;
+  gap: 0.45rem;
+  max-height: 280px;
+  overflow: auto;
+  padding-right: 0.15rem;
+}
+
+.wa-group-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.wa-group-option input {
+  margin-top: 0.2rem;
+}
+
+.wa-group-option span {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.wa-group-option strong {
+  font-size: 0.95rem;
+}
+
 .phone-list {
   list-style: none;
   margin: 0 0 1rem;

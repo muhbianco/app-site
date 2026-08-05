@@ -519,39 +519,107 @@
       </div>
 
       <div id="wa-panel-owned" class="wa-panel" hidden>
+        <p class="hint" id="wa-owned-step-label">Passo 1 de 3 · Parear WhatsApp</p>
         <p class="hint" id="wa-owned-status">
           Informe o número que vai receber o agente e avance com QR ou código de pareamento.
         </p>
-        <div id="wa-owned-connected" hidden>
-          <p class="hint" id="wa-owned-connected-text">
-            WhatsApp já conectado nesta instância.
-          </p>
-          <div class="balance-actions" style="margin-top:0.75rem">
-            <button type="button" class="btn btn-ghost" id="wa-owned-logout-btn">
-              Desconectar instância
-            </button>
-            <button type="button" class="btn btn-ghost" id="wa-owned-connected-refresh-btn">
-              Atualizar status
-            </button>
+
+        <div id="wa-owned-step-pair">
+          <div id="wa-owned-connected" hidden>
+            <p class="hint" id="wa-owned-connected-text">
+              WhatsApp já conectado nesta instância.
+            </p>
+            <div class="balance-actions" style="margin-top:0.75rem">
+              <button type="button" class="btn btn-primary" id="wa-owned-next-scope-btn">
+                Continuar configuração
+              </button>
+              <button type="button" class="btn btn-ghost" id="wa-owned-logout-btn">
+                Desconectar instância
+              </button>
+              <button type="button" class="btn btn-ghost" id="wa-owned-connected-refresh-btn">
+                Atualizar status
+              </button>
+            </div>
+          </div>
+          <div id="wa-owned-pair-block">
+            <form class="settings-inline-form" id="wa-owned-phone-form">
+              <label>
+                <span>Número do WhatsApp (seu / da empresa)</span>
+                <input type="tel" id="wa-owned-phone" inputmode="tel" autocomplete="tel"
+                       placeholder="(11) 99999-8888" maxlength="20" required />
+              </label>
+              <button type="submit" class="btn btn-primary" id="wa-owned-pair-btn">
+                Gerar código de pareamento
+              </button>
+            </form>
+            <div class="balance-actions" style="margin-top:0.75rem">
+              <button type="button" class="btn btn-ghost" id="wa-owned-qr-btn">Gerar QR code</button>
+              <button type="button" class="btn btn-ghost" id="wa-owned-refresh-btn">Atualizar status</button>
+            </div>
+            <pre class="terms-box" id="wa-owned-pair-result" hidden></pre>
+            <div id="wa-owned-qr" class="wa-qr-wrap" hidden></div>
           </div>
         </div>
-        <div id="wa-owned-pair-block">
-          <form class="settings-inline-form" id="wa-owned-phone-form">
-            <label>
-              <span>Número do WhatsApp (seu / da empresa)</span>
-              <input type="tel" id="wa-owned-phone" inputmode="tel" autocomplete="tel"
-                     placeholder="(11) 99999-8888" maxlength="20" required />
-            </label>
-            <button type="submit" class="btn btn-primary" id="wa-owned-pair-btn">
-              Gerar código de pareamento
+
+        <div id="wa-owned-step-scope" hidden>
+          <p class="hint">Onde o agente deve responder neste WhatsApp?</p>
+          <div class="wa-scope-choices" id="wa-scope-choices">
+            <button type="button" class="wa-choice-box" data-wa-scope="dm">
+              <strong>Só conversas privadas</strong>
+              <span>Responde 1:1. Ignora mensagens em grupos.</span>
             </button>
-          </form>
-          <div class="balance-actions" style="margin-top:0.75rem">
-            <button type="button" class="btn btn-ghost" id="wa-owned-qr-btn">Gerar QR code</button>
-            <button type="button" class="btn btn-ghost" id="wa-owned-refresh-btn">Atualizar status</button>
+            <button type="button" class="wa-choice-box" data-wa-scope="groups">
+              <strong>Só nos grupos escolhidos</strong>
+              <span>Ignora chats privados; responde apenas nos grupos que você selecionar.</span>
+            </button>
+            <button type="button" class="wa-choice-box" data-wa-scope="both">
+              <strong>Privado e grupos</strong>
+              <span>Responde em 1:1 e também nos grupos selecionados.</span>
+            </button>
           </div>
-          <pre class="terms-box" id="wa-owned-pair-result" hidden></pre>
-          <div id="wa-owned-qr" class="wa-qr-wrap" hidden></div>
+          <div class="balance-actions" style="margin-top:0.85rem">
+            <button type="button" class="btn btn-primary" id="wa-owned-scope-next-btn" disabled>
+              Continuar
+            </button>
+            <button type="button" class="btn btn-ghost" id="wa-owned-scope-back-btn">Voltar</button>
+          </div>
+        </div>
+
+        <div id="wa-owned-step-groups" hidden>
+          <p class="hint">
+            Selecione um ou mais grupos em que o agente pode responder.
+            A lista vem do WhatsApp pareado.
+          </p>
+          <div class="balance-actions" style="margin-bottom:0.65rem">
+            <button type="button" class="btn btn-ghost" id="wa-owned-groups-refresh-btn">
+              Atualizar lista de grupos
+            </button>
+          </div>
+          <div id="wa-owned-groups-empty" class="tx-empty" hidden>
+            <p>Nenhum grupo encontrado ainda. Abra o WhatsApp no celular e atualize a lista.</p>
+          </div>
+          <div id="wa-owned-groups-list" class="wa-groups-list" role="group" aria-label="Grupos"></div>
+          <div class="balance-actions" style="margin-top:0.85rem">
+            <button type="button" class="btn btn-primary" id="wa-owned-groups-save-btn">
+              Salvar configuração
+            </button>
+            <button type="button" class="btn btn-ghost" id="wa-owned-groups-back-btn">Voltar</button>
+          </div>
+        </div>
+
+        <div id="wa-owned-step-done" hidden>
+          <p class="hint" id="wa-owned-done-summary">Configuração de exposição salva.</p>
+          <div class="balance-actions" style="margin-top:0.75rem">
+            <button type="button" class="btn btn-primary" id="wa-owned-edit-exposure-btn">
+              Alterar onde responde
+            </button>
+            <button type="button" class="btn btn-ghost" id="wa-owned-done-logout-btn">
+              Desconectar instância
+            </button>
+            <button type="button" class="btn btn-ghost" id="wa-owned-done-close-btn">
+              Fechar
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1401,6 +1469,9 @@
                   bot_phone: sub.kb.bot_phone,
                   has_owned_session: sub.kb.has_owned_session,
                   wa_logged_in: sub.kb.wa_logged_in,
+                  wa_reply_scope: sub.kb.wa_reply_scope || "dm",
+                  wa_groups: sub.kb.wa_groups || [],
+                  wa_owned_wizard_done: Boolean(sub.kb.wa_owned_wizard_done),
                 }
               : {}) ||
             {}
@@ -1501,13 +1572,95 @@
           });
         }
 
-        function setOwnedUi({ loggedIn, botPhone, connected }) {
+        let ownedWizardStep = "pair"; // pair | scope | groups | done
+        let pendingReplyScope = "dm";
+        let pendingGroupSelection = new Map(); // jid -> name
+        let cachedGroupOptions = [];
+
+        function setOwnedStepLabel(step) {
+          const el = document.getElementById("wa-owned-step-label");
+          const map = {
+            pair: "Passo 1 de 3 · Parear WhatsApp",
+            scope: "Passo 2 de 3 · Onde responder",
+            groups: "Passo 3 de 3 · Selecionar grupos",
+            done: "Exposição configurada",
+          };
+          el.textContent = map[step] || map.pair;
+        }
+
+        function showOwnedWizardStep(step) {
+          ownedWizardStep = step;
+          setOwnedStepLabel(step);
+          document.getElementById("wa-owned-step-pair").hidden = step !== "pair";
+          document.getElementById("wa-owned-step-scope").hidden = step !== "scope";
+          document.getElementById("wa-owned-step-groups").hidden = step !== "groups";
+          document.getElementById("wa-owned-step-done").hidden = step !== "done";
+        }
+
+        function syncScopeChoiceUi() {
+          document.querySelectorAll("#wa-scope-choices [data-wa-scope]").forEach((btn) => {
+            btn.classList.toggle("is-active", btn.dataset.waScope === pendingReplyScope);
+          });
+          document.getElementById("wa-owned-scope-next-btn").disabled = !pendingReplyScope;
+        }
+
+        function renderGroupsList(groups) {
+          const list = document.getElementById("wa-owned-groups-list");
+          const empty = document.getElementById("wa-owned-groups-empty");
+          list.innerHTML = "";
+          cachedGroupOptions = Array.isArray(groups) ? groups : [];
+          empty.hidden = cachedGroupOptions.length > 0;
+          cachedGroupOptions.forEach((g) => {
+            const jid = String(g.jid || "");
+            const name = String(g.name || jid);
+            const label = document.createElement("label");
+            label.className = "wa-group-option";
+            const checked = pendingGroupSelection.has(jid);
+            label.innerHTML = `
+              <input type="checkbox" data-wa-group-jid="${jid.replace(/"/g, "")}" ${checked ? "checked" : ""} />
+              <span>
+                <strong>${escapeHtml(name)}</strong>
+                <span class="hint">${escapeHtml(jid)}</span>
+              </span>
+            `;
+            const input = label.querySelector("input");
+            input.addEventListener("change", () => {
+              if (input.checked) pendingGroupSelection.set(jid, name);
+              else pendingGroupSelection.delete(jid);
+            });
+            list.appendChild(label);
+          });
+        }
+
+        function exposureSummaryText(aw) {
+          const scope = aw.wa_reply_scope || "dm";
+          const groups = aw.wa_groups || [];
+          if (scope === "dm") return "Responde só em conversas privadas.";
+          if (scope === "groups") {
+            return `Responde só em ${groups.length} grupo(s) selecionado(s).`;
+          }
+          return `Responde em privado e em ${groups.length} grupo(s).`;
+        }
+
+        function setOwnedUi({ loggedIn, botPhone, connected, agentWa }) {
           const statusEl = document.getElementById("wa-owned-status");
           const connectedEl = document.getElementById("wa-owned-connected");
           const pairBlock = document.getElementById("wa-owned-pair-block");
           const connectedText = document.getElementById("wa-owned-connected-text");
           const phoneInput = document.getElementById("wa-owned-phone");
+          const aw = agentWa || agentWa();
+
+          if (loggedIn && aw.wa_owned_wizard_done) {
+            showOwnedWizardStep("done");
+            document.getElementById("wa-owned-done-summary").textContent =
+              `${exposureSummaryText(aw)} ` +
+              (botPhone ? `Número: ${formatPhone(String(botPhone))}.` : "");
+            statusEl.textContent = "WhatsApp conectado.";
+            return;
+          }
+
           if (loggedIn) {
+            showOwnedWizardStep("pair");
             connectedEl.hidden = false;
             pairBlock.hidden = true;
             document.getElementById("wa-owned-pair-result").hidden = true;
@@ -1517,13 +1670,19 @@
             const linkHint = connected ? "conectado" : "logado (reconectando…)";
             statusEl.textContent = `Instância ${linkHint} · ${phoneLabel}`;
             connectedText.textContent =
-              `WhatsApp já conectado (${phoneLabel}). Não é preciso parear de novo. ` +
-              "Use Desconectar instância se quiser trocar de número.";
+              `WhatsApp pareado (${phoneLabel}). Continue para escolher onde o agente responde.`;
             if (botPhone) {
               phoneInput.value = String(botPhone).replace(/:.*/, "");
             }
+            pendingReplyScope = aw.wa_reply_scope || "dm";
+            pendingGroupSelection = new Map(
+              (aw.wa_groups || []).map((g) => [g.jid, g.name || g.jid])
+            );
+            syncScopeChoiceUi();
             return;
           }
+
+          showOwnedWizardStep("pair");
           connectedEl.hidden = true;
           pairBlock.hidden = false;
           statusEl.textContent = botPhone
@@ -1537,10 +1696,18 @@
         async function refreshOwnedSessionUi({ quiet } = { quiet: false }) {
           try {
             const st = await MuhAuth.agentWaStatus(liveService.code);
+            const aw = st.agent_wa || agentWa();
+            if (st.agent_wa) {
+              liveService.subscription = {
+                ...(liveService.subscription || {}),
+                agent_wa: st.agent_wa,
+              };
+            }
             setOwnedUi({
               loggedIn: Boolean(st.logged_in),
               botPhone: st.bot_phone,
               connected: Boolean(st.connected),
+              agentWa: aw,
             });
             if (!quiet) showModalOk("Status atualizado.");
             return st;
@@ -1550,10 +1717,42 @@
               loggedIn: false,
               botPhone: aw.bot_phone,
               connected: false,
+              agentWa: aw,
             });
             if (!quiet) showModalErr(e.message || "Falha ao consultar status.");
             return null;
           }
+        }
+
+        async function loadOwnedGroups() {
+          const result = await MuhAuth.agentWaGroups(liveService.code);
+          renderGroupsList(result.groups || []);
+          return result;
+        }
+
+        async function saveOwnedExposure() {
+          const groups = [...pendingGroupSelection.entries()].map(([jid, name]) => ({
+            jid,
+            name,
+          }));
+          const result = await MuhAuth.agentWaSetExposure(liveService.code, {
+            replyScope: pendingReplyScope,
+            groups,
+          });
+          if (result.agent_wa) {
+            liveService.subscription = {
+              ...(liveService.subscription || {}),
+              agent_wa: result.agent_wa,
+            };
+          }
+          showModalOk(result.message || "Configuração salva.");
+          setOwnedUi({
+            loggedIn: true,
+            botPhone: (result.agent_wa && result.agent_wa.bot_phone) || agentWa().bot_phone,
+            connected: true,
+            agentWa: result.agent_wa || agentWa(),
+          });
+          if (onChanged) await onChanged();
         }
 
         async function refreshFromCatalog() {
@@ -1564,9 +1763,10 @@
           const aw = agentWa();
           if (aw.wa_mode === "owned") {
             setOwnedUi({
-              loggedIn: false,
+              loggedIn: Boolean(aw.wa_logged_in),
               botPhone: aw.bot_phone,
-              connected: false,
+              connected: Boolean(aw.wa_logged_in),
+              agentWa: aw,
             });
           }
         }
@@ -1780,7 +1980,82 @@
         document.getElementById("wa-owned-refresh-btn").onclick = onOwnedRefreshClick;
         document.getElementById("wa-owned-connected-refresh-btn").onclick = onOwnedRefreshClick;
 
-        document.getElementById("wa-owned-logout-btn").onclick = async () => {
+        document.getElementById("wa-owned-next-scope-btn").onclick = () => {
+          syncScopeChoiceUi();
+          showOwnedWizardStep("scope");
+        };
+
+        document.querySelectorAll("#wa-scope-choices [data-wa-scope]").forEach((btn) => {
+          btn.onclick = () => {
+            pendingReplyScope = btn.dataset.waScope;
+            syncScopeChoiceUi();
+          };
+        });
+
+        document.getElementById("wa-owned-scope-back-btn").onclick = () => {
+          showOwnedWizardStep("pair");
+        };
+
+        document.getElementById("wa-owned-scope-next-btn").onclick = async () => {
+          if (pendingReplyScope === "dm") {
+            pendingGroupSelection = new Map();
+            try {
+              await saveOwnedExposure();
+            } catch (e) {
+              showModalErr(e.message || "Não foi possível salvar.");
+            }
+            return;
+          }
+          showOwnedWizardStep("groups");
+          try {
+            await loadOwnedGroups();
+          } catch (e) {
+            showModalErr(e.message || "Não foi possível listar grupos.");
+          }
+        };
+
+        document.getElementById("wa-owned-groups-back-btn").onclick = () => {
+          showOwnedWizardStep("scope");
+        };
+
+        document.getElementById("wa-owned-groups-refresh-btn").onclick = async () => {
+          const btn = document.getElementById("wa-owned-groups-refresh-btn");
+          btn.disabled = true;
+          try {
+            await loadOwnedGroups();
+            showModalOk("Lista de grupos atualizada.");
+          } catch (e) {
+            showModalErr(e.message || "Falha ao listar grupos.");
+          } finally {
+            btn.disabled = false;
+          }
+        };
+
+        document.getElementById("wa-owned-groups-save-btn").onclick = async () => {
+          const btn = document.getElementById("wa-owned-groups-save-btn");
+          btn.disabled = true;
+          try {
+            await saveOwnedExposure();
+          } catch (e) {
+            showModalErr(e.message || "Não foi possível salvar.");
+          } finally {
+            btn.disabled = false;
+          }
+        };
+
+        document.getElementById("wa-owned-edit-exposure-btn").onclick = () => {
+          const aw = agentWa();
+          pendingReplyScope = aw.wa_reply_scope || "dm";
+          pendingGroupSelection = new Map(
+            (aw.wa_groups || []).map((g) => [g.jid, g.name || g.jid])
+          );
+          syncScopeChoiceUi();
+          showOwnedWizardStep("scope");
+        };
+
+        document.getElementById("wa-owned-done-close-btn").onclick = close;
+
+        async function doOwnedLogout(btn) {
           if (
             !confirm(
               "Desconectar esta instância? O WhatsApp sai do aparelho vinculado e será preciso parear de novo."
@@ -1788,19 +2063,30 @@
           ) {
             return;
           }
-          const btn = document.getElementById("wa-owned-logout-btn");
           btn.disabled = true;
           try {
             const result = await MuhAuth.agentWaLogout(liveService.code);
             showModalOk(result.message || "Instância desconectada.");
             if (onChanged) await onChanged();
             await refreshFromCatalog();
-            setOwnedUi({ loggedIn: false, botPhone: null, connected: false });
+            setOwnedUi({
+              loggedIn: false,
+              botPhone: null,
+              connected: false,
+              agentWa: (result.agent_wa || { wa_mode: "owned" }),
+            });
           } catch (e) {
             showModalErr(e.message || "Falha ao desconectar.");
           } finally {
             btn.disabled = false;
           }
+        }
+
+        document.getElementById("wa-owned-logout-btn").onclick = async (event) => {
+          await doOwnedLogout(event.currentTarget);
+        };
+        document.getElementById("wa-owned-done-logout-btn").onclick = async (event) => {
+          await doOwnedLogout(event.currentTarget);
         };
 
         const aw = agentWa();

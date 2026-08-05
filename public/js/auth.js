@@ -516,6 +516,27 @@
     return jsonOrThrow(response, "Não foi possível desconectar a instância WhatsApp.");
   }
 
+  async function agentWaGroups(code) {
+    const response = await api(
+      `${API_PREFIX}/services/${encodeURIComponent(code)}/agent-whatsapp/groups`
+    );
+    return jsonOrThrow(response, "Não foi possível listar os grupos do WhatsApp.");
+  }
+
+  async function agentWaSetExposure(code, { replyScope, groups } = {}) {
+    const response = await api(
+      `${API_PREFIX}/services/${encodeURIComponent(code)}/agent-whatsapp/exposure`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          reply_scope: replyScope,
+          groups: Array.isArray(groups) ? groups : [],
+        }),
+      }
+    );
+    return jsonOrThrow(response, "Não foi possível salvar a configuração de exposição.");
+  }
+
   async function disableService(code, { immediateRefund = false } = {}) {
     const response = await api(`${API_PREFIX}/services/${encodeURIComponent(code)}/disable`, {
       method: "POST",
@@ -873,6 +894,8 @@
     agentWaQr,
     agentWaPair,
     agentWaLogout,
+    agentWaGroups,
+    agentWaSetExposure,
     disableService,
     kbSettings,
     kbPatchSettings,
