@@ -1981,8 +1981,21 @@ button.linkish {
 }
 
 .wa-config-card {
-  max-height: min(94vh, 920px);
-  overflow: visible;
+  max-height: min(92vh, 880px);
+  overflow: hidden;
+}
+
+.wa-groups-list {
+  display: grid;
+  gap: 0.45rem;
+  max-height: min(40vh, 320px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
 }
 
 .wa-chooser {
@@ -2070,14 +2083,6 @@ button.linkish {
 .wa-scope-choices .wa-choice-box.is-active {
   border-color: var(--ink);
   box-shadow: inset 0 0 0 1px var(--ink);
-}
-
-.wa-groups-list {
-  display: grid;
-  gap: 0.45rem;
-  max-height: min(48vh, 420px);
-  overflow: auto;
-  padding-right: 0.15rem;
 }
 
 .wa-group-option {
