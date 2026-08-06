@@ -989,7 +989,7 @@
         if (mode === "pack") {
           const msgs =
             (live && sub.pack && sub.pack.included_messages) ||
-            (live && sub.kb && sub.kb.included_messages) ||
+            (live && sub.assistant && sub.assistant.included_messages) ||
             service.included_messages ||
             0;
           return (
@@ -1075,10 +1075,10 @@
         }
 
         function waSummaryText() {
-          const aw = (sub && (sub.agent_wa || (sub.kb && {
-            wa_mode: sub.kb.wa_mode,
-            wa_setup_done: sub.kb.wa_setup_done,
-            bot_phone: sub.kb.bot_phone,
+          const aw = (sub && (sub.agent_wa || (sub.assistant && {
+            wa_mode: sub.assistant.wa_mode,
+            wa_setup_done: sub.assistant.wa_setup_done,
+            bot_phone: sub.assistant.bot_phone,
           }))) || {};
           const phones = (sub && sub.phones) || [];
           if (!aw.wa_setup_done || !aw.wa_mode) {
@@ -1160,10 +1160,10 @@
             q("dashboard-btn").textContent = "Abrir painel";
             q("dashboard-btn").href = "/financeiro.html";
           }
-          if (service.code === "kb_whatsapp") {
+          if (service.code === "personal_agent") {
             q("dashboard-btn").hidden = false;
             q("dashboard-btn").textContent = "Configurar agente";
-            q("dashboard-btn").href = "/kb-agente.html";
+            q("dashboard-btn").href = "/assistente.html";
           }
           q("pause-btn").hidden = paused;
           q("resume-btn").hidden = !paused;
@@ -1214,7 +1214,7 @@
 
           if (sub.billing_mode === "pack") {
             const packBlock = q("pack-block");
-            const pack = sub.pack || sub.kb || {};
+            const pack = sub.pack || sub.assistant || {};
             const included = Number(
               pack.included_messages || service.included_messages || 0
             );
@@ -1311,7 +1311,7 @@
             label: "Resposta em áudio (TTS)",
             value: ttsOn ? "Ligado" : "Desligado",
           });
-          const aw = sub.agent_wa || sub.kb || {};
+          const aw = sub.agent_wa || sub.assistant || {};
           if (aw.wa_mode === "owned") {
             let modoValue = "Expor no próprio (aguardando pareamento)";
             if (aw.bot_phone) {
@@ -1359,7 +1359,7 @@
           } else {
             rows.push({ label: "Modo WhatsApp", value: "Ainda não configurado" });
           }
-          if (service.code === "kb_whatsapp" && sub.kb) {
+          if (service.code === "personal_agent" && sub.assistant) {
             // Cota fica só no medidor do pacote abaixo — sem repetir aqui.
           }
           setStatusDetail(rows);
@@ -1581,16 +1581,16 @@
           const sub = liveService.subscription || {};
           return (
             sub.agent_wa ||
-            (sub.kb
+            (sub.assistant
               ? {
-                  wa_mode: sub.kb.wa_mode,
-                  wa_setup_done: sub.kb.wa_setup_done || Boolean(sub.kb.wa_mode),
-                  bot_phone: sub.kb.bot_phone,
-                  has_owned_session: sub.kb.has_owned_session,
-                  wa_logged_in: sub.kb.wa_logged_in,
-                  wa_reply_scope: sub.kb.wa_reply_scope || "dm",
-                  wa_groups: sub.kb.wa_groups || [],
-                  wa_owned_wizard_done: Boolean(sub.kb.wa_owned_wizard_done),
+                  wa_mode: sub.assistant.wa_mode,
+                  wa_setup_done: sub.assistant.wa_setup_done || Boolean(sub.assistant.wa_mode),
+                  bot_phone: sub.assistant.bot_phone,
+                  has_owned_session: sub.assistant.has_owned_session,
+                  wa_logged_in: sub.assistant.wa_logged_in,
+                  wa_reply_scope: sub.assistant.wa_reply_scope || "dm",
+                  wa_groups: sub.assistant.wa_groups || [],
+                  wa_owned_wizard_done: Boolean(sub.assistant.wa_owned_wizard_done),
                 }
               : {}) ||
             {}

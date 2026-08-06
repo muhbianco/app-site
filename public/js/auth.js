@@ -675,12 +675,12 @@
   }
 
   async function kbSettings() {
-    const response = await api(`${API_PREFIX}/kb/settings`);
+    const response = await api(`${API_PREFIX}/personal-agent/settings`);
     return jsonOrThrow(response, "Não foi possível carregar o agente KB.");
   }
 
   async function kbPatchSettings(payload) {
-    const response = await api(`${API_PREFIX}/kb/settings`, {
+    const response = await api(`${API_PREFIX}/personal-agent/settings`, {
       method: "PATCH",
       body: JSON.stringify(payload || {}),
     });
@@ -699,18 +699,18 @@
     }
     const qs = query.toString();
     const response = await api(
-      `${API_PREFIX}/kb/documents${qs ? `?${qs}` : ""}`
+      `${API_PREFIX}/personal-agent/documents${qs ? `?${qs}` : ""}`
     );
     return jsonOrThrow(response, "Não foi possível listar documentos.");
   }
 
   async function kbListTools() {
-    const response = await api(`${API_PREFIX}/kb/tools`);
+    const response = await api(`${API_PREFIX}/personal-agent/tools`);
     return jsonOrThrow(response, "Não foi possível listar ferramentas.");
   }
 
   async function kbCreateTool(payload) {
-    const response = await api(`${API_PREFIX}/kb/tools`, {
+    const response = await api(`${API_PREFIX}/personal-agent/tools`, {
       method: "POST",
       body: JSON.stringify(payload || {}),
     });
@@ -719,7 +719,7 @@
 
   async function kbUpdateTool(toolId, payload) {
     const response = await api(
-      `${API_PREFIX}/kb/tools/${encodeURIComponent(toolId)}`,
+      `${API_PREFIX}/personal-agent/tools/${encodeURIComponent(toolId)}`,
       { method: "PATCH", body: JSON.stringify(payload || {}) }
     );
     return jsonOrThrow(response, "Não foi possível atualizar a ferramenta.");
@@ -727,7 +727,7 @@
 
   async function kbDeleteTool(toolId) {
     const response = await api(
-      `${API_PREFIX}/kb/tools/${encodeURIComponent(toolId)}`,
+      `${API_PREFIX}/personal-agent/tools/${encodeURIComponent(toolId)}`,
       { method: "DELETE" }
     );
     return jsonOrThrow(response, "Não foi possível remover a ferramenta.");
@@ -735,17 +735,54 @@
 
   async function kbTestTool(toolId) {
     const response = await api(
-      `${API_PREFIX}/kb/tools/${encodeURIComponent(toolId)}/test`,
+      `${API_PREFIX}/personal-agent/tools/${encodeURIComponent(toolId)}/test`,
       { method: "POST" }
     );
     return jsonOrThrow(response, "Não foi possível testar a ferramenta.");
+  }
+
+  async function kbListSchedules() {
+    const response = await api(`${API_PREFIX}/personal-agent/schedules`);
+    return jsonOrThrow(response, "Não foi possível listar agendamentos.");
+  }
+
+  async function kbCreateSchedule(payload) {
+    const response = await api(`${API_PREFIX}/personal-agent/schedules`, {
+      method: "POST",
+      body: JSON.stringify(payload || {}),
+    });
+    return jsonOrThrow(response, "Não foi possível criar o agendamento.");
+  }
+
+  async function kbUpdateSchedule(scheduleId, payload) {
+    const response = await api(
+      `${API_PREFIX}/personal-agent/schedules/${encodeURIComponent(scheduleId)}`,
+      { method: "PATCH", body: JSON.stringify(payload || {}) }
+    );
+    return jsonOrThrow(response, "Não foi possível atualizar o agendamento.");
+  }
+
+  async function kbDeleteSchedule(scheduleId) {
+    const response = await api(
+      `${API_PREFIX}/personal-agent/schedules/${encodeURIComponent(scheduleId)}`,
+      { method: "DELETE" }
+    );
+    return jsonOrThrow(response, "Não foi possível remover o agendamento.");
+  }
+
+  async function kbTestSchedule(scheduleId) {
+    const response = await api(
+      `${API_PREFIX}/personal-agent/schedules/${encodeURIComponent(scheduleId)}/test`,
+      { method: "POST" }
+    );
+    return jsonOrThrow(response, "Não foi possível testar o agendamento.");
   }
 
   async function kbUploadDocument(file, title) {
     const form = new FormData();
     form.append("file", file);
     if (title) form.append("title", title);
-    const response = await api(`${API_PREFIX}/kb/documents/upload`, {
+    const response = await api(`${API_PREFIX}/personal-agent/documents/upload`, {
       method: "POST",
       body: form,
     });
@@ -753,7 +790,7 @@
   }
 
   async function kbIngestUrl(url, title) {
-    const response = await api(`${API_PREFIX}/kb/documents/url`, {
+    const response = await api(`${API_PREFIX}/personal-agent/documents/url`, {
       method: "POST",
       body: JSON.stringify({ url, title: title || null }),
     });
@@ -762,7 +799,7 @@
 
   async function kbActivateDocument(documentId) {
     const response = await api(
-      `${API_PREFIX}/kb/documents/${encodeURIComponent(documentId)}/activate`,
+      `${API_PREFIX}/personal-agent/documents/${encodeURIComponent(documentId)}/activate`,
       { method: "POST" }
     );
     return jsonOrThrow(response, "Não foi possível ativar a versão.");
@@ -770,14 +807,14 @@
 
   async function kbArchiveDocument(documentId) {
     const response = await api(
-      `${API_PREFIX}/kb/documents/${encodeURIComponent(documentId)}`,
+      `${API_PREFIX}/personal-agent/documents/${encodeURIComponent(documentId)}`,
       { method: "DELETE" }
     );
     return jsonOrThrow(response, "Não foi possível arquivar.");
   }
 
   async function kbSetWaMode(waMode) {
-    const response = await api(`${API_PREFIX}/kb/whatsapp/mode`, {
+    const response = await api(`${API_PREFIX}/personal-agent/whatsapp/mode`, {
       method: "POST",
       body: JSON.stringify({ wa_mode: waMode }),
     });
@@ -785,14 +822,14 @@
   }
 
   async function kbWaQr() {
-    const response = await api(`${API_PREFIX}/kb/whatsapp/qr`, { method: "POST" });
+    const response = await api(`${API_PREFIX}/personal-agent/whatsapp/qr`, { method: "POST" });
     return jsonOrThrow(response, "Não foi possível gerar o QR.");
   }
 
   async function kbWaPair(phone) {
     const form = new FormData();
     form.append("phone", phone);
-    const response = await api(`${API_PREFIX}/kb/whatsapp/pair`, {
+    const response = await api(`${API_PREFIX}/personal-agent/whatsapp/pair`, {
       method: "POST",
       body: form,
     });
@@ -1117,6 +1154,11 @@
     kbUpdateTool,
     kbDeleteTool,
     kbTestTool,
+    kbListSchedules,
+    kbCreateSchedule,
+    kbUpdateSchedule,
+    kbDeleteSchedule,
+    kbTestSchedule,
     kbUploadDocument,
     kbIngestUrl,
     kbActivateDocument,
