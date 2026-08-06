@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MuhBianco — Assistente Pessoal</title>
-  <link rel="stylesheet" href="css/styles.css?v=40">
+  <link rel="stylesheet" href="css/styles.css?v=41">
 </head>
 <body>
   <header class="topbar">
@@ -225,7 +225,7 @@
     </div>
   </main>
 
-  <script src="js/auth.js?v=40"></script>
+  <script src="js/auth.js?v=41"></script>
   <script>
     (function () {
       const PAGE_SIZE = 10;
@@ -802,22 +802,37 @@
         }
       });
 
-      MuhAuth.requireAuthPage()
-        .then(async () => {
-          try {
-            await MuhAuth.kbSettings();
-            gate.hidden = true;
-            app.hidden = false;
-            await loadSettings();
-            await loadDocs();
-            await loadTools();
-            await loadSchedules();
-          } catch (err) {
-            gate.hidden = false;
-            app.hidden = true;
-          }
-        })
-        .catch(() => {});
+      if (!MuhAuth.requireAuth()) return;
+
+      (async () => {
+        try {
+          await MuhAuth.kbSettings();
+          gate.hidden = true;
+          app.hidden = false;
+        } catch {
+          gate.hidden = false;
+          app.hidden = true;
+          return;
+        }
+
+        try {
+          await loadSettings();
+        } catch (err) {
+          await MuhAuth.alertModal({
+            title: "Erro",
+            message: err.message || "Não foi possível carregar as configurações.",
+          });
+        }
+
+        try {
+          await Promise.all([loadDocs(), loadTools(), loadSchedules()]);
+        } catch (err) {
+          await MuhAuth.alertModal({
+            title: "Erro",
+            message: err.message || "Não foi possível carregar parte da página.",
+          });
+        }
+      })();
     })();
   </script>
 </body>
