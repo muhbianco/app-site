@@ -1,283 +1,611 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Configure a base de conhecimento e a personalidade do seu agente." />
-  <title>Agente de conhecimento — MuhBianco</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=33" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MuhBianco — Base de conhecimento</title>
+  <link rel="stylesheet" href="css/styles.css?v=39">
 </head>
 <body>
-  <div class="noise" aria-hidden="true"></div>
-
-  <header class="site-header">
-    <a class="logo" href="/">MuhBianco</a>
-    <nav class="nav" aria-label="Principal">
-      <a href="/conta.html#servicos">Serviços</a>
-      <a href="/contato.html">Contato</a>
-      <a href="/conta.html" class="nav-cta" aria-current="page">Conta</a>
-    </nav>
+  <header class="topbar">
+    <div class="container nav">
+      <a class="brand" href="index.html">MuhBianco</a>
+      <nav class="menu">
+        <a href="index.html">Início</a>
+        <a href="servicos.html">Serviços</a>
+        <a href="assinaturas.html">Assinaturas</a>
+        <a href="perfil.html">Perfil</a>
+        <a href="admin.html" data-admin-link hidden>Admin</a>
+        <button type="button" class="btn ghost" data-logout>Sair</button>
+      </nav>
+    </div>
   </header>
 
-  <main class="finance-page kb-page">
-    <section class="finance-head">
-      <div class="finance-head-copy">
-        <p class="brand-mark compact">Base de conhecimento</p>
-        <h1>Seu agente</h1>
-        <p class="auth-lede" id="kb-lede">Carregando…</p>
-      </div>
-      <div class="finance-head-actions">
-        <a class="btn btn-ghost" href="/conta.html#servicos">Voltar</a>
-      </div>
-    </section>
+  <main class="section">
+    <div class="container narrow kb-page">
+      <p class="eyebrow">Agente WhatsApp</p>
+      <h1>Base de conhecimento</h1>
+      <p class="lead">Configure modo, personalidade, documentos e ferramentas que o agente pode usar.</p>
 
-    <p class="auth-alert" id="kb-error" hidden></p>
-    <p class="auth-ok" id="kb-ok" hidden></p>
-
-    <section class="settings-section kb-panel" id="kb-persona">
-      <h2>Personalidade</h2>
-      <p class="auth-lede">
-        Como o agente deve falar com seus clientes. As regras mestras da plataforma MuhBianco
-        sempre prevalecem — em qualquer modo.
-      </p>
-
-      <p class="kb-field-label">Modo do agente</p>
-      <div class="wa-scope-choices kb-mode-choices" id="kb-mode-choices" role="radiogroup" aria-label="Modo do agente">
-        <button type="button" class="wa-choice-box is-active" data-kb-mode="closed">
-          <strong>Universo fechado</strong>
-          <span>Responde só com base nos documentos indexados. Exige documentos ativos.</span>
-        </button>
-        <button type="button" class="wa-choice-box" data-kb-mode="open">
-          <strong>Modo aberto</strong>
-          <span>Não exige documentos. Pode conversar de forma geral, ainda respeitando as regras mestras.</span>
-        </button>
+      <div id="kb-gate" class="card kb-panel" hidden>
+        <p class="muted">Você precisa de uma assinatura ativa do Agente WhatsApp para usar esta página.</p>
+        <p><a class="btn primary" href="servicos.html">Ver serviços</a></p>
       </div>
 
-      <label class="kb-field" style="margin-top:1rem">
-        <span class="kb-field-label">Instruções do agente</span>
-        <textarea
-          id="kb-personality"
-          class="kb-textarea"
-          rows="10"
-          maxlength="2000"
-          placeholder="Ex.: Você é um assistente de vendas. Tom cordial, frases curtas, trate o cliente por você."
-        ></textarea>
-        <span class="kb-field-hint"><span id="kb-persona-count">0</span>/2000</span>
-      </label>
-      <div class="kb-actions">
-        <button type="button" class="btn btn-primary" id="kb-save-persona">Salvar personalidade</button>
+      <div id="kb-app" hidden>
+        <details class="kb-section" open>
+          <summary>Modo do agente</summary>
+          <div class="kb-section-body">
+            <p class="muted" style="margin-top:0.85rem">Escolha se o agente responde só com a base ou também com conhecimento geral.</p>
+            <div class="kb-mode-choices" role="radiogroup" aria-label="Modo do agente">
+              <label class="kb-mode-choice">
+                <input type="radio" name="kb-mode" value="closed" checked>
+                <span>
+                  <strong>Fechado</strong>
+                  <small>Respostas apenas com a base. Sem documentos, avisa e não inventa.</small>
+                </span>
+              </label>
+              <label class="kb-mode-choice">
+                <input type="radio" name="kb-mode" value="open">
+                <span>
+                  <strong>Aberto</strong>
+                  <small>Usa a base quando houver trechos; fora disso, conhecimento geral com transparência.</small>
+                </span>
+              </label>
+            </div>
+            <div class="kb-actions">
+              <button type="button" class="btn primary" id="kb-mode-save">Salvar modo</button>
+              <span class="form-msg" id="kb-mode-msg" aria-live="polite"></span>
+            </div>
+          </div>
+        </details>
+
+        <details class="kb-section" open>
+          <summary>Personalidade</summary>
+          <div class="kb-section-body">
+            <p class="muted" style="margin-top:0.85rem">Instruções permanentes: tom, o que priorizar e o que evitar.</p>
+            <label class="sr-only" for="kb-personality">Instruções de personalidade</label>
+            <textarea id="kb-personality" class="kb-textarea" maxlength="2000" rows="8" placeholder="Ex.: Seja objetivo, use português do Brasil, não invente preços…"></textarea>
+            <div class="kb-actions">
+              <button type="button" class="btn primary" id="kb-personality-save">Salvar personalidade</button>
+              <span class="form-msg" id="kb-personality-msg" aria-live="polite"></span>
+            </div>
+          </div>
+        </details>
+
+        <details class="kb-section" open>
+          <summary>Conhecimento</summary>
+          <div class="kb-section-body">
+            <div class="kb-upload-grid" style="margin-top:0.85rem">
+              <div class="kb-upload-block">
+                <h3>Enviar arquivo</h3>
+                <p class="muted">PDF, DOCX, TXT ou MD (até 20 MB).</p>
+                <label class="sr-only" for="kb-file-title">Título do arquivo</label>
+                <input type="text" id="kb-file-title" class="input" placeholder="Título (opcional)" maxlength="200">
+                <input type="file" id="kb-file" accept=".pdf,.docx,.txt,.md,application/pdf,text/plain">
+                <button type="button" class="btn secondary" id="kb-upload-btn">Enviar</button>
+                <span class="form-msg" id="kb-upload-msg" aria-live="polite"></span>
+              </div>
+              <div class="kb-upload-block">
+                <h3>Importar URL</h3>
+                <p class="muted">Página pública HTTPS.</p>
+                <label class="sr-only" for="kb-url">URL</label>
+                <input type="url" id="kb-url" class="input" placeholder="https://…">
+                <label class="sr-only" for="kb-url-title">Título da URL</label>
+                <input type="text" id="kb-url-title" class="input" placeholder="Título (opcional)" maxlength="200">
+                <button type="button" class="btn secondary" id="kb-url-btn">Importar</button>
+                <span class="form-msg" id="kb-url-msg" aria-live="polite"></span>
+              </div>
+            </div>
+
+            <div class="kb-filters">
+              <label>Busca
+                <input type="search" id="kb-doc-q" class="input" placeholder="Título ou slug">
+              </label>
+              <label>Status
+                <select id="kb-doc-status" class="input">
+                  <option value="">Todos</option>
+                  <option value="ready">Pronto</option>
+                  <option value="processing">Processando</option>
+                  <option value="failed">Falhou</option>
+                  <option value="archived">Arquivado</option>
+                </select>
+              </label>
+              <label>Origem
+                <select id="kb-doc-source" class="input">
+                  <option value="">Todas</option>
+                  <option value="upload">Arquivo</option>
+                  <option value="url">URL</option>
+                </select>
+              </label>
+              <label>Ativo
+                <select id="kb-doc-active" class="input">
+                  <option value="true">Só ativos</option>
+                  <option value="">Todos</option>
+                </select>
+              </label>
+              <button type="button" class="btn ghost" id="kb-doc-filter-btn">Filtrar</button>
+            </div>
+
+            <div id="kb-docs-list" class="kb-docs-list" aria-live="polite"></div>
+            <div class="kb-pager">
+              <span class="kb-pager-meta" id="kb-docs-pager-meta"></span>
+              <div class="kb-tool-actions">
+                <button type="button" class="btn ghost" id="kb-docs-prev" disabled>Anterior</button>
+                <button type="button" class="btn ghost" id="kb-docs-next" disabled>Próxima</button>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details class="kb-section">
+          <summary>Ferramentas</summary>
+          <div class="kb-section-body">
+            <p class="muted" style="margin-top:0.85rem">O agente só recebe tools ligadas. Credenciais ficam criptografadas e nunca são exibidas.</p>
+            <div id="kb-tools-catalog" class="kb-tool-catalog"></div>
+            <span class="form-msg" id="kb-tools-msg" aria-live="polite"></span>
+          </div>
+        </details>
       </div>
-    </section>
-
-    <section class="settings-section kb-panel" id="kb-docs">
-      <h2>Documentos</h2>
-      <p class="auth-lede" id="kb-docs-lede">
-        Aceitos: .md, .txt, .csv, .pdf, .docx ou URL pública. O arquivo original é descartado após indexar;
-        ficam só metadados, texto dos trechos e vetores. No universo fechado, documentos ativos são obrigatórios.
-      </p>
-
-      <form id="kb-upload-form" class="kb-card-form">
-        <p class="kb-card-title">Enviar arquivo</p>
-        <label class="kb-field">
-          <span class="kb-field-label">Título (opcional)</span>
-          <input type="text" id="kb-upload-title" class="kb-input" placeholder="Ex.: Catálogo de produtos" maxlength="240" />
-        </label>
-        <label class="kb-file">
-          <span class="kb-field-label">Arquivo</span>
-          <input type="file" id="kb-upload-file" accept=".md,.txt,.csv,.pdf,.docx,text/plain,text/csv,application/pdf" required />
-          <span class="kb-file-ui" id="kb-upload-file-name">Arraste ou escolha um arquivo</span>
-        </label>
-        <div class="kb-actions">
-          <button type="submit" class="btn btn-primary">Enviar arquivo</button>
-        </div>
-      </form>
-
-      <form id="kb-url-form" class="kb-card-form">
-        <p class="kb-card-title">Ingerir URL pública</p>
-        <label class="kb-field">
-          <span class="kb-field-label">URL</span>
-          <input type="url" id="kb-url" class="kb-input" placeholder="https://…" required />
-        </label>
-        <label class="kb-field">
-          <span class="kb-field-label">Título (opcional)</span>
-          <input type="text" id="kb-url-title" class="kb-input" placeholder="Ex.: Política de troca" maxlength="240" />
-        </label>
-        <div class="kb-actions">
-          <button type="submit" class="btn btn-ghost">Ingerir URL</button>
-        </div>
-      </form>
-
-      <div id="kb-doc-list" class="kb-doc-list"></div>
-    </section>
+    </div>
   </main>
 
-  <script src="/js/auth.js?v=37"></script>
+  <script src="js/auth.js?v=39"></script>
   <script>
-    (async () => {
-      const err = document.getElementById("kb-error");
-      const ok = document.getElementById("kb-ok");
-      const showErr = (m) => { err.hidden = false; ok.hidden = true; err.textContent = m; };
-      const showOk = (m) => { ok.hidden = false; err.hidden = true; ok.textContent = m; };
-      const clearMsg = () => { err.hidden = true; ok.hidden = true; };
+    (function () {
+      const PAGE_SIZE = 10;
+      let docsPage = 1;
+      let docsPages = 1;
 
-      try {
-        await MuhAuth.requireAuth();
-      } catch {
-        location.replace("/login.html?next=" + encodeURIComponent("/kb-agente.html"));
-        return;
+      const gate = document.getElementById("kb-gate");
+      const app = document.getElementById("kb-app");
+      const personalityEl = document.getElementById("kb-personality");
+      const docsList = document.getElementById("kb-docs-list");
+      const toolsCatalog = document.getElementById("kb-tools-catalog");
+      const toolsMsg = document.getElementById("kb-tools-msg");
+
+      const SOON_TOOLS = [
+        { id: "gdrive", name: "Google Drive", desc: "Ler e buscar arquivos do Drive do cliente." },
+        { id: "gmail", name: "Gmail", desc: "Ler e enviar e-mails com escopo mínimo." },
+        { id: "discord", name: "Discord", desc: "Enviar avisos em canais autorizados." },
+        { id: "webhook", name: "Webhook outbound", desc: "Avisar o sistema do cliente em eventos." },
+        { id: "gcal", name: "Calendário Google", desc: "Consultar e criar eventos." },
+        { id: "gsheets", name: "Planilha (Sheets)", desc: "Ler e atualizar abas autorizadas." },
+      ];
+
+      function setMsg(el, text, ok) {
+        if (!el) return;
+        el.textContent = text || "";
+        el.classList.toggle("ok", !!ok);
+        el.classList.toggle("err", !!text && !ok);
       }
 
-      const personality = document.getElementById("kb-personality");
-      const personaCount = document.getElementById("kb-persona-count");
-      let selectedKbMode = "closed";
+      function esc(s) {
+        return String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
 
-      const syncPersonaCount = () => {
-        personaCount.textContent = String((personality.value || "").length);
-      };
-      personality.addEventListener("input", syncPersonaCount);
+      function selectedMode() {
+        const el = document.querySelector('input[name="kb-mode"]:checked');
+        return el ? el.value : "closed";
+      }
 
-      function syncKbModeUi() {
-        document.querySelectorAll("#kb-mode-choices [data-kb-mode]").forEach((btn) => {
-          btn.classList.toggle("is-active", btn.dataset.kbMode === selectedKbMode);
-        });
-        const docsLede = document.getElementById("kb-docs-lede");
-        if (docsLede) {
-          docsLede.textContent =
-            selectedKbMode === "open"
-              ? "Aceitos: .md, .txt, .csv, .pdf, .docx ou URL pública. No modo aberto os documentos são opcionais — se existirem, o agente pode consultá-los."
-              : "Aceitos: .md, .txt, .csv, .pdf, .docx ou URL pública. O arquivo original é descartado após indexar; ficam só metadados, texto dos trechos e vetores. No universo fechado, documentos ativos são obrigatórios.";
+      function setMode(mode) {
+        const v = mode === "open" ? "open" : "closed";
+        const el = document.querySelector(`input[name="kb-mode"][value="${v}"]`);
+        if (el) el.checked = true;
+      }
+
+      async function loadSettings() {
+        const data = await MuhAuth.kbSettings();
+        const settings = (data && data.settings) || {};
+        personalityEl.value = settings.personality || "";
+        setMode(settings.kb_mode || "closed");
+      }
+
+      async function saveMode() {
+        const msg = document.getElementById("kb-mode-msg");
+        try {
+          await MuhAuth.kbPatchSettings({ kb_mode: selectedMode() });
+          setMsg(msg, "Modo salvo.", true);
+        } catch (err) {
+          setMsg(msg, err.message || "Falha ao salvar.", false);
         }
       }
 
-      document.querySelectorAll("#kb-mode-choices [data-kb-mode]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          selectedKbMode = btn.dataset.kbMode || "closed";
-          syncKbModeUi();
-        });
-      });
+      async function savePersonality() {
+        const msg = document.getElementById("kb-personality-msg");
+        try {
+          await MuhAuth.kbPatchSettings({ personality: personalityEl.value });
+          setMsg(msg, "Personalidade salva.", true);
+        } catch (err) {
+          setMsg(msg, err.message || "Falha ao salvar.", false);
+        }
+      }
 
-      const fileInput = document.getElementById("kb-upload-file");
-      const fileName = document.getElementById("kb-upload-file-name");
-      fileInput.addEventListener("change", () => {
-        const f = fileInput.files && fileInput.files[0];
-        fileName.textContent = f ? f.name : "Arraste ou escolha um arquivo";
-        fileName.classList.toggle("has-file", Boolean(f));
-      });
+      function docFilters() {
+        const active = document.getElementById("kb-doc-active").value;
+        return {
+          page: docsPage,
+          page_size: PAGE_SIZE,
+          q: document.getElementById("kb-doc-q").value.trim() || undefined,
+          status: document.getElementById("kb-doc-status").value || undefined,
+          source_kind: document.getElementById("kb-doc-source").value || undefined,
+          active: active === "" ? undefined : active === "true",
+        };
+      }
 
-      async function refresh() {
-        clearMsg();
-        const data = await MuhAuth.kbSettings();
-        const s = data.settings || {};
-        document.getElementById("kb-lede").textContent = data.kb_ready
-          ? "Envie documentos e ajuste a personalidade. Cota e WhatsApp ficam em Conta → Serviços."
-          : "Base vetorial ainda não configurada no servidor. Contate o suporte se o upload falhar.";
-        personality.value = s.personality || "";
-        selectedKbMode = s.kb_mode === "open" ? "open" : "closed";
-        syncPersonaCount();
-        syncKbModeUi();
+      function renderDocs(payload) {
+        const items = payload.items || [];
+        docsPages = Math.max(1, Number(payload.pages) || 1);
+        docsPage = Number(payload.page) || 1;
+        const total = Number(payload.total) || 0;
+        document.getElementById("kb-docs-pager-meta").textContent =
+          total === 0
+            ? "Nenhum documento"
+            : `Página ${docsPage} de ${docsPages} · ${total} documento(s)`;
+        document.getElementById("kb-docs-prev").disabled = docsPage <= 1;
+        document.getElementById("kb-docs-next").disabled = docsPage >= docsPages;
 
-        const docs = await MuhAuth.kbListDocuments();
-        const list = document.getElementById("kb-doc-list");
-        const items = docs.items || [];
         if (!items.length) {
-          list.innerHTML = "<p class='auth-lede kb-empty'>Nenhum documento ainda.</p>";
+          docsList.innerHTML = '<p class="muted kb-empty">Nenhum documento neste filtro.</p>';
           return;
         }
-        list.innerHTML = items.map((d) => `
-          <article class="kb-doc-item">
-            <div class="kb-doc-meta">
-              <strong>${escapeHtml(d.title)}</strong>
-              <span>v${d.version} · ${escapeHtml(d.status)}${d.is_active ? " · ativo" : ""} · ${d.chunk_count || 0} trechos</span>
-            </div>
-            <div class="btn-row">
-              ${d.status === "ready" && !d.is_active
-                ? `<button type="button" data-activate="${d.id}" class="btn btn-ghost">Ativar</button>`
-                : ""}
-              ${d.status !== "archived"
-                ? `<button type="button" data-archive="${d.id}" class="btn btn-ghost">Arquivar</button>`
-                : ""}
-            </div>
-          </article>
-        `).join("");
-        list.querySelectorAll("[data-activate]").forEach((btn) => {
+
+        docsList.innerHTML = items
+          .map((doc) => {
+            const source = esc((doc.source_name || "").slice(0, 80) || "—");
+            const chunks = doc.chunk_count != null ? `${doc.chunk_count} trechos` : "—";
+            return `
+              <article class="kb-doc-card" data-id="${esc(doc.id)}">
+                <div class="kb-doc-meta">
+                  <strong>${esc(doc.title || doc.slug)}</strong>
+                  <span>v${esc(doc.version)} · ${esc(doc.status)} · ${chunks}</span>
+                  <span>${doc.source_kind === "url" ? "URL" : "Arquivo"}: ${source}</span>
+                  ${doc.is_active ? "" : '<span class="muted">Versão inativa</span>'}
+                </div>
+                <div class="kb-tool-actions">
+                  <button type="button" class="btn ghost kb-doc-archive">Arquivar</button>
+                </div>
+              </article>`;
+          })
+          .join("");
+
+        docsList.querySelectorAll(".kb-doc-archive").forEach((btn) => {
           btn.addEventListener("click", async () => {
-            try {
-              await MuhAuth.kbActivateDocument(btn.dataset.activate);
-              showOk("Versão ativada.");
-              await refresh();
-            } catch (e) { showErr(e.message || "Falha ao ativar."); }
-          });
-        });
-        list.querySelectorAll("[data-archive]").forEach((btn) => {
-          btn.addEventListener("click", async () => {
+            const card = btn.closest("[data-id]");
+            const id = card && card.getAttribute("data-id");
+            if (!id) return;
             const ok = await MuhAuth.confirmModal({
-              title: "Arquivar documento",
-              message: "Arquivar e remover vetores deste documento?",
+              title: "Arquivar documento?",
+              message: "A versão ativa será arquivada e deixa de entrar nas buscas.",
               confirmLabel: "Arquivar",
-              cancelLabel: "Voltar",
-              danger: true,
             });
             if (!ok) return;
             try {
-              await MuhAuth.kbArchiveDocument(btn.dataset.archive);
-              showOk("Documento arquivado.");
-              await refresh();
-            } catch (e) { showErr(e.message || "Falha ao arquivar."); }
+              await MuhAuth.kbArchiveDocument(id);
+              await loadDocs();
+            } catch (err) {
+              await MuhAuth.alertModal({
+                title: "Erro",
+                message: err.message || "Falha ao arquivar.",
+              });
+            }
           });
         });
       }
 
-      function escapeHtml(v) {
-        return String(v || "").replace(/[&<>"']/g, (c) => ({
-          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-        }[c]));
+      async function loadDocs() {
+        const data = await MuhAuth.kbListDocuments(docFilters());
+        renderDocs(data);
       }
 
-      document.getElementById("kb-save-persona").addEventListener("click", async () => {
-        try {
-          await MuhAuth.kbPatchSettings({
-            personality: personality.value,
-            kb_mode: selectedKbMode,
+      function renderSoonCard(item) {
+        return `
+          <article class="kb-tool-card is-soon">
+            <div class="kb-tool-card-head">
+              <div>
+                <h3>${esc(item.name)}</h3>
+                <p>${esc(item.desc)}</p>
+              </div>
+              <span class="kb-tool-badge soon">Em breve</span>
+            </div>
+            <p class="muted" style="margin:0">Conexão OAuth e permissões mínimas chegam em uma próxima entrega.</p>
+            <button type="button" class="btn ghost" disabled>Conectar</button>
+          </article>`;
+      }
+
+      function renderBuiltinSearch() {
+        return `
+          <article class="kb-tool-card">
+            <div class="kb-tool-card-head">
+              <div>
+                <h3>Base de conhecimento</h3>
+                <p>Busca semântica nos documentos ativos (search_kb).</p>
+              </div>
+              <span class="kb-tool-badge ok">Sempre disponível</span>
+            </div>
+            <p class="muted" style="margin:0">Não precisa conectar. O agente usa quando há documentos ou modo fechado.</p>
+          </article>`;
+      }
+
+      function renderHttpCard(tool) {
+        const connected = tool.status === "ok" || tool.has_secret || (tool.config && tool.config.auth_type === "none");
+        const badge = connected
+          ? '<span class="kb-tool-badge ok">Pronta</span>'
+          : '<span class="kb-tool-badge">Configurar</span>';
+        return `
+          <article class="kb-tool-card" data-tool-id="${esc(tool.id)}">
+            <div class="kb-tool-card-head">
+              <div>
+                <h3>${esc(tool.name)}</h3>
+                <p>${esc(tool.description || "API HTTP custom")}</p>
+              </div>
+              ${badge}
+            </div>
+            <label class="kb-tool-switch">
+              <input type="checkbox" class="kb-tool-enabled" ${tool.enabled ? "checked" : ""}>
+              Ligada para o agente
+            </label>
+            <p class="muted" style="margin:0">
+              ${(tool.config && tool.config.method) || "GET"} · ${esc((tool.config && tool.config.url) || "")}
+              · segredo: ${tool.has_secret ? "configurado" : "não"}
+            </p>
+            <label>Instruções de uso
+              <textarea class="input kb-tool-instructions" rows="2">${esc(tool.instructions || "")}</textarea>
+            </label>
+            <div class="kb-tool-actions">
+              <button type="button" class="btn secondary kb-tool-save">Salvar</button>
+              <button type="button" class="btn ghost kb-tool-test">Testar</button>
+              <button type="button" class="btn ghost kb-tool-rotate">Trocar segredo</button>
+              <button type="button" class="btn ghost kb-tool-delete">Remover</button>
+            </div>
+          </article>`;
+      }
+
+      function renderCreateHttpForm() {
+        return `
+          <article class="kb-tool-card" id="kb-http-create">
+            <div class="kb-tool-card-head">
+              <div>
+                <h3>API HTTP custom</h3>
+                <p>Chamada HTTPS autenticada à API do seu sistema.</p>
+              </div>
+              <span class="kb-tool-badge">Nova</span>
+            </div>
+            <div class="kb-tool-form">
+              <label>Nome
+                <input type="text" class="input" id="http-name" maxlength="120" placeholder="Ex.: Consultar pedido">
+              </label>
+              <label>Descrição para o LLM
+                <textarea class="input" id="http-description" rows="2" maxlength="500" placeholder="Quando usar e o que retorna"></textarea>
+              </label>
+              <label>Instruções de uso
+                <textarea class="input" id="http-instructions" rows="2" maxlength="4000" placeholder="Quando o cliente pedir X, use esta tool…"></textarea>
+              </label>
+              <div class="kb-tool-form-row">
+                <label>Método
+                  <select class="input" id="http-method">
+                    <option>GET</option>
+                    <option>POST</option>
+                    <option>PUT</option>
+                    <option>PATCH</option>
+                    <option>DELETE</option>
+                  </select>
+                </label>
+                <label>URL HTTPS
+                  <input type="url" class="input" id="http-url" placeholder="https://api.exemplo.com/…">
+                </label>
+              </div>
+              <div class="kb-tool-form-row">
+                <label>Auth
+                  <select class="input" id="http-auth">
+                    <option value="none">Nenhuma</option>
+                    <option value="bearer">Bearer</option>
+                    <option value="header">Header custom</option>
+                    <option value="basic">Basic</option>
+                  </select>
+                </label>
+                <label>Nome do header (se header)
+                  <input type="text" class="input" id="http-header-name" placeholder="X-Api-Key">
+                </label>
+              </div>
+              <label>Segredo / token
+                <input type="password" class="input" id="http-secret" autocomplete="new-password" placeholder="Não será exibido depois">
+              </label>
+              <label>Timeout (s)
+                <input type="number" class="input" id="http-timeout" min="1" max="15" value="10">
+              </label>
+              <div class="kb-tool-actions">
+                <button type="button" class="btn primary" id="http-create-btn">Criar ferramenta</button>
+              </div>
+            </div>
+          </article>`;
+      }
+
+      function bindToolCard(card, tool) {
+        const id = tool.id;
+        card.querySelector(".kb-tool-save").addEventListener("click", async () => {
+          try {
+            await MuhAuth.kbUpdateTool(id, {
+              enabled: card.querySelector(".kb-tool-enabled").checked,
+              instructions: card.querySelector(".kb-tool-instructions").value,
+            });
+            setMsg(toolsMsg, "Ferramenta atualizada.", true);
+            await loadTools();
+          } catch (err) {
+            setMsg(toolsMsg, err.message || "Falha ao salvar.", false);
+          }
+        });
+        card.querySelector(".kb-tool-test").addEventListener("click", async () => {
+          try {
+            const res = await MuhAuth.kbTestTool(id);
+            const ok = res && res.ok;
+            setMsg(
+              toolsMsg,
+              ok
+                ? `Teste OK (HTTP ${res.status_code}).`
+                : `Teste falhou: ${(res && (res.preview || res.error)) || "erro"}`,
+              !!ok
+            );
+          } catch (err) {
+            setMsg(toolsMsg, err.message || "Falha no teste.", false);
+          }
+        });
+        card.querySelector(".kb-tool-rotate").addEventListener("click", async () => {
+          const secret = window.prompt("Novo segredo (será criptografado):");
+          if (secret == null || !String(secret).trim()) return;
+          try {
+            await MuhAuth.kbUpdateTool(id, { secret: String(secret).trim() });
+            setMsg(toolsMsg, "Segredo atualizado.", true);
+            await loadTools();
+          } catch (err) {
+            setMsg(toolsMsg, err.message || "Falha ao rotacionar.", false);
+          }
+        });
+        card.querySelector(".kb-tool-delete").addEventListener("click", async () => {
+          const ok = await MuhAuth.confirmModal({
+            title: "Remover ferramenta?",
+            message: "O agente deixa de ver esta tool imediatamente.",
+            confirmLabel: "Remover",
           });
-          showOk("Personalidade e modo salvos.");
-        } catch (e) { showErr(e.message || "Não salvou."); }
-      });
-
-      document.getElementById("kb-upload-form").addEventListener("submit", async (ev) => {
-        ev.preventDefault();
-        const file = fileInput.files[0];
-        if (!file) return;
-        try {
-          await MuhAuth.kbUploadDocument(file, document.getElementById("kb-upload-title").value);
-          showOk("Documento indexado. Original descartado.");
-          ev.target.reset();
-          fileName.textContent = "Arraste ou escolha um arquivo";
-          fileName.classList.remove("has-file");
-          await refresh();
-        } catch (e) { showErr(e.message || "Falha no upload."); }
-      });
-
-      document.getElementById("kb-url-form").addEventListener("submit", async (ev) => {
-        ev.preventDefault();
-        try {
-          await MuhAuth.kbIngestUrl(
-            document.getElementById("kb-url").value,
-            document.getElementById("kb-url-title").value
-          );
-          showOk("URL indexada.");
-          ev.target.reset();
-          await refresh();
-        } catch (e) { showErr(e.message || "Falha na URL."); }
-      });
-
-      try {
-        await refresh();
-      } catch (e) {
-        showErr(e.message || "Habilite o serviço em Conta → Serviços primeiro.");
+          if (!ok) return;
+          try {
+            await MuhAuth.kbDeleteTool(id);
+            setMsg(toolsMsg, "Ferramenta removida.", true);
+            await loadTools();
+          } catch (err) {
+            setMsg(toolsMsg, err.message || "Falha ao remover.", false);
+          }
+        });
       }
+
+      async function loadTools() {
+        const data = await MuhAuth.kbListTools();
+        const tools = (data && data.items) || [];
+        const catalog = (data && data.catalog) || [];
+        const httpTools = tools.filter((t) => t.provider === "http_custom");
+        const soonFromApi = catalog
+          .filter((c) => c.coming_soon)
+          .map((c) => ({
+            id: c.provider,
+            name: c.name,
+            desc: c.description,
+          }));
+        const soonList = soonFromApi.length ? soonFromApi : SOON_TOOLS;
+
+        let html = renderBuiltinSearch();
+        html += httpTools.map(renderHttpCard).join("");
+        html += renderCreateHttpForm();
+        html += soonList.map(renderSoonCard).join("");
+        toolsCatalog.innerHTML = html;
+
+        toolsCatalog.querySelectorAll("[data-tool-id]").forEach((card) => {
+          const id = card.getAttribute("data-tool-id");
+          const tool = httpTools.find((t) => t.id === id);
+          if (tool) bindToolCard(card, tool);
+        });
+
+        const createBtn = document.getElementById("http-create-btn");
+        if (createBtn) {
+          createBtn.addEventListener("click", async () => {
+            try {
+              await MuhAuth.kbCreateTool({
+                name: document.getElementById("http-name").value.trim(),
+                description: document.getElementById("http-description").value.trim(),
+                instructions: document.getElementById("http-instructions").value.trim(),
+                method: document.getElementById("http-method").value,
+                url: document.getElementById("http-url").value.trim(),
+                auth_type: document.getElementById("http-auth").value,
+                header_name: document.getElementById("http-header-name").value.trim() || null,
+                secret: document.getElementById("http-secret").value || null,
+                timeout_seconds: Number(document.getElementById("http-timeout").value) || 10,
+                enabled: true,
+              });
+              setMsg(toolsMsg, "Ferramenta criada.", true);
+              await loadTools();
+            } catch (err) {
+              setMsg(toolsMsg, err.message || "Falha ao criar.", false);
+            }
+          });
+        }
+      }
+
+      document.getElementById("kb-mode-save").addEventListener("click", saveMode);
+      document.getElementById("kb-personality-save").addEventListener("click", savePersonality);
+      document.getElementById("kb-doc-filter-btn").addEventListener("click", () => {
+        docsPage = 1;
+        loadDocs().catch((err) => MuhAuth.alertModal({ title: "Erro", message: err.message }));
+      });
+      document.getElementById("kb-docs-prev").addEventListener("click", () => {
+        if (docsPage > 1) {
+          docsPage -= 1;
+          loadDocs().catch((err) => MuhAuth.alertModal({ title: "Erro", message: err.message }));
+        }
+      });
+      document.getElementById("kb-docs-next").addEventListener("click", () => {
+        if (docsPage < docsPages) {
+          docsPage += 1;
+          loadDocs().catch((err) => MuhAuth.alertModal({ title: "Erro", message: err.message }));
+        }
+      });
+
+      document.getElementById("kb-upload-btn").addEventListener("click", async () => {
+        const msg = document.getElementById("kb-upload-msg");
+        const file = document.getElementById("kb-file").files[0];
+        if (!file) {
+          setMsg(msg, "Selecione um arquivo.", false);
+          return;
+        }
+        try {
+          setMsg(msg, "Enviando…", true);
+          await MuhAuth.kbUploadDocument(file, document.getElementById("kb-file-title").value);
+          setMsg(msg, "Documento enviado.", true);
+          document.getElementById("kb-file").value = "";
+          docsPage = 1;
+          await loadDocs();
+        } catch (err) {
+          setMsg(msg, err.message || "Falha no upload.", false);
+        }
+      });
+
+      document.getElementById("kb-url-btn").addEventListener("click", async () => {
+        const msg = document.getElementById("kb-url-msg");
+        const url = document.getElementById("kb-url").value.trim();
+        if (!url) {
+          setMsg(msg, "Informe a URL.", false);
+          return;
+        }
+        try {
+          setMsg(msg, "Importando…", true);
+          await MuhAuth.kbIngestUrl(url, document.getElementById("kb-url-title").value);
+          setMsg(msg, "URL importada.", true);
+          document.getElementById("kb-url").value = "";
+          docsPage = 1;
+          await loadDocs();
+        } catch (err) {
+          setMsg(msg, err.message || "Falha na importação.", false);
+        }
+      });
+
+      MuhAuth.requireAuthPage()
+        .then(async () => {
+          try {
+            await MuhAuth.kbSettings();
+            gate.hidden = true;
+            app.hidden = false;
+            await loadSettings();
+            await loadDocs();
+            await loadTools();
+          } catch (err) {
+            gate.hidden = false;
+            app.hidden = true;
+          }
+        })
+        .catch(() => {});
     })();
   </script>
 </body>

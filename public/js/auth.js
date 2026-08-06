@@ -687,9 +687,58 @@
     return jsonOrThrow(response, "Não foi possível salvar as configurações.");
   }
 
-  async function kbListDocuments() {
-    const response = await api(`${API_PREFIX}/kb/documents`);
+  async function kbListDocuments(params = {}) {
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.page_size) query.set("page_size", String(params.page_size));
+    if (params.q) query.set("q", params.q);
+    if (params.status) query.set("status", params.status);
+    if (params.source_kind) query.set("source_kind", params.source_kind);
+    if (params.active === true || params.active === false) {
+      query.set("active", params.active ? "true" : "false");
+    }
+    const qs = query.toString();
+    const response = await api(
+      `${API_PREFIX}/kb/documents${qs ? `?${qs}` : ""}`
+    );
     return jsonOrThrow(response, "Não foi possível listar documentos.");
+  }
+
+  async function kbListTools() {
+    const response = await api(`${API_PREFIX}/kb/tools`);
+    return jsonOrThrow(response, "Não foi possível listar ferramentas.");
+  }
+
+  async function kbCreateTool(payload) {
+    const response = await api(`${API_PREFIX}/kb/tools`, {
+      method: "POST",
+      body: JSON.stringify(payload || {}),
+    });
+    return jsonOrThrow(response, "Não foi possível criar a ferramenta.");
+  }
+
+  async function kbUpdateTool(toolId, payload) {
+    const response = await api(
+      `${API_PREFIX}/kb/tools/${encodeURIComponent(toolId)}`,
+      { method: "PATCH", body: JSON.stringify(payload || {}) }
+    );
+    return jsonOrThrow(response, "Não foi possível atualizar a ferramenta.");
+  }
+
+  async function kbDeleteTool(toolId) {
+    const response = await api(
+      `${API_PREFIX}/kb/tools/${encodeURIComponent(toolId)}`,
+      { method: "DELETE" }
+    );
+    return jsonOrThrow(response, "Não foi possível remover a ferramenta.");
+  }
+
+  async function kbTestTool(toolId) {
+    const response = await api(
+      `${API_PREFIX}/kb/tools/${encodeURIComponent(toolId)}/test`,
+      { method: "POST" }
+    );
+    return jsonOrThrow(response, "Não foi possível testar a ferramenta.");
   }
 
   async function kbUploadDocument(file, title) {
@@ -1063,6 +1112,11 @@
     kbSettings,
     kbPatchSettings,
     kbListDocuments,
+    kbListTools,
+    kbCreateTool,
+    kbUpdateTool,
+    kbDeleteTool,
+    kbTestTool,
     kbUploadDocument,
     kbIngestUrl,
     kbActivateDocument,
