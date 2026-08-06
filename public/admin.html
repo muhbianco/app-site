@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=32" />
+  <link rel="stylesheet" href="/css/styles.css?v=37" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -383,41 +383,50 @@
               <option value="true">On — lê imagens e emotes no WhatsApp</option>
             </select>
           </label>
-          <label>
-            <span>Modelo de texto (chat)</span>
-            <select data-field="llm_model">
-              <option value="">Padrão da stack</option>
-            </select>
-          </label>
-          <label>
-            <span>Modelo STT (áudio → texto)</span>
-            <select data-field="stt_model">
-              <option value="">Padrão da stack</option>
-            </select>
-          </label>
-          <label data-field="vision-model-block" hidden>
-            <span>Modelo visão (imagem)</span>
-            <select data-field="vision_model">
-              <option value="">Padrão da stack</option>
-            </select>
-          </label>
-          <label>
-            <span>Modelo TTS (texto → áudio)</span>
-            <select data-field="tts_model">
-              <option value="">Padrão da stack</option>
-            </select>
-          </label>
         </div>
         <div class="admin-filters-actions">
           <a class="btn btn-ghost" data-field="users-link" href="#">Ver usuários</a>
-          <button type="button" class="btn btn-ghost" data-field="sync-models">Sincronizar modelos</button>
-          <button type="submit" class="btn btn-primary" data-field="save">Salvar</button>
+          <button type="submit" class="btn btn-primary" data-field="save">Salvar cobrança</button>
         </div>
       </form>
+
+      <section class="admin-models-section" data-field="models-section">
+        <h4>Modelos Gemini</h4>
+        <p class="hint">
+          Configuração explícita deste serviço (vale na hora). 
+          <strong>Sincronizar</strong> só atualiza a lista de models disponíveis na Gemini — não muda a escolha abaixo.
+        </p>
+        <div class="admin-filters">
+          <label>
+            <span>Modelo de texto (chat)</span>
+            <select data-field="llm_model" required></select>
+          </label>
+          <label>
+            <span>Modelo STT (áudio → texto)</span>
+            <select data-field="stt_model" required></select>
+          </label>
+          <label>
+            <span>Modelo visão (imagem)</span>
+            <select data-field="vision_model" required></select>
+          </label>
+          <label>
+            <span>Modelo TTS (texto → áudio)</span>
+            <select data-field="tts_model" required></select>
+          </label>
+        </div>
+        <div class="admin-filters-actions">
+          <button type="button" class="btn btn-ghost" data-field="sync-models">
+            Sincronizar lista
+          </button>
+          <button type="button" class="btn btn-primary" data-field="save-models">
+            Salvar models
+          </button>
+        </div>
+      </section>
     </article>
   </template>
 
-  <script src="/js/auth.js?v=21"></script>
+  <script src="/js/auth.js?v=22"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -591,14 +600,13 @@
       let modelCatalog = { text: [], audio_in: [], vision: [], tts: [] };
 
       function fillModelSelect(selectEl, rows, current) {
+        const selected = (current || "").trim();
         selectEl.innerHTML = "";
-        const empty = document.createElement("option");
-        empty.value = "";
-        empty.textContent = "Padrão da stack";
-        selectEl.appendChild(empty);
+        const ids = new Set();
         (rows || []).forEach((m) => {
           const opt = document.createElement("option");
           opt.value = m.model_id;
+          ids.add(m.model_id);
           const price =
             m.input_usd_per_million != null
               ? ` (US$ ${m.input_usd_per_million}/${m.output_usd_per_million})`
@@ -606,7 +614,17 @@
           opt.textContent = `${m.display_name || m.model_id}${price}`;
           selectEl.appendChild(opt);
         });
-        selectEl.value = current || "";
+        if (selected && !ids.has(selected)) {
+          const opt = document.createElement("option");
+          opt.value = selected;
+          opt.textContent = `${selected} (atual)`;
+          selectEl.appendChild(opt);
+        }
+        if (selected) {
+          selectEl.value = selected;
+        } else if (selectEl.options.length) {
+          selectEl.selectedIndex = 0;
+        }
       }
 
       async function loadModelCatalog() {
@@ -683,15 +701,8 @@
           q("period_days").required = !isPerUse;
         }
 
-        function syncVisionModel() {
-          const on = q("image_recognition_enabled").value === "true";
-          q("vision-model-block").hidden = !on;
-        }
-
         syncModeFields();
-        syncVisionModel();
         q("billing_mode").addEventListener("change", syncModeFields);
-        q("image_recognition_enabled").addEventListener("change", syncVisionModel);
 
         q("users-link").href = `/admin-servico-usuarios.html?service_id=${encodeURIComponent(
           service.id
@@ -701,15 +712,40 @@
           const btn = q("sync-models");
           btn.disabled = true;
           try {
-            await MuhAuth.adminSyncLlmModels();
+            const stats = await MuhAuth.adminSyncLlmModels();
             await loadModelCatalog();
             fillModelSelect(q("llm_model"), modelCatalog.text, q("llm_model").value);
             fillModelSelect(q("stt_model"), modelCatalog.audio_in, q("stt_model").value);
             fillModelSelect(q("vision_model"), modelCatalog.vision, q("vision_model").value);
             fillModelSelect(q("tts_model"), modelCatalog.tts, q("tts_model").value);
-            showSvcOk("Modelos Gemini sincronizados.");
+            showSvcOk(
+              `Lista Gemini atualizada (${stats.listed || 0} models · +${stats.created || 0} novos). Escolha e clique em Salvar models.`
+            );
           } catch (err) {
-            showSvcError(err.message || "Falha ao sincronizar modelos.");
+            showSvcError(err.message || "Falha ao sincronizar lista de models.");
+          } finally {
+            btn.disabled = false;
+          }
+        });
+
+        q("save-models").addEventListener("click", async () => {
+          const btn = q("save-models");
+          btn.disabled = true;
+          try {
+            const payload = {
+              llm_model: q("llm_model").value,
+              stt_model: q("stt_model").value,
+              vision_model: q("vision_model").value,
+              tts_model: q("tts_model").value,
+            };
+            if (!payload.llm_model || !payload.stt_model || !payload.vision_model || !payload.tts_model) {
+              throw new Error("Selecione os quatro models antes de salvar.");
+            }
+            await MuhAuth.adminUpdateService(service.id, payload);
+            showSvcOk(`Models de "${service.name}" salvos — já valem nos próximos requests.`);
+            await loadServices();
+          } catch (err) {
+            showSvcError(err.message || "Não foi possível salvar os models.");
           } finally {
             btn.disabled = false;
           }
@@ -729,13 +765,6 @@
               allow_owned_whatsapp: q("allow_owned_whatsapp").value === "true",
               image_recognition_enabled:
                 q("image_recognition_enabled").value === "true",
-              llm_model: q("llm_model").value || null,
-              stt_model: q("stt_model").value || null,
-              vision_model:
-                q("image_recognition_enabled").value === "true"
-                  ? q("vision_model").value || null
-                  : null,
-              tts_model: q("tts_model").value || null,
             };
             if (mode === "per_use") {
               payload.price_cents = 0;
@@ -760,7 +789,7 @@
               payload.on_demand_markup_pct = null;
             }
             await MuhAuth.adminUpdateService(service.id, payload);
-            showSvcOk(`"${service.name}" atualizado.`);
+            showSvcOk(`Cobrança de "${service.name}" atualizada.`);
             await loadServices();
           } catch (err) {
             showSvcError(err.message || "Não foi possível salvar.");
