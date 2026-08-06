@@ -1732,6 +1732,14 @@ img {
   background: rgba(255, 255, 255, 0.6);
 }
 
+.settings-badge-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  max-width: min(100%, 16rem);
+}
+
 .settings-badge[data-state="done"] {
   border-color: rgba(26, 107, 107, 0.4);
   color: var(--teal-deep);
@@ -1742,6 +1750,14 @@ img {
   border-color: rgba(226, 78, 59, 0.4);
   color: var(--coral-deep);
   background: rgba(226, 78, 59, 0.12);
+}
+
+.settings-badge[data-state="warn"] {
+  border-color: rgba(180, 120, 20, 0.45);
+  color: #8a5a00;
+  background: rgba(234, 179, 8, 0.18);
+  text-transform: none;
+  letter-spacing: 0.02em;
 }
 
 .settings-page .auth-switch {

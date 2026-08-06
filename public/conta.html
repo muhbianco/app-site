@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=35" />
+  <link rel="stylesheet" href="/css/styles.css?v=36" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -336,7 +336,9 @@
           <p class="hint" data-field="description"></p>
           <p class="hint" data-field="price"></p>
         </div>
-        <span class="settings-badge" data-field="badge" data-state="pending">Disponível</span>
+        <div class="settings-badge-group" data-field="badges">
+          <span class="settings-badge" data-state="pending">Disponível</span>
+        </div>
       </header>
       <div class="auth-alert" data-field="alert" hidden></div>
       <div class="auth-ok" data-field="ok" hidden></div>
@@ -1006,7 +1008,7 @@
         q("description").textContent = service.description;
         q("price").textContent = priceLabel(service);
 
-        const badge = q("badge");
+        const badgeGroup = q("badges");
         const sub = service.subscription;
         const status = sub ? sub.status : null;
         const phoneGate = q("phone-gate");
@@ -1016,6 +1018,17 @@
         const phonesBlock = q("phones-block");
         const phoneOk = Boolean(service.account_phone_verified && service.account_phone);
         const needsPhone = Boolean(service.requires_phone);
+
+        function setBadges(items) {
+          badgeGroup.innerHTML = "";
+          (items || []).forEach((item) => {
+            const span = document.createElement("span");
+            span.className = "settings-badge";
+            span.dataset.state = item.state || "info";
+            span.textContent = item.text;
+            badgeGroup.appendChild(span);
+          });
+        }
 
         function showError(message) {
           q("ok").hidden = true;
@@ -1104,8 +1117,23 @@
 
         if (status === "active" || status === "paused") {
           const paused = status === "paused";
-          badge.dataset.state = paused ? "pending" : "done";
-          badge.textContent = paused ? "Pausado" : "Ativo";
+          const cancelling = Boolean(sub.cancel_at_period_end);
+          const until = cancelling && sub.current_period_end
+            ? formatDate(sub.current_period_end)
+            : null;
+          if (cancelling) {
+            setBadges([
+              { text: "Cancelado", state: "pending" },
+              {
+                text: until ? `Ativo até ${until}` : "Não renova",
+                state: "warn",
+              },
+            ]);
+          } else if (paused) {
+            setBadges([{ text: "Pausado", state: "pending" }]);
+          } else {
+            setBadges([{ text: "Ativo", state: "done" }]);
+          }
           activeActions.hidden = false;
           phonesBlock.hidden = false;
           q("wa-summary").textContent = waSummaryText();
@@ -1128,6 +1156,17 @@
           }
           q("pause-btn").hidden = paused;
           q("resume-btn").hidden = !paused;
+          // Já marcado para não renovar: não oferece cancelar de novo.
+          q("disable-btn").hidden = cancelling;
+          if (cancelling) {
+            const note = document.createElement("p");
+            note.className = "hint";
+            note.dataset.field = "cancel-scheduled-hint";
+            note.textContent = until
+              ? `Cancelamento agendado — você pode usar o agente até ${until}. Depois disso ele encerra.`
+              : "Cancelamento agendado — o serviço não renova ao fim do período.";
+            activeActions.parentNode.insertBefore(note, activeActions);
+          }
           const ttsPrefs = q("tts-prefs");
           const ttsToggle = q("tts-toggle");
           ttsPrefs.hidden = false;
@@ -1313,8 +1352,7 @@
           }
           setStatusDetail(rows);
         } else if (status === "suspended") {
-          badge.dataset.state = "pending";
-          badge.textContent = "Suspenso";
+          setBadges([{ text: "Suspenso", state: "pending" }]);
           setStatusDetail([
             {
               label: "Situação",
@@ -1328,8 +1366,7 @@
             phoneGate.hidden = false;
           }
         } else {
-          badge.dataset.state = "info";
-          badge.textContent = "Disponível";
+          setBadges([{ text: "Disponível", state: "info" }]);
 
           if (needsPhone && !phoneOk) {
             setStatusDetail([
@@ -2222,10 +2259,19 @@
             services.forEach((service) => listEl.appendChild(buildServiceCard(service)));
           }
           if (pendingServiceMessage) {
-            const first = listEl.querySelector('[data-field="ok"]');
-            if (first) {
-              first.hidden = false;
-              first.textContent = pendingServiceMessage;
+            const cancelledCard = Array.from(
+              listEl.querySelectorAll(".settings-card")
+            ).find((card) =>
+              Array.from(card.querySelectorAll(".settings-badge")).some(
+                (b) => b.textContent === "Cancelado"
+              )
+            );
+            const okEl =
+              (cancelledCard && cancelledCard.querySelector('[data-field="ok"]')) ||
+              listEl.querySelector('[data-field="ok"]');
+            if (okEl) {
+              okEl.hidden = false;
+              okEl.textContent = pendingServiceMessage;
             }
             pendingServiceMessage = "";
           }
