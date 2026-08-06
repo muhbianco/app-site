@@ -120,8 +120,8 @@
 
         <!-- LLM -->
         <section class="settings-section admin-panel" id="panel-llm" data-panel="llm" hidden>
-          <h2>Uso estimado</h2>
-          <p class="hint" id="llm-pricing-note">Termômetro de custo — não debita a carteira.</p>
+          <h2>Uso de LLM (congelado)</h2>
+          <p class="hint" id="llm-pricing-note">Custo real vs interno — não recalcula se mudar model/markup.</p>
           <form class="admin-filters" id="llm-filters" autocomplete="off">
             <label>
               <span>Cliente</span>
@@ -153,7 +153,8 @@
                   <th scope="col">Tokens in</th>
                   <th scope="col">Tokens out</th>
                   <th scope="col">Turnos</th>
-                  <th scope="col">Custo est.</th>
+                  <th scope="col">Custo real</th>
+                  <th scope="col">Custo interno</th>
                   <th scope="col">Último uso</th>
                 </tr>
               </thead>
@@ -164,6 +165,29 @@
             <button type="button" class="btn btn-ghost" id="llm-prev">Anterior</button>
             <span id="llm-pager-label">—</span>
             <button type="button" class="btn btn-ghost" id="llm-next">Próxima</button>
+          </div>
+
+          <h3 style="margin-top:2rem">Detalhe por turno</h3>
+          <div class="tx-table-wrap" id="llm-turns-wrap" hidden>
+            <table class="tx-table admin-tx-table" aria-label="Turnos LLM">
+              <thead>
+                <tr>
+                  <th scope="col">Data</th>
+                  <th scope="col">Cliente</th>
+                  <th scope="col">Model</th>
+                  <th scope="col">Tokens</th>
+                  <th scope="col">Real</th>
+                  <th scope="col">Interno</th>
+                  <th scope="col">Preview</th>
+                </tr>
+              </thead>
+              <tbody id="llm-turns-body"></tbody>
+            </table>
+          </div>
+          <div class="admin-pager" id="llm-turns-pager" hidden>
+            <button type="button" class="btn btn-ghost" id="llm-turns-prev">Anterior</button>
+            <span id="llm-turns-pager-label">—</span>
+            <button type="button" class="btn btn-ghost" id="llm-turns-next">Próxima</button>
           </div>
         </section>
 
@@ -222,6 +246,7 @@
                   <th scope="col">Descrição</th>
                   <th scope="col">Tipo</th>
                   <th scope="col">Valor</th>
+                  <th scope="col">Custo real</th>
                   <th scope="col">Saldo</th>
                   <th scope="col">Ações</th>
                 </tr>
@@ -358,16 +383,41 @@
               <option value="true">On — lê imagens e emotes no WhatsApp</option>
             </select>
           </label>
+          <label>
+            <span>Modelo de texto (chat)</span>
+            <select data-field="llm_model">
+              <option value="">Padrão da stack</option>
+            </select>
+          </label>
+          <label>
+            <span>Modelo STT (áudio → texto)</span>
+            <select data-field="stt_model">
+              <option value="">Padrão da stack</option>
+            </select>
+          </label>
+          <label data-field="vision-model-block" hidden>
+            <span>Modelo visão (imagem)</span>
+            <select data-field="vision_model">
+              <option value="">Padrão da stack</option>
+            </select>
+          </label>
+          <label>
+            <span>Modelo TTS (texto → áudio)</span>
+            <select data-field="tts_model">
+              <option value="">Padrão da stack</option>
+            </select>
+          </label>
         </div>
         <div class="admin-filters-actions">
           <a class="btn btn-ghost" data-field="users-link" href="#">Ver usuários</a>
+          <button type="button" class="btn btn-ghost" data-field="sync-models">Sincronizar modelos</button>
           <button type="submit" class="btn btn-primary" data-field="save">Salvar</button>
         </div>
       </form>
     </article>
   </template>
 
-  <script src="/js/auth.js?v=20"></script>
+  <script src="/js/auth.js?v=21"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -538,6 +588,36 @@
       const svcError = document.getElementById("svc-error");
       const svcOk = document.getElementById("svc-ok");
       const svcTpl = document.getElementById("tpl-admin-service");
+      let modelCatalog = { text: [], audio_in: [], vision: [], tts: [] };
+
+      function fillModelSelect(selectEl, rows, current) {
+        selectEl.innerHTML = "";
+        const empty = document.createElement("option");
+        empty.value = "";
+        empty.textContent = "Padrão da stack";
+        selectEl.appendChild(empty);
+        (rows || []).forEach((m) => {
+          const opt = document.createElement("option");
+          opt.value = m.model_id;
+          const price =
+            m.input_usd_per_million != null
+              ? ` (US$ ${m.input_usd_per_million}/${m.output_usd_per_million})`
+              : "";
+          opt.textContent = `${m.display_name || m.model_id}${price}`;
+          selectEl.appendChild(opt);
+        });
+        selectEl.value = current || "";
+      }
+
+      async function loadModelCatalog() {
+        const [text, audio_in, vision, tts] = await Promise.all([
+          MuhAuth.adminListLlmModels("text"),
+          MuhAuth.adminListLlmModels("audio_in"),
+          MuhAuth.adminListLlmModels("vision"),
+          MuhAuth.adminListLlmModels("tts"),
+        ]);
+        modelCatalog = { text, audio_in, vision, tts };
+      }
 
       function showSvcError(message) {
         svcOk.hidden = true;
@@ -578,6 +658,11 @@
         q("on_demand_markup_pct").value =
           service.on_demand_markup_pct != null ? service.on_demand_markup_pct : "";
 
+        fillModelSelect(q("llm_model"), modelCatalog.text, service.llm_model);
+        fillModelSelect(q("stt_model"), modelCatalog.audio_in, service.stt_model);
+        fillModelSelect(q("vision_model"), modelCatalog.vision, service.vision_model);
+        fillModelSelect(q("tts_model"), modelCatalog.tts, service.tts_model);
+
         function syncModeFields() {
           const mode = q("billing_mode").value;
           const isPerUse = mode === "per_use";
@@ -598,12 +683,37 @@
           q("period_days").required = !isPerUse;
         }
 
+        function syncVisionModel() {
+          const on = q("image_recognition_enabled").value === "true";
+          q("vision-model-block").hidden = !on;
+        }
+
         syncModeFields();
+        syncVisionModel();
         q("billing_mode").addEventListener("change", syncModeFields);
+        q("image_recognition_enabled").addEventListener("change", syncVisionModel);
 
         q("users-link").href = `/admin-servico-usuarios.html?service_id=${encodeURIComponent(
           service.id
         )}`;
+
+        q("sync-models").addEventListener("click", async () => {
+          const btn = q("sync-models");
+          btn.disabled = true;
+          try {
+            await MuhAuth.adminSyncLlmModels();
+            await loadModelCatalog();
+            fillModelSelect(q("llm_model"), modelCatalog.text, q("llm_model").value);
+            fillModelSelect(q("stt_model"), modelCatalog.audio_in, q("stt_model").value);
+            fillModelSelect(q("vision_model"), modelCatalog.vision, q("vision_model").value);
+            fillModelSelect(q("tts_model"), modelCatalog.tts, q("tts_model").value);
+            showSvcOk("Modelos Gemini sincronizados.");
+          } catch (err) {
+            showSvcError(err.message || "Falha ao sincronizar modelos.");
+          } finally {
+            btn.disabled = false;
+          }
+        });
 
         q("form").addEventListener("submit", async (event) => {
           event.preventDefault();
@@ -619,6 +729,13 @@
               allow_owned_whatsapp: q("allow_owned_whatsapp").value === "true",
               image_recognition_enabled:
                 q("image_recognition_enabled").value === "true",
+              llm_model: q("llm_model").value || null,
+              stt_model: q("stt_model").value || null,
+              vision_model:
+                q("image_recognition_enabled").value === "true"
+                  ? q("vision_model").value || null
+                  : null,
+              tts_model: q("tts_model").value || null,
             };
             if (mode === "per_use") {
               payload.price_cents = 0;
@@ -658,6 +775,7 @@
       async function loadServices() {
         try {
           svcError.hidden = true;
+          await loadModelCatalog();
           const services = await MuhAuth.adminListServices();
           svcList.innerHTML = "";
           services.forEach((service) => svcList.appendChild(buildServiceCard(service)));
@@ -859,6 +977,9 @@
         llmBody.innerHTML = "";
         items.forEach((row) => {
           const tr = document.createElement("tr");
+          const realCents = row.provider_cost_cents ?? row.estimated_cost_cents ?? 0;
+          const realUsd = row.provider_cost_usd ?? row.estimated_cost_usd ?? 0;
+          const internalCents = row.internal_cost_cents ?? 0;
           tr.innerHTML = `
             <td>
               <span class="tx-client">${row.full_name || "—"}</span>
@@ -868,13 +989,66 @@
             <td><span class="tx-detail">${Number(row.completion_tokens).toLocaleString("pt-BR")}</span></td>
             <td><span class="tx-detail">${row.assistant_messages}</span></td>
             <td>
-              <span class="tx-amount">${brl(row.estimated_cost_cents)}</span>
-              <span class="tx-detail">US$ ${Number(row.estimated_cost_usd).toFixed(4)}</span>
+              <span class="tx-amount">${brl(realCents)}</span>
+              <span class="tx-detail">US$ ${Number(realUsd).toFixed(4)}</span>
             </td>
+            <td><span class="tx-amount">${brl(internalCents)}</span></td>
             <td><span class="tx-date">${formatDate(row.last_usage_at)}</span></td>
           `;
           llmBody.appendChild(tr);
         });
+      }
+
+      let llmTurnsPage = 1;
+      let llmTurnsPages = 1;
+      const llmTurnsBody = document.getElementById("llm-turns-body");
+      const llmTurnsWrap = document.getElementById("llm-turns-wrap");
+
+      function renderLlmTurns(items) {
+        llmTurnsBody.innerHTML = "";
+        items.forEach((row) => {
+          const tr = document.createElement("tr");
+          const tokens = (row.prompt_tokens || 0) + (row.completion_tokens || 0);
+          tr.innerHTML = `
+            <td><span class="tx-date">${formatDate(row.created_at)}</span></td>
+            <td>
+              <span class="tx-client">${row.user_full_name || "—"}</span>
+              <span class="tx-detail">${row.user_email || ""}</span>
+            </td>
+            <td><span class="tx-detail">${row.llm_model || "—"}</span></td>
+            <td><span class="tx-detail">${Number(tokens).toLocaleString("pt-BR")}</span></td>
+            <td><span class="tx-amount">${
+              row.provider_cost_cents != null ? brl(row.provider_cost_cents) : "—"
+            }</span></td>
+            <td><span class="tx-amount">${
+              row.internal_cost_cents != null ? brl(row.internal_cost_cents) : "—"
+            }</span></td>
+            <td><span class="tx-detail">${row.content_preview || ""}</span></td>
+          `;
+          llmTurnsBody.appendChild(tr);
+        });
+      }
+
+      async function loadLlmTurns() {
+        try {
+          const payload = llmFilters();
+          payload.page = llmTurnsPage;
+          payload.page_size = 30;
+          const data = await MuhAuth.adminLlmTurns(payload);
+          const items = data.items || [];
+          llmTurnsPages = data.pages || 1;
+          llmTurnsPage = data.page || 1;
+          llmTurnsWrap.hidden = items.length === 0;
+          document.getElementById("llm-turns-pager").hidden = items.length === 0;
+          document.getElementById("llm-turns-pager-label").textContent =
+            `Página ${llmTurnsPage} de ${llmTurnsPages} · ${data.total || 0} turnos`;
+          document.getElementById("llm-turns-prev").disabled = llmTurnsPage <= 1;
+          document.getElementById("llm-turns-next").disabled = llmTurnsPage >= llmTurnsPages;
+          if (items.length) renderLlmTurns(items);
+        } catch (err) {
+          llmTurnsWrap.hidden = true;
+          document.getElementById("llm-turns-pager").hidden = true;
+        }
       }
 
       async function loadLlm() {
@@ -891,8 +1065,8 @@
             <strong>Total filtrado:</strong>
             ${(Number(data.total_prompt_tokens) || 0).toLocaleString("pt-BR")} in ·
             ${(Number(data.total_completion_tokens) || 0).toLocaleString("pt-BR")} out ·
-            ${brl(data.total_estimated_cost_cents || 0)}
-            (US$ ${Number(data.total_estimated_cost_usd || 0).toFixed(4)})
+            real ${brl(data.total_provider_cost_cents ?? data.total_estimated_cost_cents ?? 0)} ·
+            interno ${brl(data.total_internal_cost_cents || 0)}
           `;
           llmEmpty.hidden = items.length > 0;
           llmTableWrap.hidden = items.length === 0;
@@ -902,6 +1076,8 @@
           document.getElementById("llm-prev").disabled = llmPage <= 1;
           document.getElementById("llm-next").disabled = llmPage >= llmPages;
           if (items.length) renderLlm(items);
+          llmTurnsPage = 1;
+          await loadLlmTurns();
         } catch (err) {
           llmTableWrap.hidden = true;
           llmEmpty.hidden = true;
@@ -934,6 +1110,18 @@
         if (llmPage < llmPages) {
           llmPage += 1;
           loadLlm();
+        }
+      });
+      document.getElementById("llm-turns-prev").addEventListener("click", () => {
+        if (llmTurnsPage > 1) {
+          llmTurnsPage -= 1;
+          loadLlmTurns();
+        }
+      });
+      document.getElementById("llm-turns-next").addEventListener("click", () => {
+        if (llmTurnsPage < llmTurnsPages) {
+          llmTurnsPage += 1;
+          loadLlmTurns();
         }
       });
 
@@ -1011,6 +1199,9 @@
             <td><span class="tx-amount">${isIn ? "+" : "−"}${brl(
               Math.abs(tx.amount_cents)
             )}</span></td>
+            <td><span class="tx-detail">${
+              tx.provider_cost_cents != null ? brl(tx.provider_cost_cents) : "—"
+            }</span></td>
             <td><span class="tx-detail">${brl(tx.wallet_balance_cents)}</span></td>
             <td class="tx-actions">${actions}</td>
           `;

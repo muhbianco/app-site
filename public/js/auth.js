@@ -698,6 +698,35 @@
     return jsonOrThrow(response, "Não foi possível carregar o uso de LLM.");
   }
 
+  async function adminLlmTurns(params = {}) {
+    const qs = new URLSearchParams();
+    if (params.page) qs.set("page", String(params.page));
+    if (params.page_size) qs.set("page_size", String(params.page_size));
+    if (params.user_id) qs.set("user_id", params.user_id);
+    if (params.search) qs.set("search", params.search);
+    if (params.created_from) qs.set("created_from", params.created_from);
+    if (params.created_to) qs.set("created_to", params.created_to);
+    const response = await api(`${API_PREFIX}/agents/admin/llm-turns?${qs.toString()}`);
+    return jsonOrThrow(response, "Não foi possível carregar os turnos de LLM.");
+  }
+
+  async function adminListLlmModels(capability) {
+    const qs = new URLSearchParams();
+    if (capability) qs.set("capability", capability);
+    const response = await api(
+      `${API_PREFIX}/services/admin/llm-models?${qs.toString()}`
+    );
+    const data = await jsonOrThrow(response, "Não foi possível carregar os modelos.");
+    return Array.isArray(data) ? data : [];
+  }
+
+  async function adminSyncLlmModels() {
+    const response = await api(`${API_PREFIX}/services/admin/llm-models/sync`, {
+      method: "POST",
+    });
+    return jsonOrThrow(response, "Não foi possível sincronizar os modelos.");
+  }
+
   async function adminRefundTopup(id) {
     const response = await api(`${API_PREFIX}/billing/admin/topups/${encodeURIComponent(id)}/refund`, {
       method: "POST",
@@ -916,6 +945,9 @@
     adminListWallets,
     adminCreditWallet,
     adminLlmUsage,
+    adminLlmTurns,
+    adminListLlmModels,
+    adminSyncLlmModels,
     adminRefundTopup,
     adminCancelTopup,
     adminListSharedWa,
