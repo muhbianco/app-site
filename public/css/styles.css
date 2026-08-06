@@ -1175,6 +1175,24 @@ img {
   gap: 0.5rem;
 }
 
+.admin-models-section {
+  margin-top: 1.25rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 0.85rem;
+}
+
+.admin-models-section h4 {
+  margin: 0;
+  font-size: 0.98rem;
+  letter-spacing: -0.02em;
+}
+
+.admin-models-section > .hint {
+  margin: 0;
+}
+
 .admin-pager {
   display: flex;
   align-items: center;
