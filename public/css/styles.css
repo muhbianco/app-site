@@ -1038,6 +1038,10 @@ img {
   margin-top: 0.75rem;
 }
 
+.balance-actions-end {
+  margin-left: auto;
+}
+
 .btn.is-disabled {
   opacity: 0.55;
   pointer-events: none;
@@ -1191,6 +1195,44 @@ img {
 
 .admin-models-section > .hint {
   margin: 0;
+}
+
+.admin-models-details {
+  margin: 1rem 0 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.admin-models-details > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.85rem 1rem;
+  font-weight: 600;
+  font-size: 0.98rem;
+  letter-spacing: -0.02em;
+  user-select: none;
+}
+
+.admin-models-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-models-details > summary::after {
+  content: "▾";
+  float: right;
+  opacity: 0.55;
+  font-weight: 400;
+}
+
+.admin-models-details[open] > summary::after {
+  content: "▴";
+}
+
+.admin-models-details .admin-models-section {
+  margin: 0;
+  padding: 0 1rem 1rem;
+  border-top: 1px solid var(--line);
 }
 
 .admin-pager {

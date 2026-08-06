@@ -114,7 +114,7 @@
     </section>
   </main>
 
-  <script src="/js/auth.js?v=35"></script>
+  <script src="/js/auth.js?v=37"></script>
   <script>
     (async () => {
       const err = document.getElementById("kb-error");
@@ -213,7 +213,14 @@
         });
         list.querySelectorAll("[data-archive]").forEach((btn) => {
           btn.addEventListener("click", async () => {
-            if (!confirm("Arquivar e remover vetores deste documento?")) return;
+            const ok = await MuhAuth.confirmModal({
+              title: "Arquivar documento",
+              message: "Arquivar e remover vetores deste documento?",
+              confirmLabel: "Arquivar",
+              cancelLabel: "Voltar",
+              danger: true,
+            });
+            if (!ok) return;
             try {
               await MuhAuth.kbArchiveDocument(btn.dataset.archive);
               showOk("Documento arquivado.");

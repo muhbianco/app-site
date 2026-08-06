@@ -545,6 +545,135 @@
     return jsonOrThrow(response, "Não foi possível cancelar o serviço.");
   }
 
+  async function reactivateService(code) {
+    const response = await api(
+      `${API_PREFIX}/services/${encodeURIComponent(code)}/reactivate`,
+      { method: "POST" }
+    );
+    return jsonOrThrow(response, "Não foi possível reativar a assinatura.");
+  }
+
+  // ---------- Modais de confirmação / aviso (substitui alert/confirm nativos) ----------
+  let modalScrollY = 0;
+
+  function syncModalScrollLock() {
+    const anyOpen = Boolean(document.querySelector("dialog[open]"));
+    const root = document.documentElement;
+    if (anyOpen) {
+      if (!root.classList.contains("modal-open")) {
+        modalScrollY = window.scrollY || window.pageYOffset || 0;
+        root.classList.add("modal-open");
+        document.body.classList.add("modal-open");
+        document.body.style.top = `-${modalScrollY}px`;
+      }
+      return;
+    }
+    if (!root.classList.contains("modal-open")) return;
+    root.classList.remove("modal-open");
+    document.body.classList.remove("modal-open");
+    document.body.style.top = "";
+    window.scrollTo(0, modalScrollY);
+  }
+
+  function openAppDialog(dialog) {
+    if (!dialog) return;
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+    syncModalScrollLock();
+  }
+
+  function ensureAppConfirmDialog() {
+    let dialog = document.getElementById("app-confirm-dialog");
+    if (dialog) return dialog;
+    dialog = document.createElement("dialog");
+    dialog.id = "app-confirm-dialog";
+    dialog.className = "terms-dialog";
+    dialog.setAttribute("aria-labelledby", "app-confirm-title");
+    dialog.innerHTML = `
+      <form class="terms-dialog-card" method="dialog" id="app-confirm-form">
+        <header class="terms-dialog-head">
+          <h2 id="app-confirm-title">Confirmar</h2>
+          <button type="button" class="btn btn-ghost btn-compact" id="app-confirm-x" aria-label="Fechar">
+            Fechar
+          </button>
+        </header>
+        <p class="hint" id="app-confirm-message"></p>
+        <div class="balance-actions" id="app-confirm-actions">
+          <button type="submit" class="btn btn-primary" id="app-confirm-ok" value="confirm">Confirmar</button>
+          <button type="submit" class="btn btn-ghost" id="app-confirm-cancel" value="cancel">Cancelar</button>
+        </div>
+      </form>
+    `;
+    document.body.appendChild(dialog);
+    dialog.addEventListener("close", syncModalScrollLock);
+    return dialog;
+  }
+
+  function confirmModal({
+    title = "Confirmar",
+    message = "",
+    confirmLabel = "Confirmar",
+    cancelLabel = "Cancelar",
+    danger = false,
+  } = {}) {
+    return new Promise((resolve) => {
+      const dialog = ensureAppConfirmDialog();
+      const titleEl = dialog.querySelector("#app-confirm-title");
+      const msgEl = dialog.querySelector("#app-confirm-message");
+      const okBtn = dialog.querySelector("#app-confirm-ok");
+      const cancelBtn = dialog.querySelector("#app-confirm-cancel");
+      const closeBtn = dialog.querySelector("#app-confirm-x");
+      const form = dialog.querySelector("#app-confirm-form");
+
+      titleEl.textContent = title;
+      msgEl.textContent = message;
+      okBtn.textContent = confirmLabel;
+      okBtn.className = danger ? "btn btn-primary" : "btn btn-primary";
+      if (cancelLabel) {
+        cancelBtn.hidden = false;
+        cancelBtn.textContent = cancelLabel;
+      } else {
+        cancelBtn.hidden = true;
+      }
+
+      const finish = (value) => {
+        if (finish.settled) return;
+        finish.settled = true;
+        form.removeEventListener("submit", onSubmit);
+        closeBtn.removeEventListener("click", onClose);
+        dialog.removeEventListener("cancel", onEsc);
+        if (dialog.open) dialog.close();
+        resolve(value);
+      };
+      finish.settled = false;
+      const onSubmit = (event) => {
+        event.preventDefault();
+        const submitter = event.submitter;
+        const value = submitter && submitter.value === "confirm";
+        finish(Boolean(value));
+      };
+      const onClose = () => finish(false);
+      const onEsc = (event) => {
+        event.preventDefault();
+        finish(false);
+      };
+
+      form.addEventListener("submit", onSubmit);
+      closeBtn.addEventListener("click", onClose);
+      dialog.addEventListener("cancel", onEsc);
+      openAppDialog(dialog);
+    });
+  }
+
+  function alertModal({ title = "Aviso", message = "", okLabel = "OK" } = {}) {
+    return confirmModal({
+      title,
+      message,
+      confirmLabel: okLabel,
+      cancelLabel: null,
+    }).then(() => undefined);
+  }
+
   async function kbSettings() {
     const response = await api(`${API_PREFIX}/kb/settings`);
     return jsonOrThrow(response, "Não foi possível carregar o agente KB.");
@@ -926,6 +1055,11 @@
     agentWaGroups,
     agentWaSetExposure,
     disableService,
+    reactivateService,
+    openAppDialog,
+    syncModalScrollLock,
+    confirmModal,
+    alertModal,
     kbSettings,
     kbPatchSettings,
     kbListDocuments,

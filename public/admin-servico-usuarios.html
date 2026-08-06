@@ -96,7 +96,7 @@
     </div>
   </main>
 
-  <script src="/js/auth.js?v=33"></script>
+  <script src="/js/auth.js?v=37"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -302,7 +302,16 @@
         const subId = tr && tr.dataset.subId;
         if (!subId) return;
         const confirmMsg = btn.getAttribute("data-confirm");
-        if (confirmMsg && !confirm(confirmMsg)) return;
+        if (confirmMsg) {
+          const ok = await MuhAuth.confirmModal({
+            title: "Confirmar ação",
+            message: confirmMsg,
+            confirmLabel: "Confirmar",
+            cancelLabel: "Voltar",
+            danger: true,
+          });
+          if (!ok) return;
+        }
         btn.disabled = true;
         try {
           const result = await runner(subId);

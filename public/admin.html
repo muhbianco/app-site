@@ -384,49 +384,51 @@
             </select>
           </label>
         </div>
+        <details class="admin-models-details" data-field="models-details">
+          <summary>Modelos Google</summary>
+          <section class="admin-models-section" data-field="models-section">
+            <p class="hint">
+              Configuração explícita deste serviço (vale na hora).
+              <strong>Sincronizar</strong> atualiza a lista de models disponíveis na sua chave Google —
+              não muda a escolha abaixo.
+            </p>
+            <div class="admin-filters">
+              <label>
+                <span>Modelo de texto (chat)</span>
+                <select data-field="llm_model"></select>
+              </label>
+              <label>
+                <span>Modelo STT (áudio → texto)</span>
+                <select data-field="stt_model"></select>
+              </label>
+              <label>
+                <span>Modelo visão (imagem)</span>
+                <select data-field="vision_model"></select>
+              </label>
+              <label>
+                <span>Modelo TTS (texto → áudio)</span>
+                <select data-field="tts_model"></select>
+              </label>
+            </div>
+            <div class="admin-filters-actions">
+              <button type="button" class="btn btn-ghost" data-field="sync-models">
+                Sincronizar lista
+              </button>
+              <button type="button" class="btn btn-primary" data-field="save-models">
+                Salvar models
+              </button>
+            </div>
+          </section>
+        </details>
         <div class="admin-filters-actions">
           <a class="btn btn-ghost" data-field="users-link" href="#">Ver usuários</a>
           <button type="submit" class="btn btn-primary" data-field="save">Salvar cobrança</button>
         </div>
       </form>
-
-      <section class="admin-models-section" data-field="models-section">
-        <h4>Modelos Gemini</h4>
-        <p class="hint">
-          Configuração explícita deste serviço (vale na hora). 
-          <strong>Sincronizar</strong> só atualiza a lista de models disponíveis na Gemini — não muda a escolha abaixo.
-        </p>
-        <div class="admin-filters">
-          <label>
-            <span>Modelo de texto (chat)</span>
-            <select data-field="llm_model" required></select>
-          </label>
-          <label>
-            <span>Modelo STT (áudio → texto)</span>
-            <select data-field="stt_model" required></select>
-          </label>
-          <label>
-            <span>Modelo visão (imagem)</span>
-            <select data-field="vision_model" required></select>
-          </label>
-          <label>
-            <span>Modelo TTS (texto → áudio)</span>
-            <select data-field="tts_model" required></select>
-          </label>
-        </div>
-        <div class="admin-filters-actions">
-          <button type="button" class="btn btn-ghost" data-field="sync-models">
-            Sincronizar lista
-          </button>
-          <button type="button" class="btn btn-primary" data-field="save-models">
-            Salvar models
-          </button>
-        </div>
-      </section>
     </article>
   </template>
 
-  <script src="/js/auth.js?v=22"></script>
+  <script src="/js/auth.js?v=37"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -719,7 +721,7 @@
             fillModelSelect(q("vision_model"), modelCatalog.vision, q("vision_model").value);
             fillModelSelect(q("tts_model"), modelCatalog.tts, q("tts_model").value);
             showSvcOk(
-              `Lista Gemini atualizada (${stats.listed || 0} models · +${stats.created || 0} novos). Escolha e clique em Salvar models.`
+              `Lista Google atualizada (${stats.listed || 0} models · +${stats.created || 0} novos). Escolha e clique em Salvar models.`
             );
           } catch (err) {
             showSvcError(err.message || "Falha ao sincronizar lista de models.");
@@ -1298,7 +1300,14 @@
         const id = tr && tr.dataset.topupId;
         if (!id) return;
 
-        if (!confirm("Confirma estornar esta recarga?")) return;
+        const ok = await MuhAuth.confirmModal({
+          title: "Estornar recarga",
+          message: "Confirma estornar esta recarga?",
+          confirmLabel: "Estornar",
+          cancelLabel: "Voltar",
+          danger: true,
+        });
+        if (!ok) return;
 
         btn.disabled = true;
         try {
@@ -1575,16 +1584,27 @@
             showWaOk(activate ? "Número ativado no pool." : "Número desativado.");
             await loadWhatsapp();
           } else if (action === "logout") {
-            if (!confirm("Desconectar a sessão deste número oficial?")) return;
+            const ok = await MuhAuth.confirmModal({
+              title: "Desconectar número",
+              message: "Desconectar a sessão deste número oficial?",
+              confirmLabel: "Desconectar",
+              cancelLabel: "Voltar",
+              danger: true,
+            });
+            if (!ok) return;
             await MuhAuth.adminSharedWaLogout(id);
             showWaOk("Sessão desconectada (número inativo no pool).");
             await loadWhatsapp();
           } else if (action === "delete") {
-            if (
-              !confirm(
-                "Excluir permanentemente este número (WuzAPI + banco)? Só funciona sem assinantes."
-              )
-            ) {
+            const ok = await MuhAuth.confirmModal({
+              title: "Excluir número",
+              message:
+                "Excluir permanentemente este número (WuzAPI + banco)? Só funciona sem assinantes.",
+              confirmLabel: "Excluir",
+              cancelLabel: "Voltar",
+              danger: true,
+            });
+            if (!ok) {
               return;
             }
             await MuhAuth.adminDeleteSharedWa(id);

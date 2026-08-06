@@ -457,6 +457,14 @@
           <button type="button" class="btn btn-ghost btn-compact" data-field="disable-btn">
             Cancelar serviço
           </button>
+          <button
+            type="button"
+            class="btn btn-primary btn-compact balance-actions-end"
+            data-field="reactivate-btn"
+            hidden
+          >
+            Reativar assinatura
+          </button>
         </div>
       </div>
     </article>
@@ -686,7 +694,7 @@
     </form>
   </dialog>
 
-  <script src="/js/auth.js?v=36"></script>
+  <script src="/js/auth.js?v=37"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -864,7 +872,10 @@
         try {
           renderAvatar(await MuhAuth.uploadAvatar(file));
         } catch (err) {
-          alert(err.message || "Falha ao enviar a foto.");
+          await MuhAuth.alertModal({
+            title: "Foto de perfil",
+            message: err.message || "Falha ao enviar a foto.",
+          });
         } finally {
           avatarEdit.disabled = false;
         }
@@ -1156,8 +1167,9 @@
           }
           q("pause-btn").hidden = paused;
           q("resume-btn").hidden = !paused;
-          // Já marcado para não renovar: não oferece cancelar de novo.
+          // Já marcado para não renovar: não oferece cancelar de novo; oferece reativar.
           q("disable-btn").hidden = cancelling;
+          q("reactivate-btn").hidden = !cancelling;
           if (cancelling) {
             const note = document.createElement("p");
             note.className = "hint";
@@ -1391,13 +1403,15 @@
         }
 
         q("pause-btn").addEventListener("click", async () => {
-          if (
-            !confirm(
+          const ok = await MuhAuth.confirmModal({
+            title: "Pausar agente",
+            message:
               "Pausar o agente agora? Ele para de responder no WhatsApp na hora. " +
-                "A cobrança do período continua normal — para parar de pagar, cancele o serviço."
-            )
-          )
-            return;
+              "A cobrança do período continua normal — para parar de pagar, cancele o serviço.",
+            confirmLabel: "Pausar",
+            cancelLabel: "Voltar",
+          });
+          if (!ok) return;
           const btn = q("pause-btn");
           btn.disabled = true;
           try {
@@ -1422,13 +1436,15 @@
         });
 
         q("ping-btn").addEventListener("click", async () => {
-          if (
-            !confirm(
+          const ok = await MuhAuth.confirmModal({
+            title: "Contato no WhatsApp",
+            message:
               "Enviar uma mensagem do agente no seu WhatsApp agora? " +
-                "Use isso se perdeu o contato — salve o número quando a mensagem chegar."
-            )
-          )
-            return;
+              "Use isso se perdeu o contato — salve o número quando a mensagem chegar.",
+            confirmLabel: "Enviar",
+            cancelLabel: "Voltar",
+          });
+          if (!ok) return;
           const btn = q("ping-btn");
           btn.disabled = true;
           try {
@@ -1437,6 +1453,27 @@
           } catch (err) {
             showError(err.message || "Não foi possível enviar a mensagem.");
           } finally {
+            btn.disabled = false;
+          }
+        });
+
+        q("reactivate-btn").addEventListener("click", async () => {
+          const ok = await MuhAuth.confirmModal({
+            title: "Reativar assinatura",
+            message:
+              "Reativar a renovação desta assinatura? " +
+              "O serviço continua ativo e volta a renovar automaticamente no fim do período.",
+            confirmLabel: "Reativar",
+            cancelLabel: "Voltar",
+          });
+          if (!ok) return;
+          const btn = q("reactivate-btn");
+          btn.disabled = true;
+          try {
+            await MuhAuth.reactivateService(service.code);
+            await reloadServicos("Assinatura reativada — a renovação está ligada de novo.");
+          } catch (err) {
+            showError(err.message || "Não foi possível reativar.");
             btn.disabled = false;
           }
         });
@@ -1464,7 +1501,14 @@
           }
 
           if (!refundEligible || refundCents <= 0) {
-            if (!confirm("Cancelar este serviço no fim do período pago?")) return;
+            const ok = await MuhAuth.confirmModal({
+              title: "Cancelar serviço",
+              message: "Cancelar este serviço no fim do período pago?",
+              confirmLabel: "Cancelar no fim do período",
+              cancelLabel: "Voltar",
+              danger: true,
+            });
+            if (!ok) return;
             await runCancel({ immediateRefund: false });
             return;
           }
@@ -1629,7 +1673,14 @@
               btn.className = "btn btn-ghost btn-compact";
               btn.textContent = "Remover";
               btn.addEventListener("click", async () => {
-                if (!confirm("Remover este WhatsApp do agente?")) return;
+                const ok = await MuhAuth.confirmModal({
+                  title: "Remover WhatsApp",
+                  message: "Remover este WhatsApp do agente?",
+                  confirmLabel: "Remover",
+                  cancelLabel: "Voltar",
+                  danger: true,
+                });
+                if (!ok) return;
                 btn.disabled = true;
                 try {
                   await MuhAuth.removeServicePhone(liveService.code, item.id);
@@ -2138,11 +2189,15 @@
         document.getElementById("wa-owned-done-close-btn").onclick = close;
 
         async function doOwnedLogout(btn) {
-          if (
-            !confirm(
-              "Desconectar esta instância? O WhatsApp sai do aparelho vinculado e será preciso parear de novo."
-            )
-          ) {
+          const ok = await MuhAuth.confirmModal({
+            title: "Desconectar instância",
+            message:
+              "Desconectar esta instância? O WhatsApp sai do aparelho vinculado e será preciso parear de novo.",
+            confirmLabel: "Desconectar",
+            cancelLabel: "Voltar",
+            danger: true,
+          });
+          if (!ok) {
             return;
           }
           btn.disabled = true;
@@ -2423,7 +2478,14 @@
         if (!btn) return;
         const id = btn.getAttribute("data-cancel-topup");
         if (!id) return;
-        if (!confirm("Cancelar esta recarga pendente?")) return;
+        const ok = await MuhAuth.confirmModal({
+          title: "Cancelar recarga",
+          message: "Cancelar esta recarga pendente?",
+          confirmLabel: "Cancelar recarga",
+          cancelLabel: "Voltar",
+          danger: true,
+        });
+        if (!ok) return;
         btn.disabled = true;
         try {
           await MuhAuth.cancelTopup(id);
