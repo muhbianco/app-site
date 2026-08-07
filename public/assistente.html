@@ -1,35 +1,37 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MuhBianco — Assistente Pessoal</title>
-  <link rel="stylesheet" href="css/styles.css?v=41">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Configure o Assistente Pessoal no WhatsApp — modo, personalidade, documentos, ferramentas e agendamentos." />
+  <title>Assistente Pessoal — MuhBianco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css?v=47" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="container nav">
-      <a class="brand" href="index.html">MuhBianco</a>
-      <nav class="menu">
-        <a href="index.html">Início</a>
-        <a href="servicos.html">Serviços</a>
-        <a href="assinaturas.html">Assinaturas</a>
-        <a href="perfil.html">Perfil</a>
-        <a href="admin.html" data-admin-link hidden>Admin</a>
-        <button type="button" class="btn ghost" data-logout>Sair</button>
-      </nav>
-    </div>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="logo" href="/">MuhBianco</a>
+    <nav class="nav" aria-label="Principal">
+      <a href="/conta.html#servicos">Serviços</a>
+      <a href="/contato.html">Contato</a>
+      <div id="account-menu-root"></div>
+    </nav>
   </header>
 
-  <main class="section">
-    <div class="container narrow kb-page">
-      <p class="eyebrow">WhatsApp</p>
+  <main class="settings-page kb-page">
+    <section class="settings-head">
+      <p class="brand-mark compact">WhatsApp</p>
       <h1>Assistente Pessoal</h1>
-      <p class="lead">Configure modo, personalidade, documentos, ferramentas e agendamentos.</p>
+      <p class="auth-lede">Configure modo, personalidade, documentos, ferramentas e agendamentos.</p>
+    </section>
 
-      <div id="kb-gate" class="card kb-panel" hidden>
+      <div id="kb-gate" class="kb-panel" hidden>
         <p class="muted">Você precisa de uma assinatura ativa do Assistente Pessoal no WhatsApp para usar esta página.</p>
-        <p><a class="btn primary" href="servicos.html">Ver serviços</a></p>
+        <p><a class="btn btn-primary" href="/conta.html#servicos">Ver serviços</a></p>
       </div>
 
       <div id="kb-app" hidden>
@@ -54,7 +56,7 @@
               </label>
             </div>
             <div class="kb-actions">
-              <button type="button" class="btn primary" id="kb-mode-save">Salvar modo</button>
+              <button type="button" class="btn btn-primary" id="kb-mode-save">Salvar modo</button>
               <span class="form-msg" id="kb-mode-msg" aria-live="polite"></span>
             </div>
           </div>
@@ -67,7 +69,7 @@
             <label class="sr-only" for="kb-personality">Instruções de personalidade</label>
             <textarea id="kb-personality" class="kb-textarea" maxlength="2000" rows="8" placeholder="Ex.: Seja objetivo, use português do Brasil, não invente preços…"></textarea>
             <div class="kb-actions">
-              <button type="button" class="btn primary" id="kb-personality-save">Salvar personalidade</button>
+              <button type="button" class="btn btn-primary" id="kb-personality-save">Salvar personalidade</button>
               <span class="form-msg" id="kb-personality-msg" aria-live="polite"></span>
             </div>
           </div>
@@ -83,7 +85,7 @@
                 <label class="sr-only" for="kb-file-title">Título do arquivo</label>
                 <input type="text" id="kb-file-title" class="input" placeholder="Título (opcional)" maxlength="200">
                 <input type="file" id="kb-file" accept=".pdf,.docx,.txt,.md,application/pdf,text/plain">
-                <button type="button" class="btn secondary" id="kb-upload-btn">Enviar</button>
+                <button type="button" class="btn btn-ghost" id="kb-upload-btn">Enviar</button>
                 <span class="form-msg" id="kb-upload-msg" aria-live="polite"></span>
               </div>
               <div class="kb-upload-block">
@@ -93,7 +95,7 @@
                 <input type="url" id="kb-url" class="input" placeholder="https://…">
                 <label class="sr-only" for="kb-url-title">Título da URL</label>
                 <input type="text" id="kb-url-title" class="input" placeholder="Título (opcional)" maxlength="200">
-                <button type="button" class="btn secondary" id="kb-url-btn">Importar</button>
+                <button type="button" class="btn btn-ghost" id="kb-url-btn">Importar</button>
                 <span class="form-msg" id="kb-url-msg" aria-live="polite"></span>
               </div>
             </div>
@@ -124,15 +126,15 @@
                   <option value="">Todos</option>
                 </select>
               </label>
-              <button type="button" class="btn ghost" id="kb-doc-filter-btn">Filtrar</button>
+              <button type="button" class="btn btn-ghost" id="kb-doc-filter-btn">Filtrar</button>
             </div>
 
             <div id="kb-docs-list" class="kb-docs-list" aria-live="polite"></div>
             <div class="kb-pager">
               <span class="kb-pager-meta" id="kb-docs-pager-meta"></span>
               <div class="kb-tool-actions">
-                <button type="button" class="btn ghost" id="kb-docs-prev" disabled>Anterior</button>
-                <button type="button" class="btn ghost" id="kb-docs-next" disabled>Próxima</button>
+                <button type="button" class="btn btn-ghost" id="kb-docs-prev" disabled>Anterior</button>
+                <button type="button" class="btn btn-ghost" id="kb-docs-next" disabled>Próxima</button>
               </div>
             </div>
           </div>
@@ -142,6 +144,9 @@
           <summary>Ferramentas</summary>
           <div class="kb-section-body">
             <p class="muted" style="margin-top:0.85rem">O agente só recebe tools ligadas nas conversas do WhatsApp. Credenciais ficam criptografadas e nunca são exibidas.</p>
+            <div class="kb-tools-toolbar">
+              <button type="button" class="btn btn-primary" id="kb-tool-create-btn">Criar ferramenta</button>
+            </div>
             <div id="kb-tools-catalog" class="kb-tool-catalog"></div>
             <span class="form-msg" id="kb-tools-msg" aria-live="polite"></span>
           </div>
@@ -214,7 +219,7 @@
                   <label class="kb-tool-switch"><input type="checkbox" id="sched-email"> E-mail</label>
                 </div>
                 <div class="kb-tool-actions">
-                  <button type="button" class="btn primary" id="sched-create-btn">Criar agendamento</button>
+                  <button type="button" class="btn btn-primary" id="sched-create-btn">Criar agendamento</button>
                 </div>
               </div>
             </article>
@@ -222,10 +227,112 @@
           </div>
         </details>
       </div>
-    </div>
   </main>
 
-  <script src="js/auth.js?v=41"></script>
+  <dialog class="terms-dialog kb-tool-dialog" id="kb-tool-dialog" aria-labelledby="kb-tool-dialog-title">
+    <div class="terms-dialog-card kb-tool-dialog-card">
+      <header class="terms-dialog-head">
+        <div>
+          <h2 id="kb-tool-dialog-title">Criar ferramenta</h2>
+          <p class="hint" id="kb-tool-dialog-lede" style="margin:0.35rem 0 0">Escolha o tipo e configure.</p>
+        </div>
+        <button type="button" class="btn btn-ghost btn-compact" id="kb-tool-dialog-x" aria-label="Fechar">Fechar</button>
+      </header>
+
+      <p class="kb-wizard-step" id="kb-tool-wizard-step" aria-live="polite">Passo 1 de 2 — tipo</p>
+
+      <div id="kb-tool-step-type" class="kb-wizard-pane">
+        <div class="kb-tool-type-grid" id="kb-tool-type-grid" role="listbox" aria-label="Tipos de ferramenta"></div>
+      </div>
+
+      <div id="kb-tool-step-config" class="kb-wizard-pane" hidden>
+        <div class="kb-tool-form">
+          <label>Nome
+            <input type="text" class="input" id="tool-name" maxlength="120" placeholder="Ex.: Consultar pedido">
+          </label>
+          <label>Descrição para o LLM
+            <textarea class="input" id="tool-description" rows="2" maxlength="500" placeholder="Quando usar e o que retorna"></textarea>
+          </label>
+          <label>Instruções de uso
+            <textarea class="input" id="tool-instructions" rows="2" maxlength="4000" placeholder="Quando o cliente pedir X, use esta tool…"></textarea>
+          </label>
+
+          <div class="kb-params-block">
+            <div class="kb-params-head">
+              <div>
+                <strong>Parâmetros</strong>
+                <p class="muted" style="margin:0.2rem 0 0">Defina o que o agente deve pedir ao usuário. Depois use <code>{{nome}}</code> na URL.</p>
+              </div>
+              <button type="button" class="btn btn-ghost btn-compact" id="tool-param-add">Adicionar</button>
+            </div>
+            <div id="tool-params-list" class="kb-params-list"></div>
+            <div id="tool-param-chips" class="kb-param-chips" hidden></div>
+          </div>
+
+          <div class="kb-tool-form-row">
+            <label>Método
+              <select class="input" id="tool-method">
+                <option>GET</option>
+                <option>POST</option>
+                <option>PUT</option>
+                <option>PATCH</option>
+                <option>DELETE</option>
+              </select>
+            </label>
+            <label>URL HTTPS
+              <input type="url" class="input" id="tool-url" placeholder="https://api.exemplo.com/ws/{{cep}}/json/">
+            </label>
+          </div>
+          <p class="muted kb-url-hint" id="tool-url-hint">Crie parâmetros acima e clique neles para inserir na URL ou no JSON.</p>
+          <div id="tool-body-wrap" class="kb-body-wrap" hidden>
+            <label for="tool-body-json">Body JSON
+              <textarea class="input" id="tool-body-json" rows="6" maxlength="8000" placeholder='{\n  "cep": "{{cep}}"\n}'></textarea>
+            </label>
+            <p class="muted kb-url-hint">Obrigatório em POST/PUT/PATCH. Use <code>{{param}}</code> entre aspas para strings.</p>
+          </div>
+          <div class="kb-tool-form-row">
+            <label>Auth
+              <select class="input" id="tool-auth">
+                <option value="none">Nenhuma</option>
+                <option value="bearer">Bearer</option>
+                <option value="header">Header custom</option>
+                <option value="basic">Basic</option>
+              </select>
+            </label>
+            <label>Nome do header (se header)
+              <input type="text" class="input" id="tool-header-name" placeholder="X-Api-Key">
+            </label>
+          </div>
+          <label id="tool-secret-label"><span id="tool-secret-caption">Segredo / token</span>
+            <input type="password" class="input" id="tool-secret" autocomplete="new-password" placeholder="Não será exibido depois">
+          </label>
+          <label>Timeout (s)
+            <input type="number" class="input" id="tool-timeout" min="1" max="15" value="10">
+          </label>
+          <label class="kb-tool-switch" id="tool-enabled-wrap" hidden>
+            <input type="checkbox" id="tool-enabled" checked>
+            Ligada para o agente
+          </label>
+          <div id="tool-test-args" class="kb-test-args" hidden>
+            <strong>Valores para teste</strong>
+            <p class="muted" style="margin:0.25rem 0 0.5rem">Usados só no botão Testar; não são salvos.</p>
+            <div id="tool-test-args-fields" class="kb-tool-form"></div>
+          </div>
+        </div>
+      </div>
+
+      <p class="form-msg" id="kb-tool-dialog-msg" aria-live="polite"></p>
+      <div class="balance-actions kb-wizard-actions">
+        <button type="button" class="btn btn-ghost" id="kb-tool-back" hidden>Voltar</button>
+        <button type="button" class="btn btn-ghost" id="kb-tool-test" hidden>Testar</button>
+        <span class="kb-wizard-actions-spacer"></span>
+        <button type="button" class="btn btn-ghost" id="kb-tool-cancel">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="kb-tool-primary">Continuar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="/js/auth.js?v=47"></script>
   <script>
     (function () {
       const PAGE_SIZE = 10;
@@ -238,15 +345,6 @@
       const docsList = document.getElementById("kb-docs-list");
       const toolsCatalog = document.getElementById("kb-tools-catalog");
       const toolsMsg = document.getElementById("kb-tools-msg");
-
-      const SOON_TOOLS = [
-        { id: "gdrive", name: "Google Drive", desc: "Ler e buscar arquivos do Drive do cliente." },
-        { id: "gmail", name: "Gmail", desc: "Ler e enviar e-mails com escopo mínimo." },
-        { id: "discord", name: "Discord", desc: "Enviar avisos em canais autorizados." },
-        { id: "webhook", name: "Webhook outbound", desc: "Avisar o sistema do cliente em eventos." },
-        { id: "gcal", name: "Calendário Google", desc: "Consultar e criar eventos." },
-        { id: "gsheets", name: "Planilha (Sheets)", desc: "Ler e atualizar abas autorizadas." },
-      ];
 
       function setMsg(el, text, ok) {
         if (!el) return;
@@ -334,6 +432,11 @@
           .map((doc) => {
             const source = esc((doc.source_name || "").slice(0, 80) || "—");
             const chunks = doc.chunk_count != null ? `${doc.chunk_count} trechos` : "—";
+            const archived = doc.status === "archived";
+            const actions = archived
+              ? `<button type="button" class="btn btn-ghost kb-doc-reactivate">Reativar</button>
+                 <button type="button" class="btn btn-ghost kb-doc-purge">Excluir</button>`
+              : `<button type="button" class="btn btn-ghost kb-doc-archive">Arquivar</button>`;
             return `
               <article class="kb-doc-card" data-id="${esc(doc.id)}">
                 <div class="kb-doc-meta">
@@ -342,21 +445,18 @@
                   <span>${doc.source_kind === "url" ? "URL" : "Arquivo"}: ${source}</span>
                   ${doc.is_active ? "" : '<span class="muted">Versão inativa</span>'}
                 </div>
-                <div class="kb-tool-actions">
-                  <button type="button" class="btn ghost kb-doc-archive">Arquivar</button>
-                </div>
+                <div class="kb-tool-actions">${actions}</div>
               </article>`;
           })
           .join("");
 
         docsList.querySelectorAll(".kb-doc-archive").forEach((btn) => {
           btn.addEventListener("click", async () => {
-            const card = btn.closest("[data-id]");
-            const id = card && card.getAttribute("data-id");
+            const id = btn.closest("[data-id]")?.getAttribute("data-id");
             if (!id) return;
             const ok = await MuhAuth.confirmModal({
               title: "Arquivar documento?",
-              message: "A versão ativa será arquivada e deixa de entrar nas buscas.",
+              message: "Deixa de entrar nas buscas. Você poderá reativar depois.",
               confirmLabel: "Arquivar",
             });
             if (!ok) return;
@@ -371,6 +471,47 @@
             }
           });
         });
+
+        docsList.querySelectorAll(".kb-doc-reactivate").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const id = btn.closest("[data-id]")?.getAttribute("data-id");
+            if (!id) return;
+            try {
+              btn.disabled = true;
+              await MuhAuth.kbActivateDocument(id);
+              await loadDocs();
+            } catch (err) {
+              await MuhAuth.alertModal({
+                title: "Erro",
+                message: err.message || "Falha ao reativar.",
+              });
+            } finally {
+              btn.disabled = false;
+            }
+          });
+        });
+
+        docsList.querySelectorAll(".kb-doc-purge").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const id = btn.closest("[data-id]")?.getAttribute("data-id");
+            if (!id) return;
+            const ok = await MuhAuth.confirmModal({
+              title: "Excluir documento?",
+              message: "Remove de vez. Não dá para desfazer.",
+              confirmLabel: "Excluir",
+            });
+            if (!ok) return;
+            try {
+              await MuhAuth.kbArchiveDocument(id);
+              await loadDocs();
+            } catch (err) {
+              await MuhAuth.alertModal({
+                title: "Erro",
+                message: err.message || "Falha ao excluir.",
+              });
+            }
+          });
+        });
       }
 
       async function loadDocs() {
@@ -378,20 +519,425 @@
         renderDocs(data);
       }
 
-      function renderSoonCard(item) {
-        return `
-          <article class="kb-tool-card is-soon">
-            <div class="kb-tool-card-head">
-              <div>
-                <h3>${esc(item.name)}</h3>
-                <p>${esc(item.desc)}</p>
-              </div>
-              <span class="kb-tool-badge soon">Em breve</span>
-            </div>
-            <p class="muted" style="margin:0">Conexão OAuth e permissões mínimas chegam em uma próxima entrega.</p>
-            <button type="button" class="btn ghost" disabled>Conectar</button>
-          </article>`;
+      const SOON_TOOLS = [
+        { id: "gdrive", name: "Google Drive", desc: "Ler e buscar arquivos do Drive do cliente." },
+        { id: "gmail", name: "Gmail", desc: "Ler e enviar e-mails com escopo mínimo." },
+        { id: "discord", name: "Discord", desc: "Enviar avisos em canais autorizados." },
+        { id: "webhook", name: "Webhook outbound", desc: "Avisar o sistema do cliente em eventos." },
+        { id: "gcal", name: "Calendário Google", desc: "Consultar e criar eventos." },
+        { id: "gsheets", name: "Planilha (Sheets)", desc: "Ler e atualizar abas autorizadas." },
+      ];
+
+      const TOOL_TYPES = [
+        {
+          id: "http_custom",
+          name: "API HTTP custom",
+          desc: "Chamada HTTPS autenticada à API do seu sistema.",
+          ready: true,
+        },
+      ];
+
+      const toolDialog = document.getElementById("kb-tool-dialog");
+      let toolWizard = {
+        mode: "create", // create | edit
+        step: 1,
+        typeId: "http_custom",
+        editTool: null,
+        catalogSoon: [],
+        insertTarget: "url",
+      };
+
+      function toolDialogMsg(text, ok) {
+        setMsg(document.getElementById("kb-tool-dialog-msg"), text, ok);
       }
+
+      function readParamsFromEditor() {
+        return Array.from(document.querySelectorAll("#tool-params-list .kb-param-row")).map(
+          (row) => ({
+            name: (row.querySelector(".kb-param-name")?.value || "").trim(),
+            description: (row.querySelector(".kb-param-desc")?.value || "").trim(),
+            required: !!(row.querySelector(".kb-param-required")?.checked),
+          })
+        );
+      }
+
+      function renderParamChips() {
+        const chips = document.getElementById("tool-param-chips");
+        const params = readParamsFromEditor().filter((p) => p.name);
+        if (!params.length) {
+          chips.hidden = true;
+          chips.innerHTML = "";
+          return;
+        }
+        chips.hidden = false;
+        chips.innerHTML = params
+          .map(
+            (p) =>
+              `<button type="button" class="kb-param-chip" data-insert="{{${esc(p.name)}}}">{{${esc(p.name)}}}</button>`
+          )
+          .join("");
+        chips.querySelectorAll("[data-insert]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const urlEl = document.getElementById("tool-url");
+            const bodyEl = document.getElementById("tool-body-json");
+            const active =
+              document.activeElement === bodyEl || toolWizard.insertTarget === "body"
+                ? bodyEl
+                : urlEl;
+            const token = btn.getAttribute("data-insert") || "";
+            const start = active.selectionStart ?? active.value.length;
+            const end = active.selectionEnd ?? active.value.length;
+            active.value = active.value.slice(0, start) + token + active.value.slice(end);
+            active.focus();
+            const pos = start + token.length;
+            active.setSelectionRange(pos, pos);
+          });
+        });
+      }
+
+      function syncBodyFieldVisibility() {
+        const method = document.getElementById("tool-method").value;
+        const wrap = document.getElementById("tool-body-wrap");
+        const needsBody = method === "POST" || method === "PUT" || method === "PATCH";
+        wrap.hidden = !needsBody;
+        if (!needsBody) {
+          toolWizard.insertTarget = "url";
+        }
+      }
+
+      function addParamRow(param) {
+        const list = document.getElementById("tool-params-list");
+        const row = document.createElement("div");
+        row.className = "kb-param-row";
+        row.innerHTML = `
+          <label>Nome
+            <input type="text" class="input kb-param-name" maxlength="40" placeholder="cep" value="${esc((param && param.name) || "")}">
+          </label>
+          <label>Descrição (para o LLM)
+            <input type="text" class="input kb-param-desc" maxlength="300" placeholder="CEP com 8 dígitos" value="${esc((param && param.description) || "")}">
+          </label>
+          <label class="kb-tool-switch kb-param-required-wrap">
+            <input type="checkbox" class="kb-param-required" ${(param ? param.required !== false : true) ? "checked" : ""}>
+            Obrigatório
+          </label>
+          <button type="button" class="btn btn-ghost btn-compact kb-param-remove" aria-label="Remover parâmetro">Remover</button>
+        `;
+        list.appendChild(row);
+        row.querySelector(".kb-param-remove").addEventListener("click", () => {
+          row.remove();
+          renderParamChips();
+          syncTestArgsFields();
+        });
+        row.querySelector(".kb-param-name").addEventListener("input", () => {
+          renderParamChips();
+          syncTestArgsFields();
+        });
+        renderParamChips();
+        syncTestArgsFields();
+      }
+
+      function setParamsEditor(params) {
+        const list = document.getElementById("tool-params-list");
+        list.innerHTML = "";
+        (params || []).forEach((p) => addParamRow(p));
+        renderParamChips();
+        syncTestArgsFields();
+      }
+
+      function syncTestArgsFields() {
+        const wrap = document.getElementById("tool-test-args");
+        const fields = document.getElementById("tool-test-args-fields");
+        const params = readParamsFromEditor().filter((p) => p.name);
+        const show = toolWizard.mode === "edit" && params.length > 0;
+        wrap.hidden = !show;
+        if (!show) {
+          fields.innerHTML = "";
+          return;
+        }
+        const prev = {};
+        fields.querySelectorAll("[data-test-param]").forEach((el) => {
+          prev[el.getAttribute("data-test-param")] = el.value;
+        });
+        fields.innerHTML = params
+          .map(
+            (p) => `
+              <label>${esc(p.name)}${p.required ? " *" : ""}
+                <input type="text" class="input" data-test-param="${esc(p.name)}" value="${esc(prev[p.name] || "")}" placeholder="Valor de teste">
+              </label>`
+          )
+          .join("");
+      }
+
+      function readTestArguments() {
+        const out = {};
+        document.querySelectorAll("#tool-test-args-fields [data-test-param]").forEach((el) => {
+          const key = el.getAttribute("data-test-param");
+          const val = el.value.trim();
+          if (key && val) out[key] = val;
+        });
+        return out;
+      }
+
+      function fillToolForm(tool) {
+        const cfg = (tool && tool.config) || {};
+        document.getElementById("tool-name").value = (tool && tool.name) || "";
+        document.getElementById("tool-description").value = (tool && tool.description) || "";
+        document.getElementById("tool-instructions").value = (tool && tool.instructions) || "";
+        document.getElementById("tool-method").value = cfg.method || "GET";
+        document.getElementById("tool-url").value = cfg.url || "";
+        document.getElementById("tool-body-json").value = cfg.body_json || "";
+        document.getElementById("tool-auth").value = cfg.auth_type || "none";
+        document.getElementById("tool-header-name").value = cfg.header_name || "";
+        document.getElementById("tool-secret").value = "";
+        document.getElementById("tool-timeout").value = cfg.timeout_seconds || 10;
+        document.getElementById("tool-enabled").checked = tool ? !!tool.enabled : true;
+        document.getElementById("tool-secret-caption").textContent = tool
+          ? "Novo segredo / token (deixe em branco para manter)"
+          : "Segredo / token";
+        document.getElementById("tool-secret").placeholder = tool
+          ? tool.has_secret
+            ? "Já configurado — preencha só para trocar"
+            : "Opcional"
+          : "Não será exibido depois";
+        setParamsEditor(cfg.parameters || []);
+        syncBodyFieldVisibility();
+      }
+
+      function readToolFormPayload() {
+        const secret = document.getElementById("tool-secret").value;
+        const method = document.getElementById("tool-method").value;
+        const needsBody = method === "POST" || method === "PUT" || method === "PATCH";
+        const payload = {
+          name: document.getElementById("tool-name").value.trim(),
+          description: document.getElementById("tool-description").value.trim(),
+          instructions: document.getElementById("tool-instructions").value.trim(),
+          method,
+          url: document.getElementById("tool-url").value.trim(),
+          auth_type: document.getElementById("tool-auth").value,
+          header_name: document.getElementById("tool-header-name").value.trim() || null,
+          timeout_seconds: Number(document.getElementById("tool-timeout").value) || 10,
+          enabled: document.getElementById("tool-enabled").checked,
+          parameters: readParamsFromEditor().filter((p) => p.name),
+          body_json: needsBody
+            ? document.getElementById("tool-body-json").value.trim()
+            : null,
+        };
+        if (secret) payload.secret = secret;
+        return payload;
+      }
+
+      function renderToolTypeGrid() {
+        const ready = TOOL_TYPES.map((t) => ({
+          ...t,
+          soon: false,
+        }));
+        const soon = (toolWizard.catalogSoon.length ? toolWizard.catalogSoon : SOON_TOOLS).map(
+          (t) => ({
+            id: t.id || t.provider,
+            name: t.name,
+            desc: t.desc || t.description || "",
+            soon: true,
+            ready: false,
+          })
+        );
+        const grid = document.getElementById("kb-tool-type-grid");
+        grid.innerHTML = [...ready, ...soon]
+          .map((t) => {
+            const selected = !t.soon && toolWizard.typeId === t.id;
+            return `
+              <button type="button"
+                class="kb-tool-type-card${selected ? " is-selected" : ""}${t.soon ? " is-soon" : ""}"
+                data-type-id="${esc(t.id)}"
+                ${t.soon ? "disabled" : ""}
+                role="option"
+                aria-selected="${selected ? "true" : "false"}">
+                <span class="kb-tool-type-card-top">
+                  <strong>${esc(t.name)}</strong>
+                  <span class="kb-tool-badge ${t.soon ? "soon" : "ok"}">${t.soon ? "Em breve" : "Pronta"}</span>
+                </span>
+                <span class="muted">${esc(t.desc)}</span>
+              </button>`;
+          })
+          .join("");
+
+        grid.querySelectorAll("[data-type-id]:not([disabled])").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            toolWizard.typeId = btn.getAttribute("data-type-id");
+            renderToolTypeGrid();
+          });
+        });
+      }
+
+      function syncToolWizardUi() {
+        const isEdit = toolWizard.mode === "edit";
+        const step = toolWizard.step;
+        const title = document.getElementById("kb-tool-dialog-title");
+        const lede = document.getElementById("kb-tool-dialog-lede");
+        const stepEl = document.getElementById("kb-tool-wizard-step");
+        const stepType = document.getElementById("kb-tool-step-type");
+        const stepConfig = document.getElementById("kb-tool-step-config");
+        const backBtn = document.getElementById("kb-tool-back");
+        const testBtn = document.getElementById("kb-tool-test");
+        const primaryBtn = document.getElementById("kb-tool-primary");
+        const enabledWrap = document.getElementById("tool-enabled-wrap");
+
+        title.textContent = isEdit ? "Editar ferramenta" : "Criar ferramenta";
+        lede.textContent = isEdit
+          ? "Ajuste nome, instruções, URL e credenciais."
+          : step === 1
+            ? "Escolha o tipo de ferramenta para instalar."
+            : "Preencha como o agente deve usar esta API.";
+
+        if (isEdit) {
+          stepEl.textContent = "Configuração";
+          stepType.hidden = true;
+          stepConfig.hidden = false;
+          backBtn.hidden = true;
+          testBtn.hidden = false;
+          primaryBtn.textContent = "Salvar";
+          enabledWrap.hidden = false;
+        } else if (step === 1) {
+          stepEl.textContent = "Passo 1 de 2 — tipo";
+          stepType.hidden = false;
+          stepConfig.hidden = true;
+          backBtn.hidden = true;
+          testBtn.hidden = true;
+          primaryBtn.textContent = "Continuar";
+          enabledWrap.hidden = true;
+          renderToolTypeGrid();
+        } else {
+          stepEl.textContent = "Passo 2 de 2 — configuração";
+          stepType.hidden = true;
+          stepConfig.hidden = false;
+          backBtn.hidden = false;
+          testBtn.hidden = true;
+          primaryBtn.textContent = "Criar ferramenta";
+          enabledWrap.hidden = true;
+          document.getElementById("tool-enabled").checked = true;
+        }
+        syncTestArgsFields();
+        syncBodyFieldVisibility();
+      }
+
+      function closeToolDialog() {
+        if (toolDialog.open) toolDialog.close();
+        MuhAuth.syncModalScrollLock();
+      }
+
+      function openCreateToolDialog() {
+        toolWizard = {
+          mode: "create",
+          step: 1,
+          typeId: "http_custom",
+          editTool: null,
+          catalogSoon: toolWizard.catalogSoon || [],
+          insertTarget: "url",
+        };
+        fillToolForm(null);
+        toolDialogMsg("", true);
+        syncToolWizardUi();
+        MuhAuth.openAppDialog(toolDialog);
+      }
+
+      function openEditToolDialog(tool) {
+        toolWizard = {
+          mode: "edit",
+          step: 2,
+          typeId: tool.provider || "http_custom",
+          editTool: tool,
+          catalogSoon: toolWizard.catalogSoon || [],
+          insertTarget: "url",
+        };
+        fillToolForm(tool);
+        toolDialogMsg("", true);
+        syncToolWizardUi();
+        MuhAuth.openAppDialog(toolDialog);
+      }
+
+      async function submitToolWizard() {
+        const primaryBtn = document.getElementById("kb-tool-primary");
+        if (toolWizard.mode === "create" && toolWizard.step === 1) {
+          if (toolWizard.typeId !== "http_custom") {
+            toolDialogMsg("Selecione um tipo disponível.", false);
+            return;
+          }
+          toolWizard.step = 2;
+          toolDialogMsg("", true);
+          syncToolWizardUi();
+          return;
+        }
+
+        const payload = readToolFormPayload();
+        if (!payload.name || !payload.url) {
+          toolDialogMsg("Informe nome e URL HTTPS.", false);
+          return;
+        }
+        const needsBody =
+          payload.method === "POST" ||
+          payload.method === "PUT" ||
+          payload.method === "PATCH";
+        if (needsBody && !payload.body_json) {
+          toolDialogMsg("Informe o JSON do body para este método.", false);
+          return;
+        }
+
+        primaryBtn.disabled = true;
+        try {
+          if (toolWizard.mode === "edit" && toolWizard.editTool) {
+            await MuhAuth.kbUpdateTool(toolWizard.editTool.id, payload);
+            setMsg(toolsMsg, "Ferramenta atualizada.", true);
+          } else {
+            await MuhAuth.kbCreateTool({ ...payload, enabled: true });
+            setMsg(toolsMsg, "Ferramenta criada.", true);
+          }
+          closeToolDialog();
+          await loadTools();
+        } catch (err) {
+          toolDialogMsg(err.message || "Falha ao salvar.", false);
+        } finally {
+          primaryBtn.disabled = false;
+        }
+      }
+
+      document.getElementById("kb-tool-create-btn").addEventListener("click", openCreateToolDialog);
+      document.getElementById("kb-tool-dialog-x").addEventListener("click", closeToolDialog);
+      document.getElementById("kb-tool-cancel").addEventListener("click", closeToolDialog);
+      document.getElementById("tool-param-add").addEventListener("click", () => addParamRow({ name: "", description: "", required: true }));
+      document.getElementById("tool-method").addEventListener("change", syncBodyFieldVisibility);
+      document.getElementById("tool-url").addEventListener("focus", () => {
+        toolWizard.insertTarget = "url";
+      });
+      document.getElementById("tool-body-json").addEventListener("focus", () => {
+        toolWizard.insertTarget = "body";
+      });
+      document.getElementById("kb-tool-back").addEventListener("click", () => {
+        toolWizard.step = 1;
+        toolDialogMsg("", true);
+        syncToolWizardUi();
+      });
+      document.getElementById("kb-tool-primary").addEventListener("click", () => {
+        submitToolWizard().catch(() => {});
+      });
+      document.getElementById("kb-tool-test").addEventListener("click", async () => {
+        if (!toolWizard.editTool) return;
+        try {
+          const res = await MuhAuth.kbTestTool(toolWizard.editTool.id, readTestArguments());
+          const ok = res && res.ok;
+          toolDialogMsg(
+            ok
+              ? `Teste OK (HTTP ${res.status_code}).`
+              : `Teste falhou: ${(res && (res.preview || res.error)) || "erro"}`,
+            !!ok
+          );
+        } catch (err) {
+          toolDialogMsg(err.message || "Falha no teste.", false);
+        }
+      });
+      toolDialog.addEventListener("close", () => MuhAuth.syncModalScrollLock());
+      toolDialog.addEventListener("cancel", (event) => {
+        event.preventDefault();
+        closeToolDialog();
+      });
 
       function renderBuiltinSearch() {
         return `
@@ -407,11 +953,21 @@
           </article>`;
       }
 
-      function renderHttpCard(tool) {
-        const connected = tool.status === "ok" || tool.has_secret || (tool.config && tool.config.auth_type === "none");
-        const badge = connected
-          ? '<span class="kb-tool-badge ok">Pronta</span>'
-          : '<span class="kb-tool-badge">Configurar</span>';
+      function renderInstalledHttpCard(tool) {
+        const connected =
+          tool.status === "ok" ||
+          tool.has_secret ||
+          (tool.config && tool.config.auth_type === "none");
+        const badge = tool.enabled
+          ? connected
+            ? '<span class="kb-tool-badge ok">Ligada</span>'
+            : '<span class="kb-tool-badge">Sem credencial</span>'
+          : '<span class="kb-tool-badge">Desligada</span>';
+        const method = (tool.config && tool.config.method) || "GET";
+        const url = esc((tool.config && tool.config.url) || "");
+        const params = ((tool.config && tool.config.parameters) || [])
+          .map((p) => p.name + (p.required ? "*" : ""))
+          .join(", ");
         return `
           <article class="kb-tool-card" data-tool-id="${esc(tool.id)}">
             <div class="kb-tool-card-head">
@@ -421,139 +977,51 @@
               </div>
               ${badge}
             </div>
-            <label class="kb-tool-switch">
-              <input type="checkbox" class="kb-tool-enabled" ${tool.enabled ? "checked" : ""}>
-              Ligada para o agente
-            </label>
-            <p class="muted" style="margin:0">
-              ${(tool.config && tool.config.method) || "GET"} · ${esc((tool.config && tool.config.url) || "")}
-              · segredo: ${tool.has_secret ? "configurado" : "não"}
-            </p>
-            <label>Instruções de uso
-              <textarea class="input kb-tool-instructions" rows="2">${esc(tool.instructions || "")}</textarea>
-            </label>
+            <p class="muted" style="margin:0">${esc(method)} · ${url}</p>
+            ${params ? `<p class="muted" style="margin:0">Parâmetros: ${esc(params)}</p>` : ""}
             <div class="kb-tool-actions">
-              <button type="button" class="btn secondary kb-tool-save">Salvar</button>
-              <button type="button" class="btn ghost kb-tool-test">Testar</button>
-              <button type="button" class="btn ghost kb-tool-rotate">Trocar segredo</button>
-              <button type="button" class="btn ghost kb-tool-delete">Remover</button>
+              <label class="kb-tool-switch">
+                <input type="checkbox" class="kb-tool-enabled" ${tool.enabled ? "checked" : ""}>
+                Ligada
+              </label>
+              <button type="button" class="btn btn-ghost kb-tool-edit">Editar</button>
+              <button type="button" class="btn btn-ghost kb-tool-test-inline">Testar</button>
+              <button type="button" class="btn btn-ghost kb-tool-delete">Excluir</button>
             </div>
           </article>`;
       }
 
-      function renderCreateHttpForm() {
-        return `
-          <article class="kb-tool-card" id="kb-http-create">
-            <div class="kb-tool-card-head">
-              <div>
-                <h3>API HTTP custom</h3>
-                <p>Chamada HTTPS autenticada à API do seu sistema.</p>
-              </div>
-              <span class="kb-tool-badge">Nova</span>
-            </div>
-            <div class="kb-tool-form">
-              <label>Nome
-                <input type="text" class="input" id="http-name" maxlength="120" placeholder="Ex.: Consultar pedido">
-              </label>
-              <label>Descrição para o LLM
-                <textarea class="input" id="http-description" rows="2" maxlength="500" placeholder="Quando usar e o que retorna"></textarea>
-              </label>
-              <label>Instruções de uso
-                <textarea class="input" id="http-instructions" rows="2" maxlength="4000" placeholder="Quando o cliente pedir X, use esta tool…"></textarea>
-              </label>
-              <div class="kb-tool-form-row">
-                <label>Método
-                  <select class="input" id="http-method">
-                    <option>GET</option>
-                    <option>POST</option>
-                    <option>PUT</option>
-                    <option>PATCH</option>
-                    <option>DELETE</option>
-                  </select>
-                </label>
-                <label>URL HTTPS
-                  <input type="url" class="input" id="http-url" placeholder="https://api.exemplo.com/…">
-                </label>
-              </div>
-              <div class="kb-tool-form-row">
-                <label>Auth
-                  <select class="input" id="http-auth">
-                    <option value="none">Nenhuma</option>
-                    <option value="bearer">Bearer</option>
-                    <option value="header">Header custom</option>
-                    <option value="basic">Basic</option>
-                  </select>
-                </label>
-                <label>Nome do header (se header)
-                  <input type="text" class="input" id="http-header-name" placeholder="X-Api-Key">
-                </label>
-              </div>
-              <label>Segredo / token
-                <input type="password" class="input" id="http-secret" autocomplete="new-password" placeholder="Não será exibido depois">
-              </label>
-              <label>Timeout (s)
-                <input type="number" class="input" id="http-timeout" min="1" max="15" value="10">
-              </label>
-              <div class="kb-tool-actions">
-                <button type="button" class="btn primary" id="http-create-btn">Criar ferramenta</button>
-              </div>
-            </div>
-          </article>`;
-      }
-
-      function bindToolCard(card, tool) {
+      function bindInstalledToolCard(card, tool) {
         const id = tool.id;
-        card.querySelector(".kb-tool-save").addEventListener("click", async () => {
+        card.querySelector(".kb-tool-enabled").addEventListener("change", async (event) => {
+          const enabled = event.target.checked;
           try {
-            await MuhAuth.kbUpdateTool(id, {
-              enabled: card.querySelector(".kb-tool-enabled").checked,
-              instructions: card.querySelector(".kb-tool-instructions").value,
-            });
-            setMsg(toolsMsg, "Ferramenta atualizada.", true);
+            await MuhAuth.kbUpdateTool(id, { enabled });
+            setMsg(toolsMsg, enabled ? "Ferramenta ligada." : "Ferramenta desligada.", true);
             await loadTools();
           } catch (err) {
-            setMsg(toolsMsg, err.message || "Falha ao salvar.", false);
+            event.target.checked = !enabled;
+            setMsg(toolsMsg, err.message || "Falha ao atualizar.", false);
           }
         });
-        card.querySelector(".kb-tool-test").addEventListener("click", async () => {
-          try {
-            const res = await MuhAuth.kbTestTool(id);
-            const ok = res && res.ok;
-            setMsg(
-              toolsMsg,
-              ok
-                ? `Teste OK (HTTP ${res.status_code}).`
-                : `Teste falhou: ${(res && (res.preview || res.error)) || "erro"}`,
-              !!ok
-            );
-          } catch (err) {
-            setMsg(toolsMsg, err.message || "Falha no teste.", false);
-          }
-        });
-        card.querySelector(".kb-tool-rotate").addEventListener("click", async () => {
-          const secret = window.prompt("Novo segredo (será criptografado):");
-          if (secret == null || !String(secret).trim()) return;
-          try {
-            await MuhAuth.kbUpdateTool(id, { secret: String(secret).trim() });
-            setMsg(toolsMsg, "Segredo atualizado.", true);
-            await loadTools();
-          } catch (err) {
-            setMsg(toolsMsg, err.message || "Falha ao rotacionar.", false);
-          }
+        card.querySelector(".kb-tool-edit").addEventListener("click", () => openEditToolDialog(tool));
+        card.querySelector(".kb-tool-test-inline").addEventListener("click", async () => {
+          openEditToolDialog(tool);
+          toolDialogMsg("Preencha os valores de teste e clique em Testar.", true);
         });
         card.querySelector(".kb-tool-delete").addEventListener("click", async () => {
           const ok = await MuhAuth.confirmModal({
-            title: "Remover ferramenta?",
+            title: "Excluir ferramenta?",
             message: "O agente deixa de ver esta tool imediatamente.",
-            confirmLabel: "Remover",
+            confirmLabel: "Excluir",
           });
           if (!ok) return;
           try {
             await MuhAuth.kbDeleteTool(id);
-            setMsg(toolsMsg, "Ferramenta removida.", true);
+            setMsg(toolsMsg, "Ferramenta excluída.", true);
             await loadTools();
           } catch (err) {
-            setMsg(toolsMsg, err.message || "Falha ao remover.", false);
+            setMsg(toolsMsg, err.message || "Falha ao excluir.", false);
           }
         });
       }
@@ -563,50 +1031,26 @@
         const tools = (data && data.items) || [];
         const catalog = (data && data.catalog) || [];
         const httpTools = tools.filter((t) => t.provider === "http_custom");
-        const soonFromApi = catalog
+        toolWizard.catalogSoon = catalog
           .filter((c) => c.coming_soon)
           .map((c) => ({
             id: c.provider,
             name: c.name,
             desc: c.description,
           }));
-        const soonList = soonFromApi.length ? soonFromApi : SOON_TOOLS;
 
         let html = renderBuiltinSearch();
-        html += httpTools.map(renderHttpCard).join("");
-        html += renderCreateHttpForm();
-        html += soonList.map(renderSoonCard).join("");
+        html += httpTools.map(renderInstalledHttpCard).join("");
+        if (!httpTools.length) {
+          html += '<p class="muted kb-empty">Nenhuma ferramenta instalada além da base. Use “Criar ferramenta”.</p>';
+        }
         toolsCatalog.innerHTML = html;
 
         toolsCatalog.querySelectorAll("[data-tool-id]").forEach((card) => {
           const id = card.getAttribute("data-tool-id");
           const tool = httpTools.find((t) => t.id === id);
-          if (tool) bindToolCard(card, tool);
+          if (tool) bindInstalledToolCard(card, tool);
         });
-
-        const createBtn = document.getElementById("http-create-btn");
-        if (createBtn) {
-          createBtn.addEventListener("click", async () => {
-            try {
-              await MuhAuth.kbCreateTool({
-                name: document.getElementById("http-name").value.trim(),
-                description: document.getElementById("http-description").value.trim(),
-                instructions: document.getElementById("http-instructions").value.trim(),
-                method: document.getElementById("http-method").value,
-                url: document.getElementById("http-url").value.trim(),
-                auth_type: document.getElementById("http-auth").value,
-                header_name: document.getElementById("http-header-name").value.trim() || null,
-                secret: document.getElementById("http-secret").value || null,
-                timeout_seconds: Number(document.getElementById("http-timeout").value) || 10,
-                enabled: true,
-              });
-              setMsg(toolsMsg, "Ferramenta criada.", true);
-              await loadTools();
-            } catch (err) {
-              setMsg(toolsMsg, err.message || "Falha ao criar.", false);
-            }
-          });
-        }
       }
 
       const schedulesList = document.getElementById("kb-schedules-list");
@@ -645,9 +1089,9 @@
             <p class="muted" style="margin:0">${last}</p>
             ${row.last_result_preview ? `<p class="muted" style="margin:0">Prévia: ${esc(row.last_result_preview.slice(0, 200))}</p>` : ""}
             <div class="kb-tool-actions">
-              <button type="button" class="btn secondary sched-save">Salvar</button>
-              <button type="button" class="btn ghost sched-test">Executar agora</button>
-              <button type="button" class="btn ghost sched-delete">Remover</button>
+              <button type="button" class="btn btn-ghost sched-save">Salvar</button>
+              <button type="button" class="btn btn-ghost sched-test">Executar agora</button>
+              <button type="button" class="btn btn-ghost sched-delete">Remover</button>
             </div>
           </article>`;
       }
@@ -805,6 +1249,16 @@
       if (!MuhAuth.requireAuth()) return;
 
       (async () => {
+        try {
+          const user = await MuhAuth.me();
+          MuhAuth.mountAccountMenu({
+            root: document.getElementById("account-menu-root"),
+            user,
+          });
+        } catch {
+          /* header opcional se /me falhar; a página ainda tenta kbSettings */
+        }
+
         try {
           await MuhAuth.kbSettings();
           gate.hidden = true;

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=38" />
+  <link rel="stylesheet" href="/css/styles.css?v=47" />
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
@@ -18,7 +18,7 @@
     <nav class="nav" aria-label="Principal">
       <a href="/#servicos">Serviços</a>
       <a href="/contato.html">Contato</a>
-      <a href="/conta.html" class="nav-cta" aria-current="page">Conta</a>
+      <div id="account-menu-root"></div>
     </nav>
   </header>
 
@@ -34,8 +34,6 @@
         <a href="#conta" data-panel="conta" class="is-current">Conta</a>
         <a href="#servicos" data-panel="servicos">Serviços</a>
         <a href="#transacoes" data-panel="transacoes">Transações</a>
-        <a href="#saldo" data-panel="saldo">Adicionar saldo</a>
-        <a href="#configuracoes" data-panel="configuracoes">Configurações</a>
       </nav>
 
       <div class="settings-sections">
@@ -694,7 +692,7 @@
     </form>
   </dialog>
 
-  <script src="/js/auth.js?v=37"></script>
+  <script src="/js/auth.js?v=47"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -808,6 +806,7 @@
       let servicesLedeOverride = "";
       let configLedeOverride = "";
       let currentUser = null;
+      let accountMenu = null;
 
       // ---------- Conta ----------
       const avatar = document.getElementById("avatar");
@@ -857,6 +856,7 @@
         const editable = Boolean(user.has_password);
         avatar.dataset.editable = editable ? "true" : "false";
         avatarEdit.hidden = !editable;
+        if (accountMenu) accountMenu.applyUser(user);
       }
 
       avatarEdit.addEventListener("click", () => {
@@ -3060,6 +3060,12 @@
       // ---------- boot ----------
       try {
         currentUser = await MuhAuth.me();
+        accountMenu = MuhAuth.mountAccountMenu({
+          root: document.getElementById("account-menu-root"),
+          user: currentUser,
+          settingsHref: "#configuracoes",
+          balanceHref: "#saldo",
+        });
         if (currentUser.role === "admin") {
           const nav = document.getElementById("client-nav");
           const link = document.createElement("a");

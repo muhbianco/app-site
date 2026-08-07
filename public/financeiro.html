@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css?v=31" />
+  <link rel="stylesheet" href="/css/styles.css?v=47" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
@@ -19,7 +19,7 @@
     <nav class="nav" aria-label="Principal">
       <a href="/conta.html#servicos">Serviços</a>
       <a href="/contato.html">Contato</a>
-      <a href="/conta.html" class="nav-cta" aria-current="page">Conta</a>
+      <div id="account-menu-root"></div>
     </nav>
   </header>
 
@@ -224,10 +224,19 @@
     </div>
   </main>
 
-  <script src="/js/auth.js?v=24"></script>
+  <script src="/js/auth.js?v=47"></script>
   <script>
     (function () {
       if (!MuhAuth.requireAuth()) return;
+
+      MuhAuth.me()
+        .then((user) => {
+          MuhAuth.mountAccountMenu({
+            root: document.getElementById("account-menu-root"),
+            user,
+          });
+        })
+        .catch(() => {});
 
       const brl = (value) =>
         Number(value || 0).toLocaleString("pt-BR", {

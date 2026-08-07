@@ -674,6 +674,109 @@
     }).then(() => undefined);
   }
 
+  /**
+   * Header da área logada: avatar + engrenagem com dropdown (config, saldo, sair).
+   * @param {{ root: HTMLElement, user?: object, settingsHref?: string, balanceHref?: string }} opts
+   */
+  function mountAccountMenu({
+    root,
+    user = null,
+    settingsHref = "/conta.html#configuracoes",
+    balanceHref = "/conta.html#saldo",
+  } = {}) {
+    if (!root) return null;
+
+    root.innerHTML = `
+      <div class="account-menu">
+        <button type="button" class="account-menu-trigger" aria-expanded="false" aria-haspopup="menu" aria-controls="account-menu-dropdown" id="account-menu-trigger">
+          <span class="account-menu-avatar" aria-hidden="true">
+            <img class="account-menu-img" alt="" hidden />
+            <span class="account-menu-fallback">?</span>
+          </span>
+          <span class="account-menu-gear" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">
+              <path fill="currentColor" d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.07 7.07 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 2h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.59.24-1.13.55-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 8.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.83 14.58a.5.5 0 0 0-.12.64l1.92 3.32c.13.23.4.32.64.22l2.39-.96c.5.39 1.04.7 1.63.94l.36 2.54c.05.24.25.42.49.42h3.8c.24 0 .44-.18.49-.42l.36-2.54c.59-.24 1.13-.55 1.63-.94l2.39.96c.24.1.51 0 .64-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z"/>
+            </svg>
+          </span>
+        </button>
+        <div class="account-menu-dropdown" id="account-menu-dropdown" role="menu" hidden>
+          <div class="account-menu-meta">
+            <strong class="account-menu-name">Conta</strong>
+            <span class="account-menu-email"></span>
+          </div>
+          <a class="account-menu-item" role="menuitem" href="${settingsHref}">Configurações de conta</a>
+          <a class="account-menu-item" role="menuitem" href="${balanceHref}">Adicionar saldo</a>
+          <button type="button" class="account-menu-item account-menu-logout" role="menuitem">Sair</button>
+        </div>
+      </div>
+    `;
+
+    const menu = root.querySelector(".account-menu");
+    const trigger = root.querySelector(".account-menu-trigger");
+    const dropdown = root.querySelector(".account-menu-dropdown");
+    const img = root.querySelector(".account-menu-img");
+    const fallback = root.querySelector(".account-menu-fallback");
+    const nameEl = root.querySelector(".account-menu-name");
+    const emailEl = root.querySelector(".account-menu-email");
+    const logoutBtn = root.querySelector(".account-menu-logout");
+
+    function setOpen(open) {
+      dropdown.hidden = !open;
+      trigger.setAttribute("aria-expanded", open ? "true" : "false");
+      menu.classList.toggle("is-open", open);
+    }
+
+    function applyUser(u) {
+      if (!u) return;
+      const first = (u.full_name || u.email || "?").trim().charAt(0).toUpperCase() || "?";
+      fallback.textContent = first;
+      nameEl.textContent = u.full_name || "Conta";
+      emailEl.textContent = u.email || "";
+      const src = avatarSrc(u.avatar_url);
+      if (src) {
+        img.hidden = false;
+        img.src = src;
+        img.alt = "";
+        fallback.hidden = true;
+      } else {
+        img.hidden = true;
+        img.removeAttribute("src");
+        fallback.hidden = false;
+      }
+    }
+
+    trigger.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setOpen(dropdown.hidden);
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      setOpen(false);
+      await logout();
+      location.href = "/login.html";
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!menu.contains(event.target)) setOpen(false);
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") setOpen(false);
+    });
+
+    dropdown.querySelectorAll("a.account-menu-item").forEach((link) => {
+      link.addEventListener("click", () => setOpen(false));
+    });
+
+    if (user) applyUser(user);
+
+    return {
+      applyUser,
+      setOpen,
+      root: menu,
+    };
+  }
+
   async function kbSettings() {
     const response = await api(`${API_PREFIX}/personal-agent/settings`);
     return jsonOrThrow(response, "Não foi possível carregar o agente KB.");
@@ -733,10 +836,13 @@
     return jsonOrThrow(response, "Não foi possível remover a ferramenta.");
   }
 
-  async function kbTestTool(toolId) {
+  async function kbTestTool(toolId, argumentsPayload) {
     const response = await api(
       `${API_PREFIX}/personal-agent/tools/${encodeURIComponent(toolId)}/test`,
-      { method: "POST" }
+      {
+        method: "POST",
+        body: JSON.stringify({ arguments: argumentsPayload || {} }),
+      }
     );
     return jsonOrThrow(response, "Não foi possível testar a ferramenta.");
   }
@@ -1146,6 +1252,7 @@
     syncModalScrollLock,
     confirmModal,
     alertModal,
+    mountAccountMenu,
     kbSettings,
     kbPatchSettings,
     kbListDocuments,
