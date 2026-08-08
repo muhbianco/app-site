@@ -480,30 +480,41 @@
       <p class="auth-alert" id="wa-config-error" hidden></p>
       <p class="auth-ok" id="wa-config-ok" hidden></p>
 
-      <div class="wa-mode-tabs" id="wa-mode-tabs" hidden>
-        <button type="button" class="wa-mode-tab" data-wa-tab="shared">Usar agente</button>
-        <button type="button" class="wa-mode-tab" data-wa-tab="owned">Expor agente</button>
-      </div>
+      <section class="wa-channel" id="wa-channel-card">
+        <h4 class="settings-subhead">Canal WhatsApp</h4>
+        <p class="hint" id="wa-channel-bot-phone">Número do agente: —</p>
+        <p class="hint" id="wa-channel-hint">
+          O agente responde no número oficial MuhBianco. Cadastre abaixo os WhatsApps
+          da sua equipe autorizados a conversar com o agente.
+        </p>
+        <div class="service-prefs">
+          <button
+            type="button"
+            class="pref-switch"
+            id="wa-marketing-toggle"
+            role="switch"
+            aria-checked="false"
+            aria-label="Comunicações de marketing"
+          >
+            <span class="pref-switch-track" aria-hidden="true"><span class="pref-switch-knob"></span></span>
+            <span class="pref-switch-copy">
+              <strong>Comunicações de marketing</strong>
+              <small>Aceito receber avisos e novidades no WhatsApp do agente.</small>
+            </span>
+          </button>
+        </div>
+        <p class="hint">
+          Para deixar de receber mensagens do agente, responda <strong>SAIR</strong> ou
+          <strong>PARAR</strong> no WhatsApp.
+        </p>
+        <div class="balance-actions" style="margin-top:0.75rem">
+          <button type="button" class="btn btn-ghost" id="wa-ping-btn">
+            Receber contato no WhatsApp
+          </button>
+        </div>
+      </section>
 
-      <div id="wa-chooser" class="wa-chooser" hidden>
-        <button type="button" class="wa-choice-box" data-wa-choose="shared">
-          <strong>Usar agente</strong>
-          <span>
-            Você conversa com o número MuhBianco. Cadastre os WhatsApps da sua equipe
-            (ou só o seu) e cada um fala com o agente nesse número compartilhado.
-          </span>
-        </button>
-        <button type="button" class="wa-choice-box" data-wa-choose="owned">
-          <strong>Expor agente</strong>
-          <span>
-            O agente passa a responder no <em>seu</em> WhatsApp. Pareamos uma sessão
-            WuzAPI com o número do cliente (QR ou código). Ideal para atendimento no
-            número da empresa.
-          </span>
-        </button>
-      </div>
-
-      <div id="wa-panel-shared" class="wa-panel" hidden>
+      <div id="wa-panel-shared" class="wa-panel">
         <p class="hint" id="wa-shared-hint">
           Números autorizados a falar com o agente no WhatsApp MuhBianco.
         </p>
@@ -525,118 +536,6 @@
           <button type="submit" class="btn btn-primary" id="wa-extra-confirm-btn">Confirmar número</button>
         </form>
       </div>
-
-      <div id="wa-panel-owned" class="wa-panel" hidden>
-        <p class="hint" id="wa-owned-step-label">Passo 1 de 3 · Parear WhatsApp</p>
-        <p class="hint" id="wa-owned-status">
-          Informe o número que vai receber o agente e avance com QR ou código de pareamento.
-        </p>
-
-        <div id="wa-owned-step-pair">
-          <p class="hint" style="margin-top:0">
-            Pareie o WhatsApp agora. O bot só começa a responder depois que você
-            concluir onde ele deve atender (próximos passos).
-          </p>
-          <div id="wa-owned-connected" hidden>
-            <p class="hint" id="wa-owned-connected-text">
-              WhatsApp já conectado nesta instância.
-            </p>
-            <div class="balance-actions" style="margin-top:0.75rem">
-              <button type="button" class="btn btn-primary" id="wa-owned-next-scope-btn">
-                Continuar configuração
-              </button>
-              <button type="button" class="btn btn-ghost" id="wa-owned-logout-btn">
-                Desconectar instância
-              </button>
-              <button type="button" class="btn btn-ghost" id="wa-owned-connected-refresh-btn">
-                Atualizar status
-              </button>
-            </div>
-          </div>
-          <div id="wa-owned-pair-block">
-            <form class="settings-inline-form" id="wa-owned-phone-form">
-              <label>
-                <span>Número do WhatsApp (seu / da empresa)</span>
-                <input type="tel" id="wa-owned-phone" inputmode="tel" autocomplete="tel"
-                       placeholder="(11) 99999-8888" maxlength="20" required />
-              </label>
-              <button type="submit" class="btn btn-primary" id="wa-owned-pair-btn">
-                Gerar código de pareamento
-              </button>
-            </form>
-            <div class="balance-actions" style="margin-top:0.75rem">
-              <button type="button" class="btn btn-ghost" id="wa-owned-qr-btn">Gerar QR code</button>
-              <button type="button" class="btn btn-ghost" id="wa-owned-refresh-btn">Atualizar status</button>
-            </div>
-            <pre class="terms-box" id="wa-owned-pair-result" hidden></pre>
-            <div id="wa-owned-qr" class="wa-qr-wrap" hidden></div>
-          </div>
-        </div>
-
-        <div id="wa-owned-step-scope" hidden>
-          <p class="hint">Onde o agente deve responder neste WhatsApp?</p>
-          <p class="hint">
-            Ao confirmar, o bot é ativado nesse número com a opção escolhida.
-          </p>
-          <div class="wa-scope-choices" id="wa-scope-choices">
-            <button type="button" class="wa-choice-box" data-wa-scope="dm">
-              <strong>Só conversas privadas</strong>
-              <span>Responde 1:1. Ignora mensagens em grupos.</span>
-            </button>
-            <button type="button" class="wa-choice-box" data-wa-scope="groups">
-              <strong>Só nos grupos escolhidos</strong>
-              <span>Ignora chats privados; responde apenas nos grupos que você selecionar.</span>
-            </button>
-            <button type="button" class="wa-choice-box" data-wa-scope="both">
-              <strong>Privado e grupos</strong>
-              <span>Responde em 1:1 e também nos grupos selecionados.</span>
-            </button>
-          </div>
-          <div class="balance-actions" style="margin-top:0.85rem">
-            <button type="button" class="btn btn-primary" id="wa-owned-scope-next-btn" disabled>
-              Continuar
-            </button>
-            <button type="button" class="btn btn-ghost" id="wa-owned-scope-back-btn">Voltar</button>
-          </div>
-        </div>
-
-        <div id="wa-owned-step-groups" hidden>
-          <p class="hint">
-            Selecione um ou mais grupos em que o agente pode responder.
-            A lista vem do WhatsApp pareado.
-          </p>
-          <div class="balance-actions" style="margin-bottom:0.65rem">
-            <button type="button" class="btn btn-ghost" id="wa-owned-groups-refresh-btn">
-              Atualizar lista de grupos
-            </button>
-          </div>
-          <div id="wa-owned-groups-empty" class="tx-empty" hidden>
-            <p>Nenhum grupo encontrado ainda. Abra o WhatsApp no celular e atualize a lista.</p>
-          </div>
-          <div id="wa-owned-groups-list" class="wa-groups-list" role="group" aria-label="Grupos"></div>
-          <div class="balance-actions" style="margin-top:0.85rem">
-            <button type="button" class="btn btn-primary" id="wa-owned-groups-save-btn">
-              Salvar configuração
-            </button>
-            <button type="button" class="btn btn-ghost" id="wa-owned-groups-back-btn">Voltar</button>
-          </div>
-        </div>
-
-        <div id="wa-owned-step-done" hidden>
-          <p class="hint" id="wa-owned-done-summary">Configuração de exposição salva.</p>
-          <div class="balance-actions" style="margin-top:0.75rem">
-            <button type="button" class="btn btn-primary" id="wa-owned-edit-exposure-btn">
-              Alterar onde responde
-            </button>
-            <button type="button" class="btn btn-ghost" id="wa-owned-done-logout-btn">
-              Desconectar instância
-            </button>
-            <button type="button" class="btn btn-ghost" id="wa-owned-done-close-btn">
-              Fechar
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   </dialog>
 
@@ -655,6 +554,10 @@
       <label class="terms-check">
         <input type="checkbox" id="terms-dialog-check" />
         <span>Li e aceito os termos de uso</span>
+      </label>
+      <label class="terms-check">
+        <input type="checkbox" id="terms-dialog-marketing" />
+        <span>Aceito receber comunicações de marketing no WhatsApp (opcional)</span>
       </label>
       <p class="auth-alert" id="terms-dialog-error" hidden></p>
       <div class="balance-actions">
@@ -1075,47 +978,28 @@
         }
 
         function waSummaryText() {
-          const aw = (sub && (sub.agent_wa || (sub.assistant && {
-            wa_mode: sub.assistant.wa_mode,
-            wa_setup_done: sub.assistant.wa_setup_done,
-            bot_phone: sub.assistant.bot_phone,
-          }))) || {};
+          const aw = (sub && sub.agent_wa) || {};
           const phones = (sub && sub.phones) || [];
-          if (!aw.wa_setup_done || !aw.wa_mode) {
-            return "Configure como o agente usa o WhatsApp (usar ou expor).";
-          }
-          if (aw.wa_mode === "owned") {
-            if (aw.bot_phone) {
-              return `Modo expor · bot em ${formatPhone(String(aw.bot_phone))}`;
-            }
-            if (aw.wa_logged_in) {
-              return "Modo expor · sessão conectada";
-            }
-            return "Modo expor · pareie seu número nas configurações";
-          }
-          if (aw.wa_mode === "shared") {
-            const n = phones.length;
-            const bot = aw.bot_phone
-              ? `MuhBianco ${formatPhone(String(aw.bot_phone))}`
-              : "número MuhBianco";
-            return `Modo usar · ${bot} · ${n} WhatsApp vinculado${n === 1 ? "" : "s"}`;
-          }
           const n = phones.length;
-          return `Modo usar · ${n} WhatsApp vinculado${n === 1 ? "" : "s"}`;
+          const bot = aw.bot_phone
+            ? `MuhBianco ${formatPhone(String(aw.bot_phone))}`
+            : "número oficial MuhBianco";
+          return `Agente em ${bot} · ${n} WhatsApp vinculado${n === 1 ? "" : "s"}`;
         }
 
         function showHireReady() {
           enableActions.hidden = false;
           q("enable-phone-hint").textContent =
-            `Depois dos termos, você escolhe usar ou expor o agente` +
+            `Após aceitar os termos, o agente fica no número oficial MuhBianco` +
             (service.account_phone
               ? ` (WhatsApp da conta: ${formatPhone(service.account_phone)}).`
               : ".");
           q("enable-btn").addEventListener("click", () => {
             openTermsDialog(service, {
-              onAccepted: () => {
+              onAccepted: ({ marketingOptIn } = {}) => {
                 openWaConfigModal(service, {
                   setupEnable: true,
+                  marketingOptIn: Boolean(marketingOptIn),
                   onChanged: () => reloadServicos(),
                   onError: showError,
                   onOk: showOk,
@@ -1311,53 +1195,35 @@
             label: "Resposta em áudio (TTS)",
             value: ttsOn ? "Ligado" : "Desligado",
           });
-          const aw = sub.agent_wa || sub.assistant || {};
-          if (aw.wa_mode === "owned") {
-            let modoValue = "Expor no próprio (aguardando pareamento)";
-            if (aw.bot_phone) {
-              modoValue = `Expor no próprio · ${formatPhone(String(aw.bot_phone))}`;
-            } else if (aw.wa_logged_in) {
-              modoValue = "Expor no próprio · conectado";
-            }
-            rows.push({
-              label: "Modo WhatsApp",
-              value: modoValue,
-            });
-            // Sync silencioso: WuzAPI pode estar logado sem bot_phone no banco.
-            if (!aw.bot_phone || !aw.wa_logged_in) {
-              MuhAuth.agentWaStatus(service.code)
-                .then((st) => {
-                  if (!st || (!st.logged_in && !st.bot_phone)) return;
-                  const next =
-                    st.bot_phone
-                      ? `Expor no próprio · ${formatPhone(String(st.bot_phone))}`
-                      : "Expor no próprio · conectado";
-                  const lis = q("status-detail")?.querySelectorAll("li") || [];
-                  for (const li of lis) {
-                    const label = li.querySelector(".service-status-label");
-                    const value = li.querySelector(".service-status-value");
-                    if (label && value && label.textContent === "Modo WhatsApp") {
-                      value.textContent = next;
-                    }
+          const aw = sub.agent_wa || {};
+          rows.push({
+            label: "Canal WhatsApp",
+            value: aw.bot_phone
+              ? `MuhBianco ${formatPhone(String(aw.bot_phone))}`
+              : "Número oficial MuhBianco",
+          });
+          if (aw.bot_phone == null || aw.bot_phone === "") {
+            MuhAuth.agentWaStatus(service.code)
+              .then((st) => {
+                if (!st || !st.bot_phone) return;
+                const next = `MuhBianco ${formatPhone(String(st.bot_phone))}`;
+                const lis = q("status-detail")?.querySelectorAll("li") || [];
+                for (const li of lis) {
+                  const label = li.querySelector(".service-status-label");
+                  const value = li.querySelector(".service-status-value");
+                  if (label && value && label.textContent === "Canal WhatsApp") {
+                    value.textContent = next;
                   }
-                  const summary = q("wa-summary");
-                  if (summary) {
-                    summary.textContent = st.bot_phone
-                      ? `Modo expor · bot em ${formatPhone(String(st.bot_phone))}`
-                      : "Modo expor · sessão conectada";
-                  }
-                })
-                .catch(() => {});
-            }
-          } else if (aw.wa_mode === "shared") {
-            rows.push({
-              label: "Modo WhatsApp",
-              value: aw.bot_phone
-                ? `Usar agente · MuhBianco ${formatPhone(String(aw.bot_phone))}`
-                : "Usar agente (número MuhBianco)",
-            });
-          } else {
-            rows.push({ label: "Modo WhatsApp", value: "Ainda não configurado" });
+                }
+                const summary = q("wa-summary");
+                if (summary) {
+                  const phones = (sub && sub.phones) || [];
+                  const n = phones.length;
+                  summary.textContent =
+                    `Agente em ${next} · ${n} WhatsApp vinculado${n === 1 ? "" : "s"}`;
+                }
+              })
+              .catch(() => {});
           }
           if (service.code === "personal_agent" && sub.assistant) {
             // Cota fica só no medidor do pacote abaixo — sem repetir aqui.
@@ -1564,51 +1430,27 @@
         return node;
       }
 
-      function openWaConfigModal(service, { onChanged, onError, onOk, setupEnable = false }) {
+      function openWaConfigModal(service, {
+        onChanged,
+        onError,
+        onOk,
+        setupEnable = false,
+        marketingOptIn = false,
+      }) {
         const dialog = document.getElementById("wa-config-dialog");
         const errEl = document.getElementById("wa-config-error");
         const okEl = document.getElementById("wa-config-ok");
-        const chooser = document.getElementById("wa-chooser");
-        const tabs = document.getElementById("wa-mode-tabs");
-        const panelShared = document.getElementById("wa-panel-shared");
-        const panelOwned = document.getElementById("wa-panel-owned");
         const phoneList = document.getElementById("wa-phone-list");
+        const marketingToggle = document.getElementById("wa-marketing-toggle");
+        const botPhoneEl = document.getElementById("wa-channel-bot-phone");
         let pendingExtraPhone = "";
         let liveService = service;
         let enabling = false;
+        let initialMarketingOptIn = Boolean(marketingOptIn);
 
         function agentWa() {
           const sub = liveService.subscription || {};
-          return (
-            sub.agent_wa ||
-            (sub.assistant
-              ? {
-                  wa_mode: sub.assistant.wa_mode,
-                  wa_setup_done: sub.assistant.wa_setup_done || Boolean(sub.assistant.wa_mode),
-                  bot_phone: sub.assistant.bot_phone,
-                  has_owned_session: sub.assistant.has_owned_session,
-                  wa_logged_in: sub.assistant.wa_logged_in,
-                  wa_reply_scope: sub.assistant.wa_reply_scope || "dm",
-                  wa_groups: sub.assistant.wa_groups || [],
-                  wa_owned_wizard_done: Boolean(sub.assistant.wa_owned_wizard_done),
-                }
-              : {}) ||
-            {}
-          );
-        }
-
-        function ownedAllowed() {
-          return liveService.allow_owned_whatsapp !== false;
-        }
-
-        function applyOwnedVisibility() {
-          const allow = ownedAllowed();
-          chooser.querySelectorAll('[data-wa-choose="owned"]').forEach((el) => {
-            el.hidden = !allow;
-          });
-          tabs.querySelectorAll('[data-wa-tab="owned"]').forEach((el) => {
-            el.hidden = !allow;
-          });
+          return sub.agent_wa || {};
         }
 
         function showModalErr(msg) {
@@ -1627,24 +1469,40 @@
           okEl.hidden = true;
         }
 
-        function setTabActive(mode) {
-          tabs.querySelectorAll("[data-wa-tab]").forEach((btn) => {
-            btn.classList.toggle("is-active", btn.dataset.waTab === mode);
-          });
+        function setMarketingUi(accepted) {
+          const on = Boolean(accepted);
+          marketingToggle.setAttribute("aria-checked", on ? "true" : "false");
+          marketingToggle.classList.toggle("is-on", on);
+        }
+
+        function renderChannel(status) {
+          const aw = agentWa();
+          const botPhone =
+            (status && status.bot_phone) || aw.bot_phone || null;
+          const displayName =
+            (status && status.bot_display_name) || aw.bot_display_name || "";
+          botPhoneEl.textContent = botPhone
+            ? `Número do agente: ${formatPhone(String(botPhone))}` +
+              (displayName ? ` (${displayName})` : "")
+            : "Número do agente: oficial MuhBianco";
+          const hint = document.getElementById("wa-shared-hint");
+          const botLabel = botPhone ? formatPhone(String(botPhone)) : "MuhBianco";
+          if (hint) {
+            hint.textContent =
+              `Números autorizados a falar com o agente no WhatsApp ${botLabel}.`;
+          }
+          const marketing =
+            status && typeof status.marketing_opt_in === "boolean"
+              ? status.marketing_opt_in
+              : typeof aw.marketing_opt_in === "boolean"
+                ? aw.marketing_opt_in
+                : initialMarketingOptIn;
+          setMarketingUi(marketing);
         }
 
         function renderPhones() {
           phoneList.innerHTML = "";
           const phones = (liveService.subscription && liveService.subscription.phones) || [];
-          const aw = agentWa();
-          const botLabel = aw.bot_phone
-            ? formatPhone(String(aw.bot_phone))
-            : "MuhBianco";
-          const hint = document.getElementById("wa-shared-hint");
-          if (hint) {
-            hint.textContent =
-              `Números autorizados a falar com o agente no WhatsApp ${botLabel}.`;
-          }
           if (!phones.length) {
             const empty = document.createElement("li");
             empty.className = "phone-list-empty";
@@ -1698,212 +1556,46 @@
           });
         }
 
-        let ownedWizardStep = "pair"; // pair | scope | groups | done
-        let pendingReplyScope = "dm";
-        let pendingGroupSelection = new Map(); // jid -> name
-        let cachedGroupOptions = [];
-
-        function setOwnedStepLabel(step) {
-          const el = document.getElementById("wa-owned-step-label");
-          const map = {
-            pair: "Passo 1 de 3 · Parear WhatsApp",
-            scope: "Passo 2 de 3 · Onde responder",
-            groups: "Passo 3 de 3 · Selecionar grupos",
-            done: "Exposição configurada",
-          };
-          el.textContent = map[step] || map.pair;
-        }
-
-        function showOwnedWizardStep(step) {
-          ownedWizardStep = step;
-          setOwnedStepLabel(step);
-          document.getElementById("wa-owned-step-pair").hidden = step !== "pair";
-          document.getElementById("wa-owned-step-scope").hidden = step !== "scope";
-          document.getElementById("wa-owned-step-groups").hidden = step !== "groups";
-          document.getElementById("wa-owned-step-done").hidden = step !== "done";
-        }
-
-        function syncScopeChoiceUi() {
-          document.querySelectorAll("#wa-scope-choices [data-wa-scope]").forEach((btn) => {
-            btn.classList.toggle("is-active", btn.dataset.waScope === pendingReplyScope);
-          });
-          document.getElementById("wa-owned-scope-next-btn").disabled = !pendingReplyScope;
-        }
-
-        function renderGroupsList(groups) {
-          const list = document.getElementById("wa-owned-groups-list");
-          const empty = document.getElementById("wa-owned-groups-empty");
-          list.innerHTML = "";
-          cachedGroupOptions = Array.isArray(groups) ? groups : [];
-          empty.hidden = cachedGroupOptions.length > 0;
-          cachedGroupOptions.forEach((g) => {
-            const jid = String(g.jid || "");
-            const name = String(g.name || jid);
-            const label = document.createElement("label");
-            label.className = "wa-group-option";
-            const checked = pendingGroupSelection.has(jid);
-            label.innerHTML = `
-              <input type="checkbox" data-wa-group-jid="${jid.replace(/"/g, "")}" ${checked ? "checked" : ""} />
-              <span>
-                <strong>${escapeHtml(name)}</strong>
-                <span class="hint">${escapeHtml(jid)}</span>
-              </span>
-            `;
-            const input = label.querySelector("input");
-            input.addEventListener("change", () => {
-              if (input.checked) pendingGroupSelection.set(jid, name);
-              else pendingGroupSelection.delete(jid);
-            });
-            list.appendChild(label);
-          });
-        }
-
-        function exposureSummaryText(aw) {
-          const scope = aw.wa_reply_scope || "dm";
-          const groups = aw.wa_groups || [];
-          if (scope === "dm") return "Responde só em conversas privadas.";
-          if (scope === "groups") {
-            return `Responde só em ${groups.length} grupo(s) selecionado(s).`;
-          }
-          return `Responde em privado e em ${groups.length} grupo(s).`;
-        }
-
-        function setOwnedUi({ loggedIn, botPhone, connected, agentWa }) {
-          const statusEl = document.getElementById("wa-owned-status");
-          const connectedEl = document.getElementById("wa-owned-connected");
-          const pairBlock = document.getElementById("wa-owned-pair-block");
-          const connectedText = document.getElementById("wa-owned-connected-text");
-          const phoneInput = document.getElementById("wa-owned-phone");
-          const aw = agentWa || agentWa();
-
-          if (loggedIn && aw.wa_owned_wizard_done) {
-            showOwnedWizardStep("done");
-            document.getElementById("wa-owned-done-summary").textContent =
-              `${exposureSummaryText(aw)} ` +
-              (botPhone ? `Número: ${formatPhone(String(botPhone))}.` : "");
-            statusEl.textContent = "WhatsApp conectado.";
-            return;
-          }
-
-          if (loggedIn) {
-            showOwnedWizardStep("pair");
-            connectedEl.hidden = false;
-            pairBlock.hidden = true;
-            document.getElementById("wa-owned-pair-result").hidden = true;
-            document.getElementById("wa-owned-qr").hidden = true;
-            document.getElementById("wa-owned-qr").innerHTML = "";
-            const phoneLabel = botPhone ? formatPhone(String(botPhone)) : "número ativo";
-            const linkHint = connected ? "conectado" : "logado (reconectando…)";
-            statusEl.textContent = `Instância ${linkHint} · ${phoneLabel}`;
-            connectedText.textContent =
-              `WhatsApp pareado (${phoneLabel}). Continue para escolher onde o agente responde.`;
-            if (botPhone) {
-              phoneInput.value = String(botPhone).replace(/:.*/, "");
-            }
-            pendingReplyScope = aw.wa_reply_scope || "dm";
-            pendingGroupSelection = new Map(
-              (aw.wa_groups || []).map((g) => [g.jid, g.name || g.jid])
-            );
-            syncScopeChoiceUi();
-            return;
-          }
-
-          showOwnedWizardStep("pair");
-          connectedEl.hidden = true;
-          pairBlock.hidden = false;
-          statusEl.textContent = botPhone
-            ? `Bot cadastrado: ${formatPhone(String(botPhone))} — conclua o pareamento se ainda não estiver logado.`
-            : "Informe o número e avance com QR ou código de pareamento.";
-          if (botPhone) {
-            phoneInput.value = String(botPhone).replace(/:.*/, "");
-          }
-        }
-
-        async function refreshOwnedSessionUi({ quiet } = { quiet: false }) {
-          try {
-            const st = await MuhAuth.agentWaStatus(liveService.code);
-            const aw = st.agent_wa || agentWa();
-            if (st.agent_wa) {
-              liveService.subscription = {
-                ...(liveService.subscription || {}),
-                agent_wa: st.agent_wa,
-              };
-            }
-            setOwnedUi({
-              loggedIn: Boolean(st.logged_in),
-              botPhone: st.bot_phone,
-              connected: Boolean(st.connected),
-              agentWa: aw,
-            });
-            if (!quiet) showModalOk("Status atualizado.");
-            return st;
-          } catch (e) {
-            const aw = agentWa();
-            setOwnedUi({
-              loggedIn: false,
-              botPhone: aw.bot_phone,
-              connected: false,
-              agentWa: aw,
-            });
-            if (!quiet) showModalErr(e.message || "Falha ao consultar status.");
-            return null;
-          }
-        }
-
-        async function loadOwnedGroups() {
-          const result = await MuhAuth.agentWaGroups(liveService.code);
-          renderGroupsList(result.groups || []);
-          clearModalMsg();
-          return result;
-        }
-
-        async function saveOwnedExposure() {
-          const groups = [...pendingGroupSelection.entries()].map(([jid, name]) => ({
-            jid,
-            name,
-          }));
-          const result = await MuhAuth.agentWaSetExposure(liveService.code, {
-            replyScope: pendingReplyScope,
-            groups,
-          });
-          if (result.agent_wa) {
-            liveService.subscription = {
-              ...(liveService.subscription || {}),
-              agent_wa: result.agent_wa,
-            };
-          }
-          showModalOk(
-            result.message ||
-              "Configuração salva. O agente já pode responder neste WhatsApp."
-          );
-          setOwnedUi({
-            loggedIn: true,
-            botPhone: (result.agent_wa && result.agent_wa.bot_phone) || agentWa().bot_phone,
-            connected: true,
-            agentWa: result.agent_wa || agentWa(),
-          });
-          if (onChanged) await onChanged();
-        }
-
         async function refreshFromCatalog() {
           const list = await MuhAuth.listServices();
           const next = list.find((s) => s.code === liveService.code);
           if (next) liveService = next;
           renderPhones();
-          const aw = agentWa();
-          if (aw.wa_mode === "owned") {
-            setOwnedUi({
-              loggedIn: Boolean(aw.wa_logged_in),
-              botPhone: aw.bot_phone,
-              connected: Boolean(aw.wa_logged_in),
-              agentWa: aw,
-            });
+          renderChannel();
+        }
+
+        async function refreshChannelStatus({ quiet } = { quiet: true }) {
+          try {
+            const st = await MuhAuth.agentWaStatus(liveService.code);
+            if (st && typeof st.marketing_opt_in === "boolean") {
+              initialMarketingOptIn = st.marketing_opt_in;
+            }
+            if (st && st.bot_phone) {
+              liveService.subscription = {
+                ...(liveService.subscription || {}),
+                agent_wa: {
+                  ...(agentWa() || {}),
+                  bot_phone: st.bot_phone,
+                  marketing_opt_in: st.marketing_opt_in,
+                },
+              };
+            }
+            renderChannel(st);
+            if (!quiet) showModalOk("Status atualizado.");
+            return st;
+          } catch (e) {
+            renderChannel();
+            if (!quiet) showModalErr(e.message || "Falha ao consultar status.");
+            return null;
           }
         }
 
-        async function ensureEnabled(mode) {
+        async function ensureEnabled() {
           if (!setupEnable) return true;
-          if (liveService.subscription && ["active", "paused"].includes(liveService.subscription.status)) {
+          if (
+            liveService.subscription &&
+            ["active", "paused"].includes(liveService.subscription.status)
+          ) {
             return true;
           }
           if (enabling) return false;
@@ -1911,7 +1603,7 @@
           try {
             const result = await MuhAuth.enableService(liveService.code, {
               termsAccepted: true,
-              waMode: mode,
+              marketingOptIn: initialMarketingOptIn,
             });
             showModalOk(result.message || "Serviço habilitado.");
             if (onOk) onOk(result.message || "Serviço habilitado.");
@@ -1926,57 +1618,6 @@
           }
         }
 
-        async function showMode(mode, { persist } = { persist: false }) {
-          clearModalMsg();
-          if (mode === "owned" && !ownedAllowed()) {
-            showModalErr(
-              "Este serviço não permite expor o agente no seu próprio WhatsApp."
-            );
-            mode = "shared";
-          }
-          if (setupEnable && persist) {
-            const ok = await ensureEnabled(mode);
-            if (!ok) return;
-            // Após enable, só troca a UI (já persistiu via enable).
-            persist = false;
-          }
-          chooser.hidden = true;
-          tabs.hidden = !ownedAllowed();
-          applyOwnedVisibility();
-          setTabActive(mode);
-          panelShared.hidden = mode !== "shared";
-          panelOwned.hidden = mode !== "owned";
-          if (persist) {
-            try {
-              const result = await MuhAuth.setAgentWaMode(liveService.code, mode);
-              showModalOk(result.message || "Modo salvo.");
-              if (onChanged) await onChanged();
-              await refreshFromCatalog();
-            } catch (e) {
-              showModalErr(e.message || "Não foi possível salvar o modo.");
-              return;
-            }
-          } else {
-            await refreshFromCatalog();
-          }
-          if (mode === "shared") renderPhones();
-          if (mode === "owned") await refreshOwnedSessionUi({ quiet: true });
-        }
-
-        function showChooser() {
-          clearModalMsg();
-          applyOwnedVisibility();
-          if (!ownedAllowed()) {
-            // Só modo Usar: aplica na hora (reconfig após admin desligar Expor).
-            showMode("shared", { persist: true });
-            return;
-          }
-          tabs.hidden = true;
-          panelShared.hidden = true;
-          panelOwned.hidden = true;
-          chooser.hidden = false;
-        }
-
         function close() {
           if (typeof dialog.close === "function") dialog.close();
           else {
@@ -1985,19 +1626,58 @@
           }
         }
 
-        document.getElementById("wa-config-service-name").textContent = liveService.name || "";
+        document.getElementById("wa-config-service-name").textContent =
+          liveService.name || "";
         document.getElementById("wa-config-close").onclick = close;
         document.getElementById("wa-extra-code-form").hidden = true;
-        document.getElementById("wa-owned-pair-result").hidden = true;
-        document.getElementById("wa-owned-qr").hidden = true;
-        document.getElementById("wa-owned-qr").innerHTML = "";
+        clearModalMsg();
+        setMarketingUi(initialMarketingOptIn);
+        renderChannel();
+        renderPhones();
 
-        chooser.querySelectorAll("[data-wa-choose]").forEach((btn) => {
-          btn.onclick = () => showMode(btn.dataset.waChoose, { persist: true });
-        });
-        tabs.querySelectorAll("[data-wa-tab]").forEach((btn) => {
-          btn.onclick = () => showMode(btn.dataset.waTab, { persist: true });
-        });
+        marketingToggle.onclick = async () => {
+          if (marketingToggle.dataset.busy === "1") return;
+          const next = marketingToggle.getAttribute("aria-checked") !== "true";
+          marketingToggle.dataset.busy = "1";
+          marketingToggle.disabled = true;
+          setMarketingUi(next);
+          try {
+            const result = await MuhAuth.setMarketingOptIn(liveService.code, next);
+            initialMarketingOptIn = next;
+            showModalOk(
+              result.message || (next ? "Marketing ativado." : "Marketing desativado.")
+            );
+            if (onChanged) await onChanged();
+          } catch (e) {
+            setMarketingUi(!next);
+            showModalErr(e.message || "Não foi possível atualizar o consentimento.");
+          } finally {
+            marketingToggle.disabled = false;
+            delete marketingToggle.dataset.busy;
+          }
+        };
+
+        document.getElementById("wa-ping-btn").onclick = async () => {
+          const ok = await MuhAuth.confirmModal({
+            title: "Contato no WhatsApp",
+            message:
+              "Enviar uma mensagem do agente no seu WhatsApp agora? " +
+              "Use isso se perdeu o contato — salve o número quando a mensagem chegar.",
+            confirmLabel: "Enviar",
+            cancelLabel: "Voltar",
+          });
+          if (!ok) return;
+          const btn = document.getElementById("wa-ping-btn");
+          btn.disabled = true;
+          try {
+            const result = await MuhAuth.pingServiceContact(liveService.code);
+            showModalOk(result.message || "Mensagem enviada no WhatsApp.");
+          } catch (e) {
+            showModalErr(e.message || "Não foi possível enviar a mensagem.");
+          } finally {
+            btn.disabled = false;
+          }
+        };
 
         document.getElementById("wa-add-phone-form").onsubmit = async (event) => {
           event.preventDefault();
@@ -2005,7 +1685,10 @@
           btn.disabled = true;
           try {
             pendingExtraPhone = document.getElementById("wa-extra-phone").value;
-            const result = await MuhAuth.addServicePhone(liveService.code, pendingExtraPhone);
+            const result = await MuhAuth.addServicePhone(
+              liveService.code,
+              pendingExtraPhone
+            );
             showModalOk(result.message || "Código enviado.");
             document.getElementById("wa-extra-code-form").hidden = false;
             document.getElementById("wa-extra-code").focus();
@@ -2039,200 +1722,13 @@
           }
         };
 
-        document.getElementById("wa-owned-phone-form").onsubmit = async (event) => {
-          event.preventDefault();
-          const btn = document.getElementById("wa-owned-pair-btn");
-          btn.disabled = true;
-          try {
-            const phone = document.getElementById("wa-owned-phone").value;
-            const result = await MuhAuth.agentWaPair(liveService.code, phone);
-            const pre = document.getElementById("wa-owned-pair-result");
-            const pair = result.pair || result || {};
-            const code =
-              pair.LinkingCode ||
-              pair.linkingCode ||
-              pair.linking_code ||
-              (pair.data && (pair.data.LinkingCode || pair.data.linkingCode));
-            pre.hidden = false;
-            pre.textContent = code
-              ? `Código para vincular no WhatsApp:\n\n${code}\n\nNo celular: WhatsApp → Aparelhos conectados → Conectar um aparelho → Vincular com número de telefone.`
-              : JSON.stringify(pair, null, 2);
-            showModalOk(
-              code
-                ? `Código ${code}: abra o WhatsApp no celular e vincule com número de telefone.`
-                : "Código de pareamento solicitado. Abra o WhatsApp no celular e confirme."
-            );
-            if (onChanged) await onChanged();
-            await refreshFromCatalog();
-            await refreshOwnedSessionUi({ quiet: true });
-          } catch (e) {
-            showModalErr(e.message || "Falha no pareamento.");
-          } finally {
-            btn.disabled = false;
-          }
-        };
-
-        document.getElementById("wa-owned-qr-btn").onclick = async () => {
-          const btn = document.getElementById("wa-owned-qr-btn");
-          btn.disabled = true;
-          try {
-            const result = await MuhAuth.agentWaQr(liveService.code);
-            const wrap = document.getElementById("wa-owned-qr");
-            wrap.hidden = false;
-            const qr = result.qr || {};
-            const raw =
-              qr.QRCode ||
-              qr.qrcode ||
-              qr.qr ||
-              qr.base64 ||
-              (typeof qr === "string" ? qr : "");
-            if (typeof raw === "string" && raw.startsWith("data:")) {
-              wrap.innerHTML = `<img alt="QR WhatsApp" src="${raw}" />`;
-            } else if (typeof raw === "string" && raw.length > 40) {
-              wrap.innerHTML = `<img alt="QR WhatsApp" src="data:image/png;base64,${raw}" />`;
-            } else {
-              wrap.innerHTML = `<pre class="terms-box">${JSON.stringify(qr, null, 2)}</pre>`;
-            }
-            showModalOk("QR gerado. Escaneie no WhatsApp → Aparelhos conectados.");
-            if (onChanged) await onChanged();
-          } catch (e) {
-            showModalErr(e.message || "Falha ao gerar QR.");
-          } finally {
-            btn.disabled = false;
-          }
-        };
-
-        async function onOwnedRefreshClick() {
-          await refreshOwnedSessionUi({ quiet: false });
-          if (onChanged) await onChanged();
-          await refreshFromCatalog();
-          // Reaplica status live (refreshFromCatalog só usa snapshot do catálogo).
-          await refreshOwnedSessionUi({ quiet: true });
-        }
-
-        document.getElementById("wa-owned-refresh-btn").onclick = onOwnedRefreshClick;
-        document.getElementById("wa-owned-connected-refresh-btn").onclick = onOwnedRefreshClick;
-
-        document.getElementById("wa-owned-next-scope-btn").onclick = () => {
-          syncScopeChoiceUi();
-          showOwnedWizardStep("scope");
-        };
-
-        document.querySelectorAll("#wa-scope-choices [data-wa-scope]").forEach((btn) => {
-          btn.onclick = () => {
-            pendingReplyScope = btn.dataset.waScope;
-            syncScopeChoiceUi();
-          };
-        });
-
-        document.getElementById("wa-owned-scope-back-btn").onclick = () => {
-          showOwnedWizardStep("pair");
-        };
-
-        document.getElementById("wa-owned-scope-next-btn").onclick = async () => {
-          if (pendingReplyScope === "dm") {
-            pendingGroupSelection = new Map();
-            try {
-              await saveOwnedExposure();
-            } catch (e) {
-              showModalErr(e.message || "Não foi possível salvar.");
-            }
-            return;
-          }
-          showOwnedWizardStep("groups");
-          try {
-            await loadOwnedGroups();
-          } catch (e) {
-            showModalErr(e.message || "Não foi possível listar grupos.");
-          }
-        };
-
-        document.getElementById("wa-owned-groups-back-btn").onclick = () => {
-          showOwnedWizardStep("scope");
-        };
-
-        document.getElementById("wa-owned-groups-refresh-btn").onclick = async () => {
-          const btn = document.getElementById("wa-owned-groups-refresh-btn");
-          btn.disabled = true;
-          try {
-            await loadOwnedGroups();
-            showModalOk("Lista de grupos atualizada.");
-          } catch (e) {
-            showModalErr(e.message || "Falha ao listar grupos.");
-          } finally {
-            btn.disabled = false;
-          }
-        };
-
-        document.getElementById("wa-owned-groups-save-btn").onclick = async () => {
-          const btn = document.getElementById("wa-owned-groups-save-btn");
-          btn.disabled = true;
-          try {
-            await saveOwnedExposure();
-          } catch (e) {
-            showModalErr(e.message || "Não foi possível salvar.");
-          } finally {
-            btn.disabled = false;
-          }
-        };
-
-        document.getElementById("wa-owned-edit-exposure-btn").onclick = () => {
-          const aw = agentWa();
-          pendingReplyScope = aw.wa_reply_scope || "dm";
-          pendingGroupSelection = new Map(
-            (aw.wa_groups || []).map((g) => [g.jid, g.name || g.jid])
-          );
-          syncScopeChoiceUi();
-          showOwnedWizardStep("scope");
-        };
-
-        document.getElementById("wa-owned-done-close-btn").onclick = close;
-
-        async function doOwnedLogout(btn) {
-          const ok = await MuhAuth.confirmModal({
-            title: "Desconectar instância",
-            message:
-              "Desconectar esta instância? O WhatsApp sai do aparelho vinculado e será preciso parear de novo.",
-            confirmLabel: "Desconectar",
-            cancelLabel: "Voltar",
-            danger: true,
-          });
-          if (!ok) {
-            return;
-          }
-          btn.disabled = true;
-          try {
-            const result = await MuhAuth.agentWaLogout(liveService.code);
-            showModalOk(result.message || "Instância desconectada.");
-            if (onChanged) await onChanged();
-            await refreshFromCatalog();
-            setOwnedUi({
-              loggedIn: false,
-              botPhone: null,
-              connected: false,
-              agentWa: (result.agent_wa || { wa_mode: "owned" }),
-            });
-          } catch (e) {
-            showModalErr(e.message || "Falha ao desconectar.");
-          } finally {
-            btn.disabled = false;
-          }
-        }
-
-        document.getElementById("wa-owned-logout-btn").onclick = async (event) => {
-          await doOwnedLogout(event.currentTarget);
-        };
-        document.getElementById("wa-owned-done-logout-btn").onclick = async (event) => {
-          await doOwnedLogout(event.currentTarget);
-        };
-
-        const aw = agentWa();
-        applyOwnedVisibility();
-        if (setupEnable || !aw.wa_setup_done || !aw.wa_mode) showChooser();
-        else if (aw.wa_mode === "owned" && !ownedAllowed()) showChooser();
-        else showMode(aw.wa_mode, { persist: false });
-
         openAppDialog(dialog);
+        (async () => {
+          const ok = await ensureEnabled();
+          if (!ok && setupEnable) return;
+          await refreshChannelStatus({ quiet: true });
+          renderPhones();
+        })();
       }
 
       function openTermsDialog(service, { onAccepted, onSuccess, onError }) {
@@ -2250,8 +1746,10 @@
           (service.terms && service.terms.text) ||
           "Ao habilitar, você autoriza a cobrança do período no saldo e o uso do agente no WhatsApp.";
         lede.textContent =
-          "Leia e aceite os termos. Em seguida você escolhe usar ou expor o agente; a cobrança sai do saldo ao confirmar o modo.";
+          "Leia e aceite os termos. A cobrança do período sai do saldo na confirmação; o agente responde no número oficial MuhBianco.";
         check.checked = false;
+        const marketingCheck = document.getElementById("terms-dialog-marketing");
+        if (marketingCheck) marketingCheck.checked = false;
         err.hidden = true;
         err.textContent = "";
         confirmBtn.disabled = false;
@@ -2275,17 +1773,18 @@
             err.textContent = "Marque que leu e aceitou os termos para continuar.";
             return;
           }
+          const marketingOptIn = Boolean(marketingCheck && marketingCheck.checked);
           confirmBtn.disabled = true;
           err.hidden = true;
           try {
             if (onAccepted) {
               close();
-              await onAccepted();
+              await onAccepted({ marketingOptIn });
               return;
             }
             const result = await MuhAuth.enableService(service.code, {
               termsAccepted: true,
-              waMode: "shared",
+              marketingOptIn,
             });
             close();
             await onSuccess(result.message || "Serviço habilitado.");

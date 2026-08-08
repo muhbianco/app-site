@@ -36,6 +36,7 @@
         <a href="#servicos" data-panel="servicos" class="is-current">Serviços</a>
         <a href="#usuarios" data-panel="usuarios">Usuários</a>
         <a href="#whatsapp" data-panel="whatsapp">WhatsApp</a>
+        <a href="#templates" data-panel="templates">Templates</a>
         <a href="#llm" data-panel="llm">LLM</a>
         <a href="#transacoes" data-panel="transacoes">Transações</a>
         <a href="/conta.html">Conta</a>
@@ -101,14 +102,15 @@
         <section class="settings-section admin-panel" id="panel-whatsapp" data-panel="whatsapp" hidden>
           <h2>Números oficiais</h2>
           <p class="hint">
-            Instâncias WuzAPI do modo <strong>Usar agente</strong>. Fonte da verdade: banco
-            (<code>shared_wa_numbers</code>). Env só faz seed se o pool estiver vazio.
+            Números registrados na Cloud API (<code>phone_number_id</code> do WhatsApp Manager).
+            Sem QR ou vínculo de aparelho.
           </p>
           <div id="wa-error" class="auth-alert" hidden></div>
           <div id="wa-ok" class="auth-ok" hidden></div>
 
           <div class="admin-filters-actions">
             <button type="button" class="btn btn-primary" id="wa-open-create">Adicionar número</button>
+            <button type="button" class="btn btn-ghost" id="wa-sync">Sincronizar com a Meta</button>
             <button type="button" class="btn btn-ghost" id="wa-refresh">Atualizar lista</button>
           </div>
 
@@ -116,6 +118,21 @@
             <p>Nenhum número oficial cadastrado.</p>
           </div>
           <div id="wa-list"></div>
+        </section>
+
+        <!-- Templates -->
+        <section class="settings-section admin-panel" id="panel-templates" data-panel="templates" hidden>
+          <h2>Templates de mensagem ativa</h2>
+          <p class="hint">Espelho local dos templates. Rascunhos nascem LOCAL_DRAFT; submeta à Meta quando a WABA estiver liberada. Editar um APPROVED volta a rascunho.</p>
+          <div id="tpl-error" class="auth-alert" hidden></div>
+          <div id="tpl-ok" class="auth-ok" hidden></div>
+          <div class="admin-filters-actions">
+            <button type="button" class="btn btn-primary" id="tpl-open-create">Novo template</button>
+            <button type="button" class="btn btn-ghost" id="tpl-sync">Sincronizar com a Meta</button>
+            <button type="button" class="btn btn-ghost" id="tpl-refresh">Atualizar lista</button>
+          </div>
+          <div id="tpl-empty" class="tx-empty" hidden><p>Nenhum template cadastrado.</p></div>
+          <div id="tpl-list"></div>
         </section>
 
         <!-- LLM -->
@@ -287,10 +304,18 @@
   <dialog class="admin-credit-dialog" id="wa-create-dialog">
     <form method="dialog" id="wa-create-form" autocomplete="off">
       <h3>Adicionar número oficial</h3>
-      <p class="hint">Cria a instância no WuzAPI. Depois pareie com QR ou código.</p>
+      <p class="hint">Cadastre um número já registrado no WhatsApp Manager.</p>
       <label>
-        <span>Telefone (que vai parear)</span>
+        <span>Telefone</span>
         <input type="tel" id="wa-create-phone" placeholder="(11) 99999-8888" required />
+      </label>
+      <label>
+        <span>Phone Number ID</span>
+        <input type="text" id="wa-create-phone-number-id" required placeholder="Ex.: 123456789012345" />
+      </label>
+      <label>
+        <span>WABA ID (opcional)</span>
+        <input type="text" id="wa-create-waba-id" placeholder="Ex.: 987654321098765" />
       </label>
       <label>
         <span>Rótulo</span>
@@ -306,6 +331,73 @@
       <div class="admin-filters-actions">
         <button type="submit" class="btn btn-primary" value="confirm" id="wa-create-submit">
           Adicionar
+        </button>
+        <button type="submit" class="btn btn-ghost" value="cancel" formnovalidate>
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="admin-credit-dialog" id="tpl-edit-dialog">
+    <form method="dialog" id="tpl-edit-form" autocomplete="off">
+      <h3 id="tpl-edit-title">Novo template</h3>
+      <input type="hidden" id="tpl-edit-id" value="" />
+      <label>
+        <span>Nome</span>
+        <input type="text" id="tpl-edit-name" required maxlength="512" placeholder="ex.: otp_login" />
+      </label>
+      <label>
+        <span>Idioma</span>
+        <input type="text" id="tpl-edit-language" required value="pt_BR" maxlength="16" />
+      </label>
+      <label>
+        <span>Categoria</span>
+        <select id="tpl-edit-category" required>
+          <option value="UTILITY">UTILITY</option>
+          <option value="MARKETING">MARKETING</option>
+          <option value="AUTHENTICATION">AUTHENTICATION</option>
+        </select>
+      </label>
+      <label>
+        <span>Evento (opcional)</span>
+        <select id="tpl-edit-event">
+          <option value="">— nenhum —</option>
+        </select>
+      </label>
+      <label>
+        <span>Header</span>
+        <select id="tpl-edit-header-type">
+          <option value="NONE">NONE</option>
+          <option value="TEXT">TEXT</option>
+        </select>
+      </label>
+      <label id="tpl-edit-header-text-wrap" hidden>
+        <span>Texto do header</span>
+        <input type="text" id="tpl-edit-header-text" maxlength="60" />
+      </label>
+      <label>
+        <span>Corpo</span>
+        <textarea id="tpl-edit-body" rows="5" required placeholder="Olá {{1}}, seu código é {{2}}."></textarea>
+      </label>
+      <label>
+        <span>Rodapé (opcional)</span>
+        <input type="text" id="tpl-edit-footer" maxlength="60" />
+      </label>
+      <div>
+        <span class="hint">Variáveis</span>
+        <div id="tpl-vars"></div>
+        <button type="button" class="btn btn-ghost btn-compact" id="tpl-var-add">+ Variável</button>
+      </div>
+      <p class="hint" id="tpl-preview">Pré-visualização —</p>
+      <label id="tpl-edit-code-exp-wrap" hidden>
+        <span>Expiração do código (minutos)</span>
+        <input type="number" id="tpl-edit-code-exp" min="1" max="90" step="1" placeholder="10" />
+      </label>
+      <p class="auth-alert" id="tpl-edit-error" hidden></p>
+      <div class="admin-filters-actions">
+        <button type="submit" class="btn btn-primary" value="confirm" id="tpl-edit-submit">
+          Salvar
         </button>
         <button type="submit" class="btn btn-ghost" value="cancel" formnovalidate>
           Cancelar
@@ -370,13 +462,6 @@
             </select>
           </label>
           <label>
-            <span>Expor número próprio</span>
-            <select data-field="allow_owned_whatsapp">
-              <option value="true">Sim — cliente pode Expor agente</option>
-              <option value="false">Não — só Usar agente (número MuhBianco)</option>
-            </select>
-          </label>
-          <label>
             <span>Reconhecer imagem / emote</span>
             <select data-field="image_recognition_enabled">
               <option value="false">Off — ignora foto e emoji puro</option>
@@ -423,7 +508,7 @@
     </article>
   </template>
 
-  <script src="/js/auth.js?v=37"></script>
+  <script src="/js/auth.js?v=38"></script>
   <script>
     (async function () {
       if (!MuhAuth.requireAuth()) return;
@@ -441,7 +526,12 @@
         whatsapp: {
           title: "Números oficiais WhatsApp",
           lede:
-            "Gerencie as instâncias MuhBianco do modo Usar agente: provisionar no WuzAPI, parear (QR ou código), ativar e remover.",
+            "Cadastre e sincronize números da Cloud API (phone_number_id do WhatsApp Manager). Sem QR ou vínculo de aparelho.",
+        },
+        templates: {
+          title: "Templates de mensagem",
+          lede:
+            "Espelho local dos templates da Meta. Crie rascunhos, submeta para aprovação e sincronize o status.",
         },
         llm: {
           title: "Uso de LLM",
@@ -462,7 +552,9 @@
       let usrLoadedOnce = false;
       let llmLoadedOnce = false;
       let waLoadedOnce = false;
+      let tplLoadedOnce = false;
       let waServiceOptions = [];
+      let tplEventOptions = [];
 
       function showPanel(name) {
         if (!PANELS[name]) name = "servicos";
@@ -493,6 +585,12 @@
           if (!waLoadedOnce) {
             waLoadedOnce = true;
             loadWhatsapp();
+          }
+        }
+        if (name === "templates") {
+          if (!tplLoadedOnce) {
+            tplLoadedOnce = true;
+            loadTemplates();
           }
         }
         if (name === "llm") {
@@ -662,9 +760,6 @@
         q("min_balance").value = (service.min_balance_cents / 100).toFixed(2);
         q("is_active").value = String(service.is_active);
         q("requires_phone").value = String(service.requires_phone);
-        q("allow_owned_whatsapp").value = String(
-          service.allow_owned_whatsapp !== false
-        );
         q("image_recognition_enabled").value = String(
           service.image_recognition_enabled === true
         );
@@ -759,7 +854,6 @@
               min_balance_cents: Math.round(Number(q("min_balance").value) * 100),
               is_active: q("is_active").value === "true",
               requires_phone: q("requires_phone").value === "true",
-              allow_owned_whatsapp: q("allow_owned_whatsapp").value === "true",
               image_recognition_enabled:
                 q("image_recognition_enabled").value === "true",
             };
@@ -1315,7 +1409,7 @@
         }
       });
 
-      // ---------- WhatsApp oficiais ----------
+      // ---------- WhatsApp oficiais (Cloud API) ----------
       const waError = document.getElementById("wa-error");
       const waOk = document.getElementById("wa-ok");
       const waEmpty = document.getElementById("wa-empty");
@@ -1347,28 +1441,13 @@
         return phone || "—";
       }
 
-      function qrSrc(payload) {
-        const raw =
-          payload.QRCode ||
-          payload.qrcode ||
-          payload.qr ||
-          payload.base64 ||
-          (payload.data && (payload.data.QRCode || payload.data.qrcode || payload.data.qr));
-        if (!raw) return null;
-        const s = String(raw);
-        if (s.startsWith("data:")) return s;
-        return `data:image/png;base64,${s}`;
-      }
-
-      function linkingCode(payload) {
-        return (
-          payload.LinkingCode ||
-          payload.linkingCode ||
-          payload.linking_code ||
-          (payload.data &&
-            (payload.data.LinkingCode || payload.data.linkingCode || payload.data.linking_code)) ||
-          ""
-        );
+      function formatSyncCounts(stats) {
+        if (!stats || typeof stats !== "object") return "concluído";
+        const parts = [];
+        for (const [key, value] of Object.entries(stats)) {
+          if (typeof value === "number") parts.push(`${key}: ${value}`);
+        }
+        return parts.length ? parts.join(" · ") : "concluído";
       }
 
       async function ensureWaServiceOptions() {
@@ -1384,7 +1463,7 @@
           waServiceOptions
             .map(
               (s) =>
-                `<option value="${s.id}">${s.name || s.code}</option>`
+                `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name || s.code)}</option>`
             )
             .join("");
       }
@@ -1392,49 +1471,41 @@
       function renderWaCard(row) {
         const scope = row.service_name
           ? row.service_name
-          : row.service_id
-            ? "Serviço dedicado"
-            : "Geral";
-        const active = row.is_active ? "Ativo no pool" : "Inativo (não aloca)";
-        const live =
-          row.logged_in === true
-            ? row.has_jid === false
-              ? "Conectado sem JID (re-parear)"
-              : "Conectado"
-            : row.logged_in === false
-              ? "Desconectado"
-              : "Status não consultado";
+          : row.service_code
+            ? row.service_code
+            : row.service_id
+              ? "Serviço dedicado"
+              : "Geral";
+        const display =
+          row.display_name || row.verified_name || row.label || formatPhone(row.phone);
+        const quality = row.quality_rating || "—";
+        const tokenHint = row.has_own_token ? "token próprio" : "token padrão";
         const article = document.createElement("article");
         article.className = "settings-card";
         article.dataset.id = row.id;
         article.innerHTML = `
           <header class="settings-card-head">
             <div>
-              <h3>${row.label || formatPhone(row.phone)}</h3>
-              <p class="hint">${formatPhone(row.phone)} · ${scope}</p>
-              <p class="hint" data-field="status-line">${active} · ${live} · ${row.subscribers || 0} assinatura(s) neste número · token ${row.token_hint || "—"}</p>
-              <p class="hint">Instância: ${row.instance_name || "—"}</p>
+              <h3>${escapeHtml(display)}</h3>
+              <p class="hint">${escapeHtml(formatPhone(row.phone))} · ${escapeHtml(scope)}</p>
+              <p class="hint">phone_number_id: ${escapeHtml(row.phone_number_id || "—")}${
+                row.label ? ` · rótulo: ${escapeHtml(row.label)}` : ""
+              }</p>
+              <p class="hint">qualidade: ${escapeHtml(quality)} · ${
+                row.subscribers || 0
+              } assinatura(s) · ${tokenHint}</p>
             </div>
-            <span class="settings-badge" data-state="${row.is_active ? "ok" : "info"}">${row.is_active ? "Pool" : "Off"}</span>
+            <span class="settings-badge" data-state="${row.is_active ? "done" : "info"}">${
+              row.is_active ? "Ativo" : "Inativo"
+            }</span>
           </header>
-          <div class="settings-card-body admin-wa-actions">
+          <div class="settings-card-body">
             <div class="admin-filters-actions">
-              <button type="button" class="btn btn-ghost" data-wa="status">Atualizar status</button>
-              <button type="button" class="btn btn-ghost" data-wa="qr">Gerar QR</button>
-              <button type="button" class="btn btn-ghost" data-wa="pair">Código de pareamento</button>
-              <button type="button" class="btn btn-ghost" data-wa="toggle">${row.is_active ? "Desativar" : "Ativar"}</button>
-              <button type="button" class="btn btn-ghost" data-wa="logout">Logout</button>
+              <button type="button" class="btn btn-ghost" data-wa="toggle">${
+                row.is_active ? "Desativar" : "Ativar"
+              }</button>
               <button type="button" class="btn btn-ghost" data-wa="delete">Excluir</button>
             </div>
-            <div class="admin-wa-pair" hidden>
-              <label>
-                <span>Celular para código</span>
-                <input type="tel" data-field="pair-phone" value="${row.phone || ""}" />
-              </label>
-              <button type="button" class="btn btn-primary" data-wa="pair-go">Gerar código</button>
-            </div>
-            <pre class="admin-wa-code" data-field="code" hidden></pre>
-            <img class="admin-wa-qr" data-field="qr" alt="QR WhatsApp" hidden />
           </div>
         `;
         return article;
@@ -1445,39 +1516,11 @@
         showWaOk("");
         await ensureWaServiceOptions();
         try {
-          const rows = await MuhAuth.adminListSharedWa();
+          const rows = await MuhAuth.adminListWhatsAppSenders();
+          const list = Array.isArray(rows) ? rows : [];
           waList.innerHTML = "";
-          waEmpty.hidden = rows.length > 0;
-          // Mostra cards já, com status “consultando…”, depois preenche ao vivo.
-          const placeholders = rows.map((row) => {
-            const card = renderWaCard({ ...row, logged_in: null, connected: null });
-            const statusHint = card.querySelector('[data-field="status-line"]');
-            if (statusHint) {
-              statusHint.textContent = statusHint.textContent.replace(
-                "Status não consultado",
-                "Consultando status…"
-              );
-            }
-            waList.appendChild(card);
-            return { row, card };
-          });
-
-          const settled = await Promise.all(
-            placeholders.map(async ({ row, card }) => {
-              try {
-                const fresh = await MuhAuth.adminSharedWaStatus(row.id);
-                return { card, fresh };
-              } catch {
-                return {
-                  card,
-                  fresh: { ...row, connected: false, logged_in: false },
-                };
-              }
-            })
-          );
-          settled.forEach(({ card, fresh }) => {
-            card.replaceWith(renderWaCard(fresh));
-          });
+          waEmpty.hidden = list.length > 0;
+          list.forEach((row) => waList.appendChild(renderWaCard(row)));
         } catch (err) {
           waList.innerHTML = "";
           waEmpty.hidden = true;
@@ -1489,12 +1532,29 @@
         loadWhatsapp();
       });
 
+      document.getElementById("wa-sync").addEventListener("click", async () => {
+        const btn = document.getElementById("wa-sync");
+        btn.disabled = true;
+        showWaError("");
+        try {
+          const stats = await MuhAuth.adminSyncWhatsAppSenders();
+          showWaOk(`Sincronizado com a Meta (${formatSyncCounts(stats)}).`);
+          await loadWhatsapp();
+        } catch (err) {
+          showWaError(err.message || "Falha ao sincronizar com a Meta.");
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
       document.getElementById("wa-open-create").addEventListener("click", async () => {
         showWaError("");
         showWaOk("");
         waCreateError.hidden = true;
         waCreateError.textContent = "";
         document.getElementById("wa-create-phone").value = "";
+        document.getElementById("wa-create-phone-number-id").value = "";
+        document.getElementById("wa-create-waba-id").value = "";
         document.getElementById("wa-create-label").value = "";
         waCreateService.value = "";
         await ensureWaServiceOptions();
@@ -1510,6 +1570,8 @@
         }
         event.preventDefault();
         const phone = document.getElementById("wa-create-phone").value;
+        const phoneNumberId = document.getElementById("wa-create-phone-number-id").value;
+        const wabaId = document.getElementById("wa-create-waba-id").value.trim() || undefined;
         const label = document.getElementById("wa-create-label").value;
         const serviceId = waCreateService.value || undefined;
         const btn = document.getElementById("wa-create-submit");
@@ -1517,11 +1579,15 @@
         waCreateError.hidden = true;
         waCreateError.textContent = "";
         try {
-          await MuhAuth.adminCreateSharedWa({ phone, label, serviceId });
+          await MuhAuth.adminCreateWhatsAppSender({
+            phone,
+            phoneNumberId,
+            wabaId,
+            label,
+            serviceId,
+          });
           waCreateDialog.close();
-          showWaOk(
-            "Número provisionado no WuzAPI. Pareie com QR ou código e ative no pool."
-          );
+          showWaOk("Número cadastrado na Cloud API.");
           await loadWhatsapp();
         } catch (err) {
           waCreateError.hidden = false;
@@ -1538,76 +1604,433 @@
         if (!card) return;
         const id = card.dataset.id;
         const action = btn.dataset.wa;
-        const codeEl = card.querySelector('[data-field="code"]');
-        const qrEl = card.querySelector('[data-field="qr"]');
-        const pairBox = card.querySelector(".admin-wa-pair");
 
         btn.disabled = true;
         showWaError("");
         try {
-          if (action === "status") {
-            const row = await MuhAuth.adminSharedWaStatus(id);
-            const fresh = renderWaCard(row);
-            card.replaceWith(fresh);
-            showWaOk(
-              row.logged_in
-                ? "Sessão conectada — número ativo no pool."
-                : "Status atualizado."
-            );
-          } else if (action === "qr") {
-            const payload = await MuhAuth.adminSharedWaQr(id);
-            const src = qrSrc(payload);
-            if (!src) throw new Error("WuzAPI não devolveu QR.");
-            qrEl.src = src;
-            qrEl.hidden = false;
-            codeEl.hidden = true;
-            showWaOk("QR gerado — escaneie no WhatsApp do número oficial.");
-          } else if (action === "pair") {
-            pairBox.hidden = !pairBox.hidden;
-          } else if (action === "pair-go") {
-            const phone = card.querySelector('[data-field="pair-phone"]').value;
-            const payload = await MuhAuth.adminSharedWaPair(id, phone);
-            const code = linkingCode(payload);
-            if (!code) throw new Error("WuzAPI não devolveu LinkingCode.");
-            codeEl.textContent = code;
-            codeEl.hidden = false;
-            qrEl.hidden = true;
-            showWaOk("Código gerado — digite no aparelho em Aparelhos conectados.");
-          } else if (action === "toggle") {
+          if (action === "toggle") {
             const activate = btn.textContent.includes("Ativar");
-            await MuhAuth.adminUpdateSharedWa(id, { is_active: activate });
-            showWaOk(activate ? "Número ativado no pool." : "Número desativado.");
-            await loadWhatsapp();
-          } else if (action === "logout") {
-            const ok = await MuhAuth.confirmModal({
-              title: "Desconectar número",
-              message: "Desconectar a sessão deste número oficial?",
-              confirmLabel: "Desconectar",
-              cancelLabel: "Voltar",
-              danger: true,
-            });
-            if (!ok) return;
-            await MuhAuth.adminSharedWaLogout(id);
-            showWaOk("Sessão desconectada (número inativo no pool).");
+            await MuhAuth.adminUpdateWhatsAppSender(id, { is_active: activate });
+            showWaOk(activate ? "Número ativado." : "Número desativado.");
             await loadWhatsapp();
           } else if (action === "delete") {
             const ok = await MuhAuth.confirmModal({
               title: "Excluir número",
               message:
-                "Excluir permanentemente este número (WuzAPI + banco)? Só funciona sem assinantes.",
+                "Excluir permanentemente este número oficial? Só funciona sem assinantes.",
               confirmLabel: "Excluir",
               cancelLabel: "Voltar",
               danger: true,
             });
-            if (!ok) {
-              return;
-            }
-            await MuhAuth.adminDeleteSharedWa(id);
+            if (!ok) return;
+            await MuhAuth.adminDeleteWhatsAppSender(id);
             showWaOk("Número excluído.");
             await loadWhatsapp();
           }
         } catch (err) {
           showWaError(err.message || "Falha na operação.");
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
+      // ---------- Templates ----------
+      const tplError = document.getElementById("tpl-error");
+      const tplOk = document.getElementById("tpl-ok");
+      const tplEmpty = document.getElementById("tpl-empty");
+      const tplList = document.getElementById("tpl-list");
+      const tplEditDialog = document.getElementById("tpl-edit-dialog");
+      const tplEditForm = document.getElementById("tpl-edit-form");
+      const tplEditError = document.getElementById("tpl-edit-error");
+      const tplVars = document.getElementById("tpl-vars");
+      const tplPreview = document.getElementById("tpl-preview");
+      const tplEditEvent = document.getElementById("tpl-edit-event");
+      const tplEditCategory = document.getElementById("tpl-edit-category");
+      const tplEditHeaderType = document.getElementById("tpl-edit-header-type");
+      const tplEditHeaderTextWrap = document.getElementById("tpl-edit-header-text-wrap");
+      const tplEditCodeExpWrap = document.getElementById("tpl-edit-code-exp-wrap");
+
+      function showTplError(msg) {
+        tplOk.hidden = true;
+        tplError.hidden = !msg;
+        tplError.textContent = msg || "";
+      }
+      function showTplOk(msg) {
+        tplError.hidden = true;
+        tplOk.hidden = !msg;
+        tplOk.textContent = msg || "";
+      }
+
+      function tplStatusState(status) {
+        const s = String(status || "").toUpperCase();
+        if (s === "APPROVED") return "done";
+        if (s === "PENDING") return "warn";
+        if (s === "REJECTED") return "pending";
+        if (s === "PAUSED" || s === "DISABLED") return "info";
+        return "info"; // LOCAL_DRAFT and others
+      }
+
+      function eventKeyOf(ev) {
+        if (typeof ev === "string") return ev;
+        return ev?.key || ev?.event_key || ev?.code || ev?.id || "";
+      }
+
+      function eventLabelOf(ev) {
+        if (typeof ev === "string") return ev;
+        return ev?.label || ev?.name || ev?.title || eventKeyOf(ev);
+      }
+
+      async function ensureTplEvents() {
+        try {
+          const events = await MuhAuth.adminListTemplateEvents();
+          tplEventOptions = Array.isArray(events) ? events : [];
+        } catch {
+          tplEventOptions = [];
+        }
+        const current = tplEditEvent.value;
+        tplEditEvent.innerHTML =
+          '<option value="">— nenhum —</option>' +
+          tplEventOptions
+            .map((ev) => {
+              const key = eventKeyOf(ev);
+              if (!key) return "";
+              return `<option value="${escapeHtml(key)}">${escapeHtml(eventLabelOf(ev))}</option>`;
+            })
+            .filter(Boolean)
+            .join("");
+        if (current) tplEditEvent.value = current;
+      }
+
+      function addTplVarRow(position = "", source = "", example = "") {
+        const row = document.createElement("div");
+        row.className = "admin-filters";
+        row.dataset.tplVar = "1";
+        row.innerHTML = `
+          <label>
+            <span>Posição</span>
+            <input type="number" data-var="position" min="1" step="1" value="${escapeHtml(
+              position
+            )}" required />
+          </label>
+          <label>
+            <span>Source</span>
+            <input type="text" data-var="source" value="${escapeHtml(source)}" placeholder="ex.: user.name" />
+          </label>
+          <label>
+            <span>Exemplo</span>
+            <input type="text" data-var="example" value="${escapeHtml(example)}" placeholder="Maria" />
+          </label>
+          <div class="admin-filters-actions">
+            <button type="button" class="btn btn-ghost btn-compact" data-var-remove>Remover</button>
+          </div>
+        `;
+        tplVars.appendChild(row);
+      }
+
+      function collectTplVars() {
+        return Array.from(tplVars.querySelectorAll("[data-tpl-var]")).map((row) => ({
+          position: Number(row.querySelector('[data-var="position"]').value),
+          source: row.querySelector('[data-var="source"]').value.trim(),
+          example: row.querySelector('[data-var="example"]').value.trim(),
+        }));
+      }
+
+      function updateTplPreview() {
+        let body = document.getElementById("tpl-edit-body").value || "";
+        const vars = collectTplVars();
+        vars.forEach((v) => {
+          if (!v.position) return;
+          const sample = v.example || `{{${v.position}}}`;
+          body = body.replaceAll(`{{${v.position}}}`, sample);
+        });
+        const headerType = tplEditHeaderType.value;
+        const header =
+          headerType === "TEXT"
+            ? document.getElementById("tpl-edit-header-text").value.trim()
+            : "";
+        const footer = document.getElementById("tpl-edit-footer").value.trim();
+        const parts = [];
+        if (header) parts.push(header);
+        parts.push(body || "—");
+        if (footer) parts.push(footer);
+        tplPreview.textContent = `Pré-visualização: ${parts.join(" · ")}`;
+      }
+
+      function syncTplEditVisibility() {
+        tplEditHeaderTextWrap.hidden = tplEditHeaderType.value !== "TEXT";
+        tplEditCodeExpWrap.hidden = tplEditCategory.value !== "AUTHENTICATION";
+        updateTplPreview();
+      }
+
+      function clearTplEditForm() {
+        document.getElementById("tpl-edit-id").value = "";
+        document.getElementById("tpl-edit-title").textContent = "Novo template";
+        document.getElementById("tpl-edit-name").value = "";
+        document.getElementById("tpl-edit-name").readOnly = false;
+        document.getElementById("tpl-edit-language").value = "pt_BR";
+        document.getElementById("tpl-edit-language").readOnly = false;
+        tplEditCategory.value = "UTILITY";
+        tplEditEvent.value = "";
+        tplEditHeaderType.value = "NONE";
+        document.getElementById("tpl-edit-header-text").value = "";
+        document.getElementById("tpl-edit-body").value = "";
+        document.getElementById("tpl-edit-footer").value = "";
+        document.getElementById("tpl-edit-code-exp").value = "";
+        tplVars.innerHTML = "";
+        tplEditError.hidden = true;
+        tplEditError.textContent = "";
+        syncTplEditVisibility();
+      }
+
+      function fillTplEditForm(row) {
+        document.getElementById("tpl-edit-id").value = row.id || "";
+        document.getElementById("tpl-edit-title").textContent = "Editar template";
+        document.getElementById("tpl-edit-name").value = row.name || "";
+        document.getElementById("tpl-edit-name").readOnly = true;
+        document.getElementById("tpl-edit-language").value = row.language || "pt_BR";
+        document.getElementById("tpl-edit-language").readOnly = true;
+        tplEditCategory.value = row.category || "UTILITY";
+        tplEditEvent.value = row.event_key || "";
+        tplEditHeaderType.value = row.header_type || "NONE";
+        document.getElementById("tpl-edit-header-text").value = row.header_text || "";
+        document.getElementById("tpl-edit-body").value = row.body_text || "";
+        document.getElementById("tpl-edit-footer").value = row.footer_text || "";
+        document.getElementById("tpl-edit-code-exp").value =
+          row.code_expiration_minutes != null ? row.code_expiration_minutes : "";
+        tplVars.innerHTML = "";
+        const vars = Array.isArray(row.variables) ? row.variables : [];
+        if (vars.length) {
+          vars.forEach((v) =>
+            addTplVarRow(v.position ?? "", v.source || "", v.example || "")
+          );
+        }
+        tplEditError.hidden = true;
+        tplEditError.textContent = "";
+        syncTplEditVisibility();
+      }
+
+      function renderTplCard(row) {
+        const status = String(row.status || "LOCAL_DRAFT").toUpperCase();
+        const canSubmit = status === "LOCAL_DRAFT" || status === "REJECTED";
+        const preview =
+          row.preview ||
+          [row.header_text, row.body_text, row.footer_text].filter(Boolean).join(" · ") ||
+          "—";
+        const snippet =
+          preview.length > 160 ? `${preview.slice(0, 157)}…` : preview;
+        const article = document.createElement("article");
+        article.className = "settings-card";
+        article.dataset.id = row.id;
+        article.innerHTML = `
+          <header class="settings-card-head">
+            <div>
+              <h3>${escapeHtml(row.name || "—")}</h3>
+              <p class="hint">${
+                row.event_key
+                  ? `evento: ${escapeHtml(row.event_key)}`
+                  : "sem evento"
+              }</p>
+              <p class="hint">${escapeHtml(snippet)}</p>
+              ${
+                row.rejection_reason
+                  ? `<p class="hint">rejeição: ${escapeHtml(row.rejection_reason)}</p>`
+                  : ""
+              }
+            </div>
+            <div class="settings-badge-group">
+              <span class="settings-badge" data-state="info">${escapeHtml(
+                row.language || "—"
+              )}</span>
+              <span class="settings-badge" data-state="info">${escapeHtml(
+                row.category || "—"
+              )}</span>
+              <span class="settings-badge" data-state="${tplStatusState(
+                status
+              )}">${escapeHtml(status)}</span>
+            </div>
+          </header>
+          <div class="settings-card-body">
+            <div class="admin-filters-actions">
+              <button type="button" class="btn btn-ghost" data-tpl="edit">Editar</button>
+              ${
+                canSubmit
+                  ? '<button type="button" class="btn btn-ghost" data-tpl="submit">Submeter à Meta</button>'
+                  : ""
+              }
+              <button type="button" class="btn btn-ghost" data-tpl="delete">Excluir</button>
+            </div>
+          </div>
+        `;
+        article._tplRow = row;
+        return article;
+      }
+
+      async function loadTemplates() {
+        showTplError("");
+        showTplOk("");
+        try {
+          const rows = await MuhAuth.adminListTemplates();
+          const list = Array.isArray(rows) ? rows : [];
+          tplList.innerHTML = "";
+          tplEmpty.hidden = list.length > 0;
+          list.forEach((row) => tplList.appendChild(renderTplCard(row)));
+        } catch (err) {
+          tplList.innerHTML = "";
+          tplEmpty.hidden = true;
+          showTplError(err.message || "Falha ao carregar templates.");
+        }
+      }
+
+      document.getElementById("tpl-refresh").addEventListener("click", () => {
+        loadTemplates();
+      });
+
+      document.getElementById("tpl-sync").addEventListener("click", async () => {
+        const btn = document.getElementById("tpl-sync");
+        btn.disabled = true;
+        showTplError("");
+        try {
+          const stats = await MuhAuth.adminSyncTemplates();
+          showTplOk(`Templates sincronizados (${formatSyncCounts(stats)}).`);
+          await loadTemplates();
+        } catch (err) {
+          showTplError(err.message || "Falha ao sincronizar templates.");
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
+      document.getElementById("tpl-open-create").addEventListener("click", async () => {
+        showTplError("");
+        showTplOk("");
+        clearTplEditForm();
+        await ensureTplEvents();
+        tplEditDialog.showModal();
+        syncModalScrollLock();
+        document.getElementById("tpl-edit-name").focus();
+      });
+
+      document.getElementById("tpl-var-add").addEventListener("click", () => {
+        const next =
+          collectTplVars().reduce((max, v) => Math.max(max, v.position || 0), 0) + 1;
+        addTplVarRow(next, "", "");
+        updateTplPreview();
+      });
+
+      tplVars.addEventListener("click", (event) => {
+        const btn = event.target.closest("[data-var-remove]");
+        if (!btn) return;
+        btn.closest("[data-tpl-var]")?.remove();
+        updateTplPreview();
+      });
+
+      tplEditForm.addEventListener("input", updateTplPreview);
+      tplEditCategory.addEventListener("change", syncTplEditVisibility);
+      tplEditHeaderType.addEventListener("change", syncTplEditVisibility);
+
+      tplEditForm.addEventListener("submit", async (event) => {
+        const submitter = event.submitter;
+        if (!submitter || submitter.value !== "confirm") {
+          return;
+        }
+        event.preventDefault();
+        const btn = document.getElementById("tpl-edit-submit");
+        btn.disabled = true;
+        tplEditError.hidden = true;
+        tplEditError.textContent = "";
+        try {
+          const id = document.getElementById("tpl-edit-id").value.trim();
+          const eventKey = tplEditEvent.value.trim();
+          const payload = {
+            name: document.getElementById("tpl-edit-name").value.trim(),
+            language: document.getElementById("tpl-edit-language").value.trim(),
+            category: tplEditCategory.value,
+            header_type: tplEditHeaderType.value,
+            header_text:
+              tplEditHeaderType.value === "TEXT"
+                ? document.getElementById("tpl-edit-header-text").value.trim()
+                : "",
+            body_text: document.getElementById("tpl-edit-body").value,
+            footer_text: document.getElementById("tpl-edit-footer").value.trim(),
+            buttons: [],
+            variables: collectTplVars(),
+          };
+          if (eventKey) {
+            payload.event_key = eventKey;
+          } else if (id) {
+            payload.clear_event_key = true;
+          }
+          if (tplEditCategory.value === "AUTHENTICATION") {
+            const exp = document.getElementById("tpl-edit-code-exp").value.trim();
+            if (exp) payload.code_expiration_minutes = Number(exp);
+          }
+          if (id) {
+            await MuhAuth.adminUpdateTemplate(id, payload);
+            showTplOk("Template atualizado (volta a rascunho se estava APPROVED).");
+          } else {
+            await MuhAuth.adminCreateTemplate(payload);
+            showTplOk("Template criado como LOCAL_DRAFT.");
+          }
+          tplEditDialog.close();
+          await loadTemplates();
+        } catch (err) {
+          tplEditError.hidden = false;
+          tplEditError.textContent = err.message || "Falha ao salvar template.";
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
+      tplList.addEventListener("click", async (event) => {
+        const btn = event.target.closest("[data-tpl]");
+        if (!btn) return;
+        const card = btn.closest("article.settings-card");
+        if (!card) return;
+        const id = card.dataset.id;
+        const action = btn.dataset.tpl;
+        const row = card._tplRow;
+
+        btn.disabled = true;
+        showTplError("");
+        try {
+          if (action === "edit") {
+            clearTplEditForm();
+            await ensureTplEvents();
+            if (row) fillTplEditForm(row);
+            else {
+              const list = await MuhAuth.adminListTemplates();
+              const found = (Array.isArray(list) ? list : []).find((r) => r.id === id);
+              if (!found) throw new Error("Template não encontrado.");
+              fillTplEditForm(found);
+            }
+            tplEditDialog.showModal();
+            syncModalScrollLock();
+          } else if (action === "submit") {
+            const ok = await MuhAuth.confirmModal({
+              title: "Submeter template",
+              message: "Enviar este rascunho para aprovação na Meta?",
+              confirmLabel: "Submeter",
+              cancelLabel: "Voltar",
+            });
+            if (!ok) return;
+            await MuhAuth.adminSubmitTemplate(id);
+            showTplOk("Template submetido à Meta.");
+            await loadTemplates();
+          } else if (action === "delete") {
+            const ok = await MuhAuth.confirmModal({
+              title: "Excluir template",
+              message: "Excluir permanentemente este template local?",
+              confirmLabel: "Excluir",
+              cancelLabel: "Voltar",
+              danger: true,
+            });
+            if (!ok) return;
+            await MuhAuth.adminDeleteTemplate(id);
+            showTplOk("Template excluído.");
+            await loadTemplates();
+          }
+        } catch (err) {
+          showTplError(err.message || "Falha na operação.");
         } finally {
           btn.disabled = false;
         }

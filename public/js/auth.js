@@ -392,9 +392,11 @@
     return Array.isArray(data) ? data : [];
   }
 
-  async function enableService(code, { termsAccepted = false, waMode = null } = {}) {
-    const body = { terms_accepted: Boolean(termsAccepted) };
-    if (waMode) body.wa_mode = waMode;
+  async function enableService(code, { termsAccepted = false, marketingOptIn = false } = {}) {
+    const body = {
+      terms_accepted: Boolean(termsAccepted),
+      marketing_opt_in: Boolean(marketingOptIn),
+    };
     const response = await api(`${API_PREFIX}/services/${encodeURIComponent(code)}/enable`, {
       method: "POST",
       body: JSON.stringify(body),
@@ -477,14 +479,6 @@
     return jsonOrThrow(response, "Não foi possível salvar as preferências.");
   }
 
-  async function setAgentWaMode(code, waMode) {
-    const response = await api(
-      `${API_PREFIX}/services/${encodeURIComponent(code)}/agent-whatsapp/mode`,
-      { method: "POST", body: JSON.stringify({ wa_mode: waMode }) }
-    );
-    return jsonOrThrow(response, "Não foi possível alterar o modo WhatsApp.");
-  }
-
   async function agentWaStatus(code) {
     const response = await api(
       `${API_PREFIX}/services/${encodeURIComponent(code)}/agent-whatsapp/status`
@@ -492,49 +486,12 @@
     return jsonOrThrow(response, "Não foi possível consultar o status WhatsApp.");
   }
 
-  async function agentWaQr(code) {
+  async function setMarketingOptIn(code, accepted) {
     const response = await api(
-      `${API_PREFIX}/services/${encodeURIComponent(code)}/agent-whatsapp/qr`,
-      { method: "POST" }
+      `${API_PREFIX}/services/${encodeURIComponent(code)}/agent-whatsapp/marketing-opt-in`,
+      { method: "PUT", body: JSON.stringify({ accepted: Boolean(accepted) }) }
     );
-    return jsonOrThrow(response, "Não foi possível gerar o QR.");
-  }
-
-  async function agentWaPair(code, phone) {
-    const response = await api(
-      `${API_PREFIX}/services/${encodeURIComponent(code)}/agent-whatsapp/pair`,
-      { method: "POST", body: JSON.stringify({ phone }) }
-    );
-    return jsonOrThrow(response, "Não foi possível pedir o código de pareamento.");
-  }
-
-  async function agentWaLogout(code) {
-    const response = await api(
-      `${API_PREFIX}/services/${encodeURIComponent(code)}/agent-whatsapp/logout`,
-      { method: "POST" }
-    );
-    return jsonOrThrow(response, "Não foi possível desconectar a instância WhatsApp.");
-  }
-
-  async function agentWaGroups(code) {
-    const response = await api(
-      `${API_PREFIX}/services/${encodeURIComponent(code)}/agent-whatsapp/groups`
-    );
-    return jsonOrThrow(response, "Não foi possível listar os grupos do WhatsApp.");
-  }
-
-  async function agentWaSetExposure(code, { replyScope, groups } = {}) {
-    const response = await api(
-      `${API_PREFIX}/services/${encodeURIComponent(code)}/agent-whatsapp/exposure`,
-      {
-        method: "PUT",
-        body: JSON.stringify({
-          reply_scope: replyScope,
-          groups: Array.isArray(groups) ? groups : [],
-        }),
-      }
-    );
-    return jsonOrThrow(response, "Não foi possível salvar a configuração de exposição.");
+    return jsonOrThrow(response, "Não foi possível atualizar o consentimento de marketing.");
   }
 
   async function disableService(code, { immediateRefund = false } = {}) {
@@ -919,29 +876,6 @@
     return jsonOrThrow(response, "Não foi possível arquivar.");
   }
 
-  async function kbSetWaMode(waMode) {
-    const response = await api(`${API_PREFIX}/personal-agent/whatsapp/mode`, {
-      method: "POST",
-      body: JSON.stringify({ wa_mode: waMode }),
-    });
-    return jsonOrThrow(response, "Não foi possível alterar o modo WhatsApp.");
-  }
-
-  async function kbWaQr() {
-    const response = await api(`${API_PREFIX}/personal-agent/whatsapp/qr`, { method: "POST" });
-    return jsonOrThrow(response, "Não foi possível gerar o QR.");
-  }
-
-  async function kbWaPair(phone) {
-    const form = new FormData();
-    form.append("phone", phone);
-    const response = await api(`${API_PREFIX}/personal-agent/whatsapp/pair`, {
-      method: "POST",
-      body: form,
-    });
-    return jsonOrThrow(response, "Não foi possível pedir o código.");
-  }
-
   async function adminListServices() {
     const response = await api(`${API_PREFIX}/services/admin/catalog`);
     const data = await jsonOrThrow(response, "Não foi possível carregar o catálogo.");
@@ -1066,72 +1000,114 @@
     return data;
   }
 
-  async function adminListSharedWa() {
-    const response = await api(`${API_PREFIX}/services/admin/shared-wa-numbers`);
+  async function adminListWhatsAppSenders() {
+    const response = await api(`${API_PREFIX}/services/admin/whatsapp-senders`);
     return jsonOrThrow(response, "Não foi possível carregar os números oficiais.");
   }
 
-  async function adminCreateSharedWa({ phone, label, serviceId } = {}) {
-    const body = { phone: String(phone || "").trim() };
+  async function adminCreateWhatsAppSender({
+    phone,
+    phoneNumberId,
+    wabaId,
+    label,
+    serviceId,
+    accessToken,
+  } = {}) {
+    const body = {
+      phone: String(phone || "").trim(),
+      phone_number_id: String(phoneNumberId || "").trim(),
+    };
     if (label) body.label = String(label).trim();
     if (serviceId) body.service_id = String(serviceId).trim();
-    const response = await api(`${API_PREFIX}/services/admin/shared-wa-numbers`, {
+    if (wabaId) body.waba_id = String(wabaId).trim();
+    if (accessToken) body.access_token = String(accessToken).trim();
+    const response = await api(`${API_PREFIX}/services/admin/whatsapp-senders`, {
       method: "POST",
       body: JSON.stringify(body),
     });
-    return jsonOrThrow(response, "Não foi possível provisionar o número oficial.");
+    return jsonOrThrow(response, "Não foi possível cadastrar o número oficial.");
   }
 
-  async function adminUpdateSharedWa(id, patch) {
+  async function adminUpdateWhatsAppSender(id, patch) {
     const body = {};
     if (patch.label !== undefined) body.label = patch.label;
     if (patch.service_id !== undefined) body.service_id = patch.service_id;
+    if (patch.waba_id !== undefined) body.waba_id = patch.waba_id;
     if (patch.is_active !== undefined) body.is_active = Boolean(patch.is_active);
+    if (patch.access_token !== undefined) body.access_token = patch.access_token;
+    if (patch.clear_access_token) body.clear_access_token = true;
     const response = await api(
-      `${API_PREFIX}/services/admin/shared-wa-numbers/${encodeURIComponent(id)}`,
+      `${API_PREFIX}/services/admin/whatsapp-senders/${encodeURIComponent(id)}`,
       { method: "PATCH", body: JSON.stringify(body) }
     );
     return jsonOrThrow(response, "Não foi possível atualizar o número oficial.");
   }
 
-  async function adminSharedWaStatus(id) {
-    const response = await api(
-      `${API_PREFIX}/services/admin/shared-wa-numbers/${encodeURIComponent(id)}/status`
-    );
-    return jsonOrThrow(response, "Não foi possível consultar o status.");
+  async function adminSyncWhatsAppSenders() {
+    const response = await api(`${API_PREFIX}/services/admin/whatsapp-senders/sync`, {
+      method: "POST",
+    });
+    return jsonOrThrow(response, "Não foi possível sincronizar com a Meta.");
   }
 
-  async function adminSharedWaQr(id) {
+  async function adminDeleteWhatsAppSender(id) {
     const response = await api(
-      `${API_PREFIX}/services/admin/shared-wa-numbers/${encodeURIComponent(id)}/qr`,
-      { method: "POST" }
-    );
-    return jsonOrThrow(response, "Não foi possível gerar o QR.");
-  }
-
-  async function adminSharedWaPair(id, phone) {
-    const response = await api(
-      `${API_PREFIX}/services/admin/shared-wa-numbers/${encodeURIComponent(id)}/pair`,
-      { method: "POST", body: JSON.stringify({ phone: String(phone || "").trim() }) }
-    );
-    return jsonOrThrow(response, "Não foi possível gerar o código de pareamento.");
-  }
-
-  async function adminSharedWaLogout(id) {
-    const response = await api(
-      `${API_PREFIX}/services/admin/shared-wa-numbers/${encodeURIComponent(id)}/logout`,
-      { method: "POST" }
-    );
-    return jsonOrThrow(response, "Não foi possível desconectar a sessão.");
-  }
-
-  async function adminDeleteSharedWa(id) {
-    const response = await api(
-      `${API_PREFIX}/services/admin/shared-wa-numbers/${encodeURIComponent(id)}`,
+      `${API_PREFIX}/services/admin/whatsapp-senders/${encodeURIComponent(id)}`,
       { method: "DELETE" }
     );
     if (response.status === 204) return null;
     return jsonOrThrow(response, "Não foi possível excluir o número oficial.");
+  }
+
+  async function adminListTemplates({ category, status } = {}) {
+    const query = new URLSearchParams();
+    if (category) query.set("category", category);
+    if (status) query.set("status", status);
+    const qs = query.toString();
+    const response = await api(`${API_PREFIX}/templates${qs ? `?${qs}` : ""}`);
+    return jsonOrThrow(response, "Não foi possível carregar os templates.");
+  }
+
+  async function adminListTemplateEvents() {
+    const response = await api(`${API_PREFIX}/templates/events`);
+    return jsonOrThrow(response, "Não foi possível carregar os eventos de template.");
+  }
+
+  async function adminCreateTemplate(payload) {
+    const response = await api(`${API_PREFIX}/templates`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    return jsonOrThrow(response, "Não foi possível criar o template.");
+  }
+
+  async function adminUpdateTemplate(id, payload) {
+    const response = await api(`${API_PREFIX}/templates/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+    return jsonOrThrow(response, "Não foi possível atualizar o template.");
+  }
+
+  async function adminDeleteTemplate(id) {
+    const response = await api(`${API_PREFIX}/templates/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
+    if (response.status === 204) return null;
+    return jsonOrThrow(response, "Não foi possível excluir o template.");
+  }
+
+  async function adminSubmitTemplate(id) {
+    const response = await api(
+      `${API_PREFIX}/templates/${encodeURIComponent(id)}/submit`,
+      { method: "POST" }
+    );
+    return jsonOrThrow(response, "Não foi possível enviar o template à Meta.");
+  }
+
+  async function adminSyncTemplates() {
+    const response = await api(`${API_PREFIX}/templates/sync`, { method: "POST" });
+    return jsonOrThrow(response, "Não foi possível sincronizar os templates.");
   }
 
   async function cancelTopup(id) {
@@ -1239,13 +1215,8 @@
     resumeService,
     pingServiceContact,
     updateServicePreferences,
-    setAgentWaMode,
     agentWaStatus,
-    agentWaQr,
-    agentWaPair,
-    agentWaLogout,
-    agentWaGroups,
-    agentWaSetExposure,
+    setMarketingOptIn,
     disableService,
     reactivateService,
     openAppDialog,
@@ -1270,9 +1241,6 @@
     kbIngestUrl,
     kbActivateDocument,
     kbArchiveDocument,
-    kbSetWaMode,
-    kbWaQr,
-    kbWaPair,
     financeDashboard,
     financeEntries,
     adminListServices,
@@ -1287,14 +1255,18 @@
     adminSyncLlmModels,
     adminRefundTopup,
     adminCancelTopup,
-    adminListSharedWa,
-    adminCreateSharedWa,
-    adminUpdateSharedWa,
-    adminSharedWaStatus,
-    adminSharedWaQr,
-    adminSharedWaPair,
-    adminSharedWaLogout,
-    adminDeleteSharedWa,
+    adminListWhatsAppSenders,
+    adminCreateWhatsAppSender,
+    adminUpdateWhatsAppSender,
+    adminSyncWhatsAppSenders,
+    adminDeleteWhatsAppSender,
+    adminListTemplates,
+    adminListTemplateEvents,
+    adminCreateTemplate,
+    adminUpdateTemplate,
+    adminDeleteTemplate,
+    adminSubmitTemplate,
+    adminSyncTemplates,
     cancelTopup,
     adminPauseSubscription,
     adminResumeSubscription,

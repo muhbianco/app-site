@@ -714,6 +714,101 @@ img {
   font-weight: 600;
 }
 
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.footer-legal {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+  max-width: 28rem;
+}
+
+.product-focus .capability-list {
+  list-style: none;
+  margin: 0 0 2rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem 1.5rem;
+}
+
+.capability-list li:first-child {
+  grid-column: 1 / -1;
+}
+
+.capability-list li {
+  padding: 1.25rem 1.35rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface, #fff) 88%, transparent);
+}
+
+.capability-list h3 {
+  margin: 0 0 0.5rem;
+  font-family: Syne, sans-serif;
+  font-size: 1.1rem;
+}
+
+.capability-list p {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+.legal-page {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 0 clamp(1.25rem, 4vw, 2.5rem);
+}
+
+.legal-doc {
+  max-width: 46rem;
+  padding-top: clamp(2.5rem, 6vw, 4rem);
+  padding-bottom: 3rem;
+}
+
+.legal-doc h1 {
+  margin-bottom: 0.35rem;
+}
+
+.legal-doc h2 {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  font-family: Syne, sans-serif;
+  font-size: 1.2rem;
+}
+
+.legal-doc p,
+.legal-doc li {
+  color: var(--ink-soft);
+  line-height: 1.65;
+}
+
+.legal-doc ul {
+  padding-left: 1.2rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.legal-doc li + li {
+  margin-top: 0.45rem;
+}
+
+.legal-doc a {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .product-focus .capability-list {
+    grid-template-columns: 1fr;
+  }
+}
+
 .contact-page .contact-hero {
   padding-top: clamp(2.5rem, 6vw, 4rem);
 }
@@ -2442,8 +2537,8 @@ button.linkish {
 
 @media (min-width: 860px) {
   .steps {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.75rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.75rem 2rem;
   }
 
   .steps li {
